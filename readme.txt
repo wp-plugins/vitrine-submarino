@@ -20,7 +20,7 @@ Requer tema compatível com Widgets e mostra produtos baseados na escolha de uma
 
 **Contextual**
 
-Requer plugins [Palavras de Monetização] (http://www.bernabauer.com/wp-plugins/ "Conheça os meus plugins"). A partir de palavras cadastradas por este plugin o Vitrine Submarino faz uma pesquisa no site da loja e trás produtos que são mostrados antes ou depois do artigo. A vitrine pode ser exibida de maneira automática ou manual. O código para exibição manual estará disponível em breve.
+Requer plugins [Palavras de Monetização](http://www.bernabauer.com/wp-plugins/ "Conheça os meus plugins"). A partir de palavras cadastradas por este plugin o Vitrine Submarino faz uma pesquisa no site da loja e trás produtos que são mostrados antes ou depois do artigo. A vitrine pode ser exibida de maneira automática ou manual. O código para exibição manual estará disponível em breve.
 
 Este plugin só foi testado com a versão 2.5 do Wordpress
 
@@ -41,8 +41,8 @@ Widget é uma palavra criada para denominar códigos que permitem agregar funcio
 
 = Onde eu acho o plugin Palavras de Monetização? =
 
-Este plugin é necessário para usar a parte contextual da vitrine. É outro plugin de minha autoria que você acha [aqui] (http://www.bernabauer.com/wp-plugins/ "Conheça todos os meus plugins").
+Este plugin é necessário para usar a parte contextual da vitrine. É outro plugin de minha autoria que você acha [aqui](http://www.bernabauer.com/wp-plugins/ "Conheça todos os meus plugins").
 
 = Quem é Jobson Lemos ? =
 
-Jobson Lemos é o autor do script que pega os produtos na página do submarino. O que eu fiz foi apenas criar uma página de administração e toda a personalização necessária para usar o script da maneira mais fácil possível dentro do Wordpress. O script original do Jobson pode ser encontrado [aqui] (http://jobsonlemos.com/?p=64 "script criado pelo jobson").
+Jobson Lemos é o autor do script que pega os produtos na página do submarino. O que eu fiz foi apenas criar uma página de administração e toda a personalização necessária para usar o script da maneira mais fácil possível dentro do Wordpress. O script original do Jobson pode ser encontrado [aqui](http://jobsonlemos.com/?p=64 "script criado pelo jobson").
