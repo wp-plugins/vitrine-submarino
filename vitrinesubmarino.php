@@ -3,11 +3,14 @@
 Plugin Name: Vitrine Submarino
 Plugin URI: http://www.bernabauer.com/wp-plugins/
 Description: Inspirado em <a href='http://jobsonlemos.com/?p=64'>script de Jobson Lemos</a>. O plugin mostra uma quantidade de ofertas configuráveis ao gosto do freguês. Requer tema de wordpress compatível com widgets.
-Version: 1.0
+Version: 1.1
 Author: Bernardo Bauer
 Author URI: http://www.bernabauer.com/
 */
 global $wpdb;
+global $vs_options;
+$vs_options = get_option('vs_options');
+
 register_activation_hook("/wp-content/plugins/vitrinesubmarino.php", 'vs_activate');
 register_deactivation_hook("/wp-content/plugins/vitrinesubmarino.php", 'vs_deactivate');
 
@@ -19,8 +22,10 @@ add_action('widgets_init', 'vs_widget_init');
 // Run plugin code and init
 add_action('admin_menu', 'vs_option_menu');
 
-add_filter('the_content', 'vs_auto');
-
+// Vitrine Automática
+if ($vs_options['ctx_exib_auto'] == 'auto') {
+	add_filter('the_content', 'vs_auto');
+} 
 
 
 /***************************************************************************************************
@@ -32,11 +37,27 @@ function vs_activate() {
 
 	global $wpdb;
 
-	$vs_options = array('codafil'=>'', 'version'=>'1.0', 'wid_title'=>'Ofertas Submarino', 'wid_show'=>'5', 'wid_bgcolor'=>'#FFFFFF', 'wid_brdcolor'=>'#dddddd', 'wid_word'=>'Celular', 'wid_altcode'=>'BVD', 'ctx_local'=>'depois', 'ctx_show'=>'1', 'ctx_exib_auto'=>'manual', 'ctx_titulo'=>'<h3>Ofertas Submarino</h3>');
+	$vs_options = array(
+		'codafil'=>			'',
+		'version'=>			'1.1',
+		'host'=>			'',
+		'wid_title'=>		'Ofertas Submarino',
+		'wid_show'=>		'5',
+		'wid_bgcolor'=>		'#FFFFFF',
+		'wid_brdcolor'=>	'#DDDDDD',
+		'wid_word'=>		'Celular',
+		'wid_altcode'=>		'BVD',
+		'wid_track'=>		'nao',
+		'ctx_tipo'=>		'horizontal',
+		'ctx_local'=>		'depois',
+		'ctx_show'=>		'4',
+		'ctx_exib_auto'=>	'auto',
+		'ctx_titulo'=>		'<h3>Ofertas Submarino</h3>',
+		'ctx_track'=>		'nao'
+	);
 
 	add_option('vs_options', $vs_options);
 }
-
 
 /***************************************************************************************************
  *  Antes de desativar a funcao abaixo eh executada
@@ -55,10 +76,12 @@ function vs_activate() {
  */
 function vs_alerta() {
 
+	global $vs_options;
+
 	if (  !isset($_POST['info_update']) ) {
-	
-	$vs_options = get_option('vs_options');
-	
+		if(!function_exists(curl_init)) {
+			$msg = '* Seu host não permite a utilização do cURL.';
+		}
 		if ($vs_options == '') {
 			$msg = '* Parece que você atualizou a versão nova sem desativar o plugin!! Por favor desative e re-ative.';
 		} else {
@@ -128,7 +151,7 @@ function textoparalink ($texto)
  */
 function vs_auto($text) {
 
-	$vs_options = get_option('vs_options');
+	global $vs_options;
 	
 	if ((is_single()) AND ($vs_options["ctx_exib_auto"] == 'auto')) {
 
@@ -151,19 +174,27 @@ return $text;
  */
 function vs_vitrine ($show = 3, $widbg = "#FFFFFF", $word = "notebook", $widbrd = "#DDDDDD") {
 
+	global $vs_options;
+
 	$current_plugins = get_option('active_plugins');
 	if (in_array('palavrasmonetizacao.php', $current_plugins)) {
 		$words_array = pm_get_words();
-		$word = $words_array[0];
+		$word_pm = $words_array[0];
 	}
+	if ($word_pm)
+		$word = $word_pm;
 
 	$vs_options = get_option('vs_options');
 	
 	$vitrine_temp = vs_core($show, $widbg, $word, $widbrd, TRUE);
-	$vitrine = $vs_options['ctx_titulo'].$vitrine_temp;
 
-return $vitrine;
-
+	if ($vs_options['ctx_exib_auto'] == 'auto') {
+		$vitrine = $vs_options['ctx_titulo'].$vitrine_temp;
+		return $vitrine;
+	} else {
+		echo $vitrine_temp;
+		return '';
+	}
 }
 
 /***************************************************************************************************
@@ -174,7 +205,7 @@ function vs_core ($show = 2, $widbg = "#FFFFFF", $word = "celular" , $widbrd = "
 
 	error_reporting( 0 );
 
-	$vs_options = get_option('vs_options');
+	global $vs_options;
 	
 	if ($vs_options['codafil'] == '')
 		return "ERRO: Código de Afiliado não informado.";
@@ -189,7 +220,7 @@ function vs_core ($show = 2, $widbg = "#FFFFFF", $word = "celular" , $widbrd = "
 	if ( !$desde ) { $desde = 1; }
 
         $urlsub = 'http://www.submarino.com.br/HomeCache/AllSearchResult.aspx?PageHits=50&OrderBy=sortordersell&Query=';
-
+        
 		$urlaserlida = $urlsub.$palavrabuscada;
 
 	// Pego a pagina do produto procurado
@@ -199,6 +230,13 @@ function vs_core ($show = 2, $widbg = "#FFFFFF", $word = "celular" , $widbrd = "
 		$ch = curl_init();
 		// informar URL e outras funcoes ao CURL
 		curl_setopt($ch, CURLOPT_URL, $urlaserlida);
+
+		if ($vs_options['host'] == 'godaddy') {
+			// BEGIN GoDaddy Hack
+			curl_setopt($this->curl, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+			curl_setopt($this->curl, CURLOPT_PROXY,"http://proxy.shr.secureserver.net:3128");
+			// END GoDaddy Hack 
+        }
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		// Acessar a URL e retornar a saida
 		$buffer = curl_exec($ch);
@@ -225,7 +263,8 @@ function vs_core ($show = 2, $widbg = "#FFFFFF", $word = "celular" , $widbrd = "
 		$teste = $img->getAttribute("class");
 
 		if($teste == 'imgresult') { 
-			$imagem[$i] = $img->getAttribute("src"); $i++; 
+			$imagem[$i] = $img->getAttribute("src"); 
+			$i++; 
 		}
 	}
 
@@ -239,7 +278,11 @@ function vs_core ($show = 2, $widbg = "#FFFFFF", $word = "celular" , $widbrd = "
 	foreach( $img as $img ) {
 		$teste = $img->getAttribute("class");
 
-		if($teste == 'link-prod') { $link[$i] = $img->getAttribute("href").'&franq='.$idsubmarino; $titulo[$i] = utf8_decode($img->nodeValue); $i++; }
+		if($teste == 'link-prod') { 
+			$link[$i] = $img->getAttribute("href").'&franq='.$idsubmarino; 
+			$titulo[$i] = utf8_decode($img->nodeValue); 
+			$i++; 
+		}
 	}
 
 
@@ -252,7 +295,13 @@ function vs_core ($show = 2, $widbg = "#FFFFFF", $word = "celular" , $widbrd = "
 	foreach( $img as $img ) {
 		$teste = $img->getAttribute("class");
 
-		if($teste == 'preco resultado-comprar') { $preco[$i] = utf8_decode($img->nodeValue); $i++; }
+		if($teste == 'preco resultado-comprar') { 
+			$preco[$i] = utf8_decode($img->nodeValue); $i++; 
+		}
+	}
+
+	if (($contextual) AND  $vs_options['ctx_tipo'] == "horizontal") { 
+		$lista_de_produtos = "<table id=\"vs_ctx_tabela_produtos\"><tr>";
 	}
 
 
@@ -261,18 +310,35 @@ function vs_core ($show = 2, $widbg = "#FFFFFF", $word = "celular" , $widbrd = "
 
 			$palavras = explode('_',textoparalink ($titulo[$a]));
 
-			// Code for click tracking using Google Analytics.
-			$tc = 'onClick="javascript: pageTracker._trackPageview (\'/out/sub/\');"';
-
+			$tc = '';
+		
 			if ($contextual) {
-
-				$lista_de_produtos .= '<div style="border:2px solid '.$widbrd.';height:104px;"><div style="background-color:'.$widbg.';padding:3px;"><table><tr><td><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a></td><td>'.utf8_encode($titulo[$a]).'<br><b>'.utf8_encode($preco[$a]).'</b><br><br><center><a href="'.$link[$a].'" rel="nofollow" target="_blank"'.$tc.'>[ Comprar ]</a></center></td></tr></table></div></div>';
+				
+				//mostra vitrine contextual
+				if ($vs_options['ctx_track'] == "sim") {
+					// Code for click tracking using Google Analytics.
+					$tc = 'onClick="javascript: pageTracker._trackPageview (\'/out/sub/contextual/'.utf8_encode($titulo[$a]).'\');"';
+				}
+				if ($vs_options['ctx_tipo'] == "horizontal") {
+					//mostra vitrine com produtos em uma unica linha
+					$lista_de_produtos .= '<td style="text-align:center;font-size:11px;"><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a><div style="">'.utf8_encode($titulo[$a]).'</div><div style="font-weight: bold;">'.utf8_encode($preco[$a]).'</div><br /><div style=""><a href="'.$link[$a].'" rel="nofollow" target="_blank"'.$tc.'>[ Comprar ]</a></div></td>';
+				} else {
+					//mostra vitrine com um produto por linha
+					$lista_de_produtos .= '<div style="border:2px solid '.$widbrd.';height:104px;"><div style="background-color:'.$widbg.';padding:3px;"><table><tr><td><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a></td><td>'.utf8_encode($titulo[$a]).'<br><b>'.utf8_encode($preco[$a]).'</b><br><br><a href="'.$link[$a].'" rel="nofollow" target="_blank"'.$tc.'>[ Comprar ]</a></td></tr></table></div></div>';
+				}
 			} else {
-				$lista_de_produtos .= '<div style="border:2px solid '.$widbrd.'"><div style="background-color:'.$widbg.';padding:3px;"><center><p><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a></p>'.utf8_encode($titulo[$a]).'<br><b>'.utf8_encode($preco[$a]).'</b><br><br><a href="'.$link[$a].'" rel="nofollow" target="_blank"'.$tc.'>[ Comprar ]</a> </center></div></div>';
+				
+				//mostra vitrine widget
+				if ($vs_options['wid_track'] == "sim") {
+					// Code for click tracking using Google Analytics.
+					$tc = 'onClick="javascript: pageTracker._trackPageview (\'/out/sub/widget/'.utf8_encode($titulo[$a]).'\');"';
+				}
+				$lista_de_produtos .= '<div style="background-color:'.$widbg.';padding:3px;"><center><p><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a></p>'.utf8_encode($titulo[$a]).'<br><b>'.utf8_encode($preco[$a]).'</b><br><br><a href="'.$link[$a].'" rel="nofollow" target="_blank"'.$tc.'>[ Comprar ]</a> </center></div>';
 			}
 		 }
 
 	}
+	
 	if (empty($lista_de_produtos)) {
 		if ($contextual) {
 			return vs_core ( "3", "#FFFFFF", "celular", "#DDDDDD", TRUE); 
@@ -308,7 +374,15 @@ function vs_core ($show = 2, $widbg = "#FFFFFF", $word = "celular" , $widbrd = "
 		return $altcode;
 		}
 	} else {
-		return $lista_de_produtos."<div style=\"font-size:8px; text-align:right;\">vitrine by <a href='http://bernabauer.com'>bernabauer.com</a></div>";
+	
+	if (($contextual) AND  $vs_options['ctx_tipo'] == "horizontal") { 
+			$lista_de_produtos .= "</tr></table>";
+		}
+
+	
+#		return "<div style=\"width:100%;\"><div style=\"border:2px solid ".$widbrd.";\">".$lista_de_produtos."</div><div style=\"font-size:8px; text-align:right;\"><a href='http://www.bernabauer.com/wp-plugins/'>vitrine</a> by <a href='http://bernabauer.com'>bernabauer.com</a></div></div>";
+
+		return "<div style=\"border:2px solid ".$widbrd.";\">".$lista_de_produtos."</div><div style=\"text-align:right;\"><small><a href='http://www.bernabauer.com/wp-plugins/'>vitrine</a> by <a href='http://bernabauer.com'>bernabauer.com</a></small></div>";
 	}
 }
 
@@ -333,7 +407,7 @@ function vs_options_subpanel() {
 	global $wpdb;
 
 	//pega dados da base
-	$vs_options = get_option('vs_options');
+	global $vs_options;
 
 	//processa novos dados para atualizacao
     if ( isset($_POST['info_update']) ) {
@@ -359,6 +433,10 @@ function vs_options_subpanel() {
 			$vs_options['ctx_show'] = strip_tags(stripslashes($_POST['ctx_show']));
 		$vs_options['ctx_exib_auto'] = strip_tags(stripslashes($_POST['ctx_exib_auto']));
 		$vs_options['ctx_local'] = strip_tags(stripslashes($_POST['ctx_local']));
+		$vs_options['ctx_track'] = strip_tags(stripslashes($_POST['ctx_track']));
+		$vs_options['wid_track'] = strip_tags(stripslashes($_POST['wid_track']));
+		$vs_options['host'] = strip_tags(stripslashes($_POST['host']));
+		$vs_options['ctx_tipo'] = strip_tags(stripslashes($_POST['ctx_tipo']));
 
 
 		//atualiza base de dados com informacaoes do formulario		
@@ -376,6 +454,30 @@ function vs_options_subpanel() {
 		$antes = 'checked=\"checked\"';
     } else {
     	$depois = 'checked=\"checked\"';
+    }
+
+    if ( $vs_options['ctx_track'] == 'sim') {
+		$ctxsim = 'checked=\"checked\"';
+    } else {
+    	$ctxnao = 'checked=\"checked\"';
+    }
+
+    if ( $vs_options['wid_track'] == 'sim') {
+		$sim = 'checked=\"checked\"';
+    } else {
+    	$nao = 'checked=\"checked\"';
+    }
+
+    if ( $vs_options['host'] == '') {
+		$outro = 'checked=\"checked\"';
+    } else {
+    	$godaddy = 'checked=\"checked\"';
+    }
+
+    if ( $vs_options['ctx_tipo'] == 'horizontal') {
+		$horizontal = 'checked=\"checked\"';
+    } else {
+    	$vertical = 'checked=\"checked\"';
     }
     
     
@@ -417,11 +519,21 @@ function vs_options_subpanel() {
 		<th scope="row" valign="top">Código de Afiliado</th>
 		<td>
 			 <input name="id" type="text" id="id" value="<?php echo $vs_options['codafil']; ?>" size=8  />
-			<label for="id"><br />O seu código de afiliado pode ser encontrado na página "Configurar HOTWords". A última caixa informa o "scriptHOTWords". Seu código de afiliado é o número após o texto 'show.jsp?id='.</label>
 		</td>
 	 </tr>
 	</table>
-	<br />
+
+    <table class="form-table">
+	 <tr>
+		<th scope="row" valign="top">Hospedagem</th>
+		<td>
+			<input type="radio" name="host" value="" <?php echo $outro; ?>> Outro
+			<br />
+			<input type="radio" name="host" value="godaddy" <?php echo $godaddy; ?>> Godaddy
+			<br />Este host precisa de uma configuração especial para usar a função cURL. Escolha esta opção se este for o seu host. Caso contrário escolha a opção "Outro".
+		</td>
+	 </tr>
+	</table>
 
     <h3>Contextual</h3>
 <?php
@@ -458,6 +570,35 @@ if (in_array('palavrasmonetizacao.php', $current_plugins)) {
 			<input type="radio" name="ctx_exib_auto" value="auto" <?php echo $auto; ?>> Automática
 			<br />
 			<input type="radio" name="ctx_exib_auto" value="manual" <?php echo $manual; ?>> Manual
+			<br />
+			Para mostrar 3 produtos, com cor de fundo branca, vitrine para "iPod" e borda cinza, por exemplo:<br />
+			 &lt;?php if(function_exists('vs_vitrine')) {<br />
+			 vs_vitrine (3, "#FFFFFF", "iPod", "#DDDDDD");<br />
+			 } ?&gt;<br />
+		</td>
+	 </tr>
+	</table>
+
+    <table class="form-table">
+	 <tr>
+		<th scope="row" valign="top">Tipo de Vitrine</th>
+		<td>
+			<input type="radio" name="ctx_tipo" value="horizontal" <?php echo $horizontal; ?>> Horizontal
+			<br />
+			<input type="radio" name="ctx_tipo" value="vertical" <?php echo $vertical; ?>> Vertical
+			<br />
+		</td>
+	 </tr>
+	</table>
+
+    <table class="form-table">
+	 <tr>
+		<th scope="row" valign="top">Rastrear Cliques</th>
+		<td>
+			É necessário ter uma conta no Google Analytics.<br />
+			<input type="radio" name="ctx_track" value="sim" <?php echo $ctxsim; ?>> Sim
+			<br />
+			<input type="radio" name="ctx_track" value="nao" <?php echo $ctxnao; ?>> Não
 			<br />
 		</td>
 	 </tr>
@@ -525,7 +666,20 @@ if (in_array('palavrasmonetizacao.php', $current_plugins)) {
 		<th scope="row" valign="top">Produto</th>
 		<td>
  				<input style="width: 30%;" id="Submarino-word" name="Submarino-word" type="text" value="<?php echo $vs_options['wid_word']; ?>" /><br />
- 				<label for="Submarino-word">Informe a palavra para popular a vitrine.</label><br />
+ 				<label for="Submarino-word">Informe a palavra para popular a vitrine. Evite utilização de acentos.</label><br />
+		</td>
+	 </tr>
+	</table>
+
+    <table class="form-table">
+	 <tr>
+		<th scope="row" valign="top">Rastrear Cliques</th>
+		<td>
+			É necessário ter uma conta no Google Analytics.<br />
+			<input type="radio" name="wid_track" value="sim" <?php echo $sim; ?>> Sim
+			<br />
+			<input type="radio" name="wid_track" value="nao" <?php echo $nao; ?>> Não
+			<br />
 		</td>
 	 </tr>
 	</table>
@@ -550,7 +704,7 @@ if (in_array('palavrasmonetizacao.php', $current_plugins)) {
 			<br>
 			<input type="radio" name="Submarino-altcode" value="HBG" <?php echo $HBG; ?>> HalfBanner (120x60px) Campanha de Giro
 			<br>
-			<label for="Submarino-altcode">Código HTML para ser mostrado caso não sejam encontrados pesquisa com a palavra acima.</label>
+			<label for="Submarino-altcode">Código HTML para ser mostrado caso não sejam encontrados produtos com a palavra acima.</label>
 		</td>
 	 </tr>
 	</table>
@@ -581,7 +735,7 @@ function vs_widget_init() {
 			extract($args);
 
 			// These are our own options
-			$vs_options = get_option('vs_options');
+			global $vs_options;
 			$title = $vs_options['wid_title'];  // Title in sidebar for widget
 			$show = $vs_options['wid_show'];  // # of Posts we are showing
 			$bgcolor = $vs_options['wid_bgcolor'];  // Showing the width or not
@@ -609,9 +763,6 @@ function vs_widget_init() {
 	
 	$widget_ops = array('classname' => 'widget_Submarino', 'description' => __( 'Vitrine de Produtos do Submarino.com' ) );
 	wp_register_sidebar_widget('vitrine-submarino', 'Vitrine Submarino', 'widget_Submarino', $widget_ops);
-
 }
-
-
 
 ?>
