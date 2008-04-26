@@ -3,7 +3,7 @@
 Plugin Name: Vitrine Submarino
 Plugin URI: http://www.bernabauer.com/wp-plugins/
 Description: Inspirado em <a href='http://jobsonlemos.com/?p=64'>script de Jobson Lemos</a>. O plugin mostra uma quantidade de ofertas configuráveis ao gosto do freguês. Requer tema de wordpress compatível com widgets.
-Version: 1.1
+Version: 1.2
 Author: Bernardo Bauer
 Author URI: http://www.bernabauer.com/
 */
@@ -48,12 +48,14 @@ function vs_activate() {
 		'wid_word'=>		'Celular',
 		'wid_altcode'=>		'BVD',
 		'wid_track'=>		'nao',
+		'wid_word'=>		'Notebook',
 		'ctx_tipo'=>		'horizontal',
 		'ctx_local'=>		'depois',
 		'ctx_show'=>		'4',
 		'ctx_exib_auto'=>	'auto',
 		'ctx_titulo'=>		'<h3>Ofertas Submarino</h3>',
-		'ctx_track'=>		'nao'
+		'ctx_track'=>		'nao',
+		'ctx_alt'=>			''
 	);
 
 	add_option('vs_options', $vs_options);
@@ -183,6 +185,8 @@ function vs_vitrine ($show = 3, $widbg = "#FFFFFF", $word = "notebook", $widbrd 
 	}
 	if ($word_pm)
 		$word = $word_pm;
+	else
+		$word = $vs_options['ctx_word'];
 
 	$vs_options = get_option('vs_options');
 	
@@ -311,7 +315,7 @@ function vs_core ($show = 2, $widbg = "#FFFFFF", $word = "celular" , $widbrd = "
 			$palavras = explode('_',textoparalink ($titulo[$a]));
 
 			$tc = '';
-		
+
 			if ($contextual) {
 				
 				//mostra vitrine contextual
@@ -320,11 +324,13 @@ function vs_core ($show = 2, $widbg = "#FFFFFF", $word = "celular" , $widbrd = "
 					$tc = 'onClick="javascript: pageTracker._trackPageview (\'/out/sub/contextual/'.utf8_encode($titulo[$a]).'\');"';
 				}
 				if ($vs_options['ctx_tipo'] == "horizontal") {
-					//mostra vitrine com produtos em uma unica linha
-					$lista_de_produtos .= '<td style="text-align:center;font-size:11px;"><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a><div style="">'.utf8_encode($titulo[$a]).'</div><div style="font-weight: bold;">'.utf8_encode($preco[$a]).'</div><br /><div style=""><a href="'.$link[$a].'" rel="nofollow" target="_blank"'.$tc.'>[ Comprar ]</a></div></td>';
+
+					//mostra vitrine com produtos em uma unica linha (VITRINE HORIZONTAL)
+					$lista_de_produtos .= '<td style="text-align:center;font-size:11px;"><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a><div style="">'.utf8_encode($titulo[$a]).'</div><div style="font-weight: bold;">'.utf8_encode($preco[$a]).'</div><br /><div style=""><a href="'.$link[$a].'" rel="nofollow" target="_blank"'.$tc.'>[ Veja Mais ]</a></div></td>';
 				} else {
-					//mostra vitrine com um produto por linha
-					$lista_de_produtos .= '<div style="border:2px solid '.$widbrd.';height:104px;"><div style="background-color:'.$widbg.';padding:3px;"><table><tr><td><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a></td><td>'.utf8_encode($titulo[$a]).'<br><b>'.utf8_encode($preco[$a]).'</b><br><br><a href="'.$link[$a].'" rel="nofollow" target="_blank"'.$tc.'>[ Comprar ]</a></td></tr></table></div></div>';
+					
+					//mostra vitrine com um produto por linha (VITRINE VERTICAL)
+					$lista_de_produtos .= '<div style="border:2px solid '.$widbrd.';height:104px;"><div style="background-color:'.$widbg.';padding:3px;"><table><tr><td><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a></td><td>'.utf8_encode($titulo[$a]).'<br><b>'.utf8_encode($preco[$a]).'</b><br><br><a href="'.$link[$a].'" rel="nofollow" target="_blank"'.$tc.'>[ Veja Mais ]</a></td></tr></table></div></div>';
 				}
 			} else {
 				
@@ -333,7 +339,7 @@ function vs_core ($show = 2, $widbg = "#FFFFFF", $word = "celular" , $widbrd = "
 					// Code for click tracking using Google Analytics.
 					$tc = 'onClick="javascript: pageTracker._trackPageview (\'/out/sub/widget/'.utf8_encode($titulo[$a]).'\');"';
 				}
-				$lista_de_produtos .= '<div style="background-color:'.$widbg.';padding:3px;"><center><p><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a></p>'.utf8_encode($titulo[$a]).'<br><b>'.utf8_encode($preco[$a]).'</b><br><br><a href="'.$link[$a].'" rel="nofollow" target="_blank"'.$tc.'>[ Comprar ]</a> </center></div>';
+				$lista_de_produtos .= '<div style="background-color:'.$widbg.';padding:3px;"><center><p><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a></p>'.utf8_encode($titulo[$a]).'<br><b>'.utf8_encode($preco[$a]).'</b><br><br><a href="'.$link[$a].'" rel="nofollow" target="_blank"'.$tc.'>[ Veja Mais ]</a></center></div>';
 			}
 		 }
 
@@ -341,6 +347,7 @@ function vs_core ($show = 2, $widbg = "#FFFFFF", $word = "celular" , $widbrd = "
 	
 	if (empty($lista_de_produtos)) {
 		if ($contextual) {
+			// anuncio alternativo
 			return vs_core ( "3", "#FFFFFF", "celular", "#DDDDDD", TRUE); 
 		} else {
 
@@ -378,9 +385,6 @@ function vs_core ($show = 2, $widbg = "#FFFFFF", $word = "celular" , $widbrd = "
 	if (($contextual) AND  $vs_options['ctx_tipo'] == "horizontal") { 
 			$lista_de_produtos .= "</tr></table>";
 		}
-
-	
-#		return "<div style=\"width:100%;\"><div style=\"border:2px solid ".$widbrd.";\">".$lista_de_produtos."</div><div style=\"font-size:8px; text-align:right;\"><a href='http://www.bernabauer.com/wp-plugins/'>vitrine</a> by <a href='http://bernabauer.com'>bernabauer.com</a></div></div>";
 
 		return "<div style=\"border:2px solid ".$widbrd.";\">".$lista_de_produtos."</div><div style=\"text-align:right;\"><small><a href='http://www.bernabauer.com/wp-plugins/'>vitrine</a> by <a href='http://bernabauer.com'>bernabauer.com</a></small></div>";
 	}
@@ -431,12 +435,15 @@ function vs_options_subpanel() {
 			$vs_options['ctx_titulo'] = stripslashes($_POST['ctx_titulo']);
 		if (isset($_POST['ctx_show'])) 
 			$vs_options['ctx_show'] = strip_tags(stripslashes($_POST['ctx_show']));
+		if (isset($_POST['ctx_word'])) 
+			$vs_options['ctx_word'] = strip_tags(stripslashes($_POST['ctx_word']));
 		$vs_options['ctx_exib_auto'] = strip_tags(stripslashes($_POST['ctx_exib_auto']));
 		$vs_options['ctx_local'] = strip_tags(stripslashes($_POST['ctx_local']));
 		$vs_options['ctx_track'] = strip_tags(stripslashes($_POST['ctx_track']));
 		$vs_options['wid_track'] = strip_tags(stripslashes($_POST['wid_track']));
 		$vs_options['host'] = strip_tags(stripslashes($_POST['host']));
 		$vs_options['ctx_tipo'] = strip_tags(stripslashes($_POST['ctx_tipo']));
+		$vs_options['ctx_alt'] = strip_tags(stripslashes($_POST['ctx_alt']));
 
 
 		//atualiza base de dados com informacaoes do formulario		
@@ -479,7 +486,7 @@ function vs_options_subpanel() {
     } else {
     	$vertical = 'checked=\"checked\"';
     }
-    
+        
     
 	switch ($vs_options['wid_altcode']) {
 		case "BVD":
@@ -555,6 +562,16 @@ if (in_array('palavrasmonetizacao.php', $current_plugins)) {
 
     <table class="form-table">
 	 <tr>
+		<th scope="row" valign="top">Produto Padrão</th>
+		<td>
+ 				<input style="width: 30%;" id="ctx_word" name="ctx_word" type="text" value="<?php echo $vs_options['ctx_word']; ?>" /><br />
+ 				<label for="Submarino-word">Informe a palavra para popular a vitrine quando não houver outra fonte para busca de produtos. Evite utilização de acentos.</label><br />
+		</td>
+	 </tr>
+	</table>
+
+    <table class="form-table">
+	 <tr>
 		<th scope="row" valign="top">Quant. Produtos</th>
 		<td>
 				<input style="width: 20px;" id="ctx_show" name="ctx_show" type="text" value="<?php echo $vs_options['ctx_show']; ?>" /><br />
@@ -616,7 +633,7 @@ if (in_array('palavrasmonetizacao.php', $current_plugins)) {
 		</td>
 	 </tr>
 	</table>
-	
+		
 <?php } else { ?>
 
     <table class="form-table">
