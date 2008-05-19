@@ -12,7 +12,7 @@ Mostra vitrine de produtos do Submarino.com.
 
 Inspirado em Script de Jobson Lemos. O plugin mostra uma quantidade de ofertas configuráveis ao gosto do freguês. 
 
-São duas funcionalidades distintas para o plugin. Widget e Contextual.
+São tres funcionalidades distintas para o plugin. Widget, Contextual e Shopping.
 
 **Widget**
 
@@ -21,6 +21,10 @@ Requer tema compatível com Widgets e mostra produtos baseados na escolha de uma
 **Contextual**
 
 Requer plugins [Palavras de Monetização](http://www.bernabauer.com/wp-plugins/ "Conheça os meus plugins"). A partir de palavras cadastradas por este plugin o Vitrine Submarino faz uma pesquisa no site da loja e trás produtos que são mostrados antes ou depois do artigo. A vitrine pode ser exibida de maneira automática ou manual. O código para exibição manual estará disponível em breve.
+
+**Shopping**
+
+Monta um mini shopping usando uma página do Wordpress. Para colocar um shopping do Submarino no seu blog, basta criar uma página, incluir o código `#shopping#` e informar na página de configuração o slug desta página. Funciona com permalink ou não.
 
 Este plugin só foi testado com a versão 2.5 do Wordpress
 
@@ -41,7 +45,7 @@ Esta mensagem aparece quando o plugin não consegue identificar a sua variável 
 
 = Rastrear cliques? O que é isto? =
 
-Este plugin permite fazer este rastreamento de cliques nos produtos da vitrine. Para sabe quantos cliques e em que produtos eles ocorreram, é necessário ter uma conta no Google Analytics. Pra saber quantos cliques foram feitas em todas as vitrines basta procurar por "/sub/" em "Top Content" dentro da opção "Content" no seu Google Analytics. Para saber quantos foram os cliques na vitrine contextual basta procurar por "contextual" e no widget procure por "/widget/". Não esqueça de colocar as barras! Elas são importantes. 
+Este plugin permite fazer este rastreamento de cliques nos produtos da vitrine. Para saber quantos cliques e em que produtos eles ocorreram, é necessário ter uma conta no Google Analytics. Pra saber quantos cliques foram feitas em todas as vitrines basta procurar por "/sub/" em "Top Content" dentro da opção "Content" no seu Google Analytics. Para saber quantos foram os cliques na vitrine contextual basta procurar por "contextual" e no widget procure por "/widget/". Não esqueça de colocar as barras! Elas são importantes. 
 
 = O que é um widget? =
 
