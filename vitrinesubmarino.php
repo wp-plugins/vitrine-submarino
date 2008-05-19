@@ -39,7 +39,7 @@ function vs_activate() {
 
 	$vs_options = array(
 		'codafil'=>			'',
-		'version'=>			'1.1',
+		'version'=>			'1.2',
 		'host'=>			'',
 		'wid_title'=>		'Ofertas Submarino',
 		'wid_show'=>		'5',
