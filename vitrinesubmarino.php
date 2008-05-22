@@ -3,7 +3,7 @@
 Plugin Name: Vitrine Submarino
 Plugin URI: http://www.bernabauer.com/wp-plugins/
 Description: Inspirado em <a href='http://jobsonlemos.com/?p=64'>script de Jobson Lemos</a>. O plugin mostra uma quantidade de ofertas configuráveis ao gosto do freguês. Requer tema de wordpress compatível com widgets.
-Version: 2.0.2
+Version: 2.0.3
 Author: Bernardo Bauer
 Author URI: http://www.bernabauer.com/
 */
@@ -226,7 +226,11 @@ function vs_vitrine_tabs($words) {
 		}
 		
 		for ($i=1; $i<=count($words);$i++) {
-			$abas .= "<li class=\"selected\"><a href=\"#tab".$i."\"><em>&nbsp;".$words[$i-1]."&nbsp;</em></a></li>";
+			if ($i == 1)
+				$abas .= "<li class=\"selected\"><a href=\"#tab".$i."\"><em>&nbsp;".$words[$i-1]."&nbsp;</em></a></li>";
+			else
+				$abas .= "<li><a href=\"#tab".$i."\"><em>&nbsp;".$words[$i-1]."&nbsp;</em></a></li>";
+
 		}
 		for ($i=1; $i<=count($words);$i++) {
 			$vitrines .= "<div>".$vitrine[$i]."</div>";
