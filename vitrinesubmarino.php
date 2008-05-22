@@ -28,6 +28,24 @@ if ($vs_options['ctx_exib_auto'] == 'auto') {
 } 
 	add_filter('the_content', 'vs_shopping');
 
+// #beta inclui javascript para tabs
+add_action('wp_head', 'vs_header');
+
+#beta
+function vs_header() {
+$url = get_settings('siteurl') . '/wp-content/plugins/' . dirname(plugin_basename(__FILE__));
+echo '<!-- Dependencies --> 
+		<!-- Sam Skin CSS for TabView --> 
+		<link rel="stylesheet" type="text/css" href="'.$url.'/tabs.css">
+
+		<!-- JavaScript Dependencies for Tabview: --> 
+		<script type="text/javascript" src="'.$url.'/yahoo-dom-event.js"></script> 
+		<script type="text/javascript" src="'.$url.'/element-beta-min.js"></script> 
+
+		<!-- Source file for TabView --> 
+		<script type="text/javascript" src="'.$url.'/tabview-min.js"></script>';
+
+}
 
 /***************************************************************************************************
  *  Coisas para serem feitas na instalacao do plugin
@@ -76,6 +94,7 @@ function vs_activate() {
 		'ctx_brdcolor'=>	'#DDDDDD',
 		'ctx_word'=>		'Notebook',
 		'ctx_tipo'=>		'horizontal',
+		'ctx_style'=>		'semabas',
 		'ctx_local'=>		'depois',
 		'ctx_show'=>		'4',
 		'ctx_exib_auto'=>	'auto',
@@ -122,11 +141,6 @@ function vs_alerta() {
 			if ( $vs_options['codafil'] == '') {
 				$msg = '* '.__('Você ainda não informou seu código de afiliados do Submarino!!!',$domain).'<br />'.sprintf(__('Se você já tem uma conta informe <a href="%1$s">aqui</a>, caso contrário <a href="%2$s">crie uma agora</a>.',$domain), "options-general.php?page=vitrinesubmarino.php","http://afiliados.submarino.com.br/affiliates/").'<br />'; 
 			}
-			$current_plugins = get_option('active_plugins');
-			if (!in_array('palavrasmonetizacao.php', $current_plugins)) {
-			$msg = '* Você não está apto para mostrar a Vitrine Contextual. Você precisa do plugin Palavras de Monetização.';
-			}
-
 		}
 		
 		if ($msg) {
@@ -182,7 +196,7 @@ function textoparalink ($texto)
 /***************************************************************************************************
  *  Vitrine automatica
  */
-function vs_auto($text) {
+function vs_auto1($text) {
 
 	global $vs_options;
 	
@@ -199,6 +213,7 @@ function vs_auto($text) {
 	if ((is_single()) AND ($vs_options["ctx_exib_auto"] == 'auto')) {
 
 		$vitrine = vs_core ( $vs_options["ctx_show"], $word, "contextual", $vs_options['ctx_bgcolor'], $vs_options['ctx_brdcolor'], $vs_options['ctx_fontcolor']) ;
+		
 		if ($vs_options["ctx_local"] == 'antes') {
 		   $text = $vitrine.$text;
 		} elseif ($vs_options["ctx_local"]=='depois') {
@@ -227,6 +242,83 @@ function vs_vitrine ($show = 3, $word = "notebook", $fundo = "#FFFFFF", $borda =
 		echo $vitrine_temp;
 		return '';
 	}
+}
+
+/**************************************************************************************************/
+function vs_vitrine_tabs($words) {
+
+	global $vs_options;
+
+		for ($i=1; $i<=count($words); $i++) {
+			$vitrine[$i] = vs_core ( $vs_options["ctx_show"], $words[$i-1], "contextual", $vs_options['ctx_bgcolor'], $vs_options['ctx_brdcolor'], $vs_options['ctx_fontcolor']) ;
+		}
+		
+		for ($i=1; $i<=count($words);$i++) {
+			$abas .= "<li class=\"selected\"><a href=\"#tab".$i."\"><em>&nbsp;".$words[$i-1]."&nbsp;</em></a></li>";
+		}
+		for ($i=1; $i<=count($words);$i++) {
+			$vitrines .= "<div>".$vitrine[$i]."</div>";
+		}
+		$vitrine_final = "<br /><br />".$vs_options['ctx_titulo']."<script type=\"text/javascript\">
+		var myTabs = new YAHOO.widget.TabView(\"demo\");
+		</script> 
+		<div class=\"yui-skin-xp\">
+		<div id=\"demo\" class=\"yui-navset\">
+			<ul class=\"yui-nav\">
+			".$abas."
+			</ul>            
+			<div class=\"yui-content\">
+			".$vitrines."
+			</div>
+		</div>
+		</div>
+		".$links_cats."<BR><BR>".$lista_de_produtos."".$credits;
+
+return $vitrine_final;
+
+}
+
+/***************************************************************************************************
+ *  Funcao principal
+ */
+function vs_auto($text) {
+
+	global $vs_options;
+
+	$vs_options = get_option('vs_options');
+	
+	$current_plugins = get_option('active_plugins');
+	if (in_array('palavrasmonetizacao.php', $current_plugins)) {
+		$words_array = pm_get_words();
+		$word_pm = $words_array[0];
+	}
+	if ($word_pm)
+		$word = $word_pm;
+	else
+		$word = $vs_options['ctx_word'];
+
+	if ((is_single()) AND ($vs_options["ctx_exib_auto"] == 'auto')) {
+
+		if ($vs_options['ctx_style'] == "comabas") {
+			if (!in_array('palavrasmonetizacao.php', get_option('active_plugins'))) {
+				$vs_options['ctx_style'] = "semabas";
+				update_option('vs_options',$vs_options);
+			} else 
+				$vitrine = vs_vitrine_tabs($words_array);
+		} else
+			$vitrine = vs_core ( $vs_options["ctx_show"], $word, "contextual", $vs_options['ctx_bgcolor'], $vs_options['ctx_brdcolor'], $vs_options['ctx_fontcolor']) ;
+
+
+		if ($vs_options["ctx_local"] == 'antes') {
+		   $text = $vitrine.$text;
+		} elseif ($vs_options["ctx_local"]=='depois') {
+			$text .= $vitrine;
+		}
+
+	}	
+
+return $text;
+	
 }
 
 /***************************************************************************************************
@@ -748,17 +840,17 @@ if (count($imagem) > 0) {
 
 		return $lista_de_produtos." ".$credits;
 	}
-	if (($vitrine == "contextual") AND ($vs_options['ctx_exib_auto'] == 'auto'))
+	if (($vitrine == "contextual") AND ($vs_options['ctx_exib_auto'] == 'auto') AND ($vs_options['ctx_style'] == 'semabas'))
 		$titulo = $vs_options['ctx_titulo'];
 	else
 		$titulo = '';
 
-		if ($vs_options['categorias'] == 'sim')
-			$links_cats = "<div style=\"color:".$desc.";\">Conheça os melhores produtos das categorias:".$categorias."</div>";
-		else
-			$links_cats = '';
+	if ($vs_options['categorias'] == 'sim')
+		$links_cats = "<div style=\"color:".$desc.";\">Conheça os melhores produtos das categorias:".$categorias."</div>";
+	else
+		$links_cats = '';
 
-		return $titulo."<div style=\"border:2px solid ".$borda.";background-color:$fundo;\">".$links_cats."<BR><BR>".$lista_de_produtos."</div>".$credits;
+	return $titulo."<div style=\"border:2px solid ".$borda.";background-color:$fundo;\">".$links_cats."<BR><BR>".$lista_de_produtos."</div>".$credits;
 	}
 }
 
@@ -892,6 +984,7 @@ function vs_options_subpanel() {
 		$vs_options['ctx_local'] = strip_tags(stripslashes($_POST['ctx_local']));
 		$vs_options['ctx_track'] = strip_tags(stripslashes($_POST['ctx_track']));
 		$vs_options['ctx_tipo'] = strip_tags(stripslashes($_POST['ctx_tipo']));
+		$vs_options['ctx_style'] = strip_tags(stripslashes($_POST['ctx_style']));
 		$vs_options['ctx_alt'] = strip_tags(stripslashes($_POST['ctx_alt']));
 
 		//atualiza base de dados com informacaoes do formulario		
@@ -951,6 +1044,12 @@ function vs_options_subpanel() {
 		$horizontal = 'checked=\"checked\"';
     } else {
     	$vertical = 'checked=\"checked\"';
+    }
+
+    if ( $vs_options['ctx_style'] == 'comabas') {
+		$style_comabas = 'checked=\"checked\"';
+    } else {
+    	$style_semabas = 'checked=\"checked\"';
     }
 
     if ( $vs_options['remover'] == 'nao') {
@@ -1229,7 +1328,8 @@ function vs_options_subpanel() {
 <?php
 
 $current_plugins = get_option('active_plugins');
-if (in_array('palavrasmonetizacao.php', $current_plugins)) {
+if (!in_array('palavrasmonetizacao.php', $current_plugins)) 
+	$PMdisabled = "DISABLED";
 
 ?>
     <table class="form-table">
@@ -1296,7 +1396,7 @@ if (in_array('palavrasmonetizacao.php', $current_plugins)) {
 	 <tr>
 		<th scope="row" valign="top">Exibição da Vitrine</th>
 		<td>
-			<input type="radio" name="ctx_exib_auto" value="auto" <?php echo $auto; ?>> Automática
+			<input type="radio" name="ctx_exib_auto" value="auto" <?php echo $auto; ?>> Automática 
 			<br />
 			<input type="radio" name="ctx_exib_auto" value="manual" <?php echo $manual; ?>> Manual
 			<br />
@@ -1310,10 +1410,17 @@ if (in_array('palavrasmonetizacao.php', $current_plugins)) {
 	 <tr>
 		<th scope="row" valign="top">Tipo de Vitrine</th>
 		<td>
-			<input type="radio" name="ctx_tipo" value="horizontal" <?php echo $horizontal; ?>> Horizontal
+			<input type="radio" name="ctx_tipo" value="horizontal" <?php echo $horizontal; ?>> Horizontal (produtos em uma única linha)
 			<br />
-			<input type="radio" name="ctx_tipo" value="vertical" <?php echo $vertical; ?>> Vertical
+			<input type="radio" name="ctx_tipo" value="vertical" <?php echo $vertical; ?>> Vertical (um produto por linha)
 			<br />
+			<br />
+			<input <?php echo $PMdisabled; ?> type="radio" name="ctx_style" value="comabas" <?php echo $style_comabas; ?>> Com Abas (Requer <a href="http://www.bernabauer.com/wp-plugins/">Palavras de Monetização</a>)
+			<br />
+			<input type="radio" name="ctx_style" value="semabas" <?php echo $style_semabas; ?>> Sem Abas 
+			<br />
+			
+			
 		</td>
 	 </tr>
 	</table>
@@ -1396,8 +1503,8 @@ if (in_array('palavrasmonetizacao.php', $current_plugins)) {
 		</td>
 	 </tr>
 	</table>
-		
-<?php } else { ?>
+<!--		
+<?php # } else { ?>
 
     <table class="form-table">
 	 <tr>
@@ -1408,7 +1515,8 @@ if (in_array('palavrasmonetizacao.php', $current_plugins)) {
 	 </tr>
 	</table>
 	
-<?php }  ?>
+<?php #}  ?>
+-->
 <br />
     <h2>Widget</h2>
     <table class="form-table">
