@@ -1328,7 +1328,7 @@ function vs_options_subpanel() {
 <?php
 
 $current_plugins = get_option('active_plugins');
-if (!in_array('palavrasmonetizacao.php', $current_plugins)) 
+if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugins)) 
 	$PMdisabled = "DISABLED";
 
 ?>
