@@ -300,7 +300,7 @@ function vs_auto($text) {
 	if ((is_single()) AND ($vs_options["ctx_exib_auto"] == 'auto')) {
 
 		if ($vs_options['ctx_style'] == "comabas") {
-			if (!in_array('palavrasmonetizacao.php', get_option('active_plugins'))) {
+			if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', get_option('active_plugins'))) {
 				$vs_options['ctx_style'] = "semabas";
 				update_option('vs_options',$vs_options);
 			} else 
