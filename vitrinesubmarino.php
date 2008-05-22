@@ -194,37 +194,6 @@ function textoparalink ($texto)
 } // 
 
 /***************************************************************************************************
- *  Vitrine automatica
- */
-function vs_auto1($text) {
-
-	global $vs_options;
-	
-	$current_plugins = get_option('active_plugins');
-	if (in_array('palavrasmonetizacao.php', $current_plugins)) {
-		$words_array = pm_get_words();
-		$word_pm = $words_array[0];
-	}
-	if ($word_pm)
-		$word = $word_pm;
-	else
-		$word = $vs_options['ctx_word'];
-
-	if ((is_single()) AND ($vs_options["ctx_exib_auto"] == 'auto')) {
-
-		$vitrine = vs_core ( $vs_options["ctx_show"], $word, "contextual", $vs_options['ctx_bgcolor'], $vs_options['ctx_brdcolor'], $vs_options['ctx_fontcolor']) ;
-		
-		if ($vs_options["ctx_local"] == 'antes') {
-		   $text = $vitrine.$text;
-		} elseif ($vs_options["ctx_local"]=='depois') {
-			$text .= $vitrine;
-		}
-	}
-	
-return $text;
-}
-
-/***************************************************************************************************
  *  Funcao principal
  */
 function vs_vitrine ($show = 3, $word = "notebook", $fundo = "#FFFFFF", $borda = "#DDDDDD", $texto = "#000000") {
@@ -244,7 +213,10 @@ function vs_vitrine ($show = 3, $word = "notebook", $fundo = "#FFFFFF", $borda =
 	}
 }
 
-/**************************************************************************************************/
+/***************************************************************************************************
+ *  Vitrine com Abas
+ */
+
 function vs_vitrine_tabs($words) {
 
 	global $vs_options;
@@ -279,7 +251,7 @@ return $vitrine_final;
 }
 
 /***************************************************************************************************
- *  Funcao principal
+ * Vitrine Automatica
  */
 function vs_auto($text) {
 
@@ -288,7 +260,7 @@ function vs_auto($text) {
 	$vs_options = get_option('vs_options');
 	
 	$current_plugins = get_option('active_plugins');
-	if (in_array('palavrasmonetizacao.php', $current_plugins)) {
+	if (in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugins)) {
 		$words_array = pm_get_words();
 		$word_pm = $words_array[0];
 	}
@@ -373,10 +345,6 @@ switch ($vitrine) {
 		$urlsub = 'http://www.submarino.com.br/HomeCache/AllSearchResult.aspx?PageHits=50&OrderBy='.$vs_options['shp_orderby'].'&Query=';
 		$shop = $_GET['shop'];   
 	
-#		if ( !$shop ) { 
-#			$shop = "DL"; 
-#		}
-		
 		switch($shop) {
 		
 			case "LL":
