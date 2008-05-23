@@ -3,7 +3,7 @@
 Plugin Name: Vitrine Submarino
 Plugin URI: http://www.bernabauer.com/wp-plugins/
 Description: Inspirado em <a href='http://jobsonlemos.com/?p=64'>script de Jobson Lemos</a>. O plugin mostra uma quantidade de ofertas configuráveis ao gosto do freguês. Requer tema de wordpress compatível com widgets.
-Version: 2.0.3
+Version: 2.0.4
 Author: Bernardo Bauer
 Author URI: http://www.bernabauer.com/
 */
@@ -26,12 +26,15 @@ add_action('admin_menu', 'vs_option_menu');
 if ($vs_options['ctx_exib_auto'] == 'auto') {
 	add_filter('the_content', 'vs_auto',99);
 } 
-	add_filter('the_content', 'vs_shopping',99);
+add_filter('the_content', 'vs_shopping',99);
 
-// #beta inclui javascript para tabs
+// Inclui JS da Vitrine Multipla
 add_action('wp_head', 'vs_header');
 
-#beta
+/***************************************************************************************************
+ *  Inclui no header as informações de JS para as abas das vitrines
+ */
+
 function vs_header() {
 $url = get_settings('siteurl') . '/wp-content/plugins/' . dirname(plugin_basename(__FILE__));
 echo '<!-- Dependencies --> 
@@ -65,13 +68,13 @@ function vs_activate() {
 		'PCP'=>				'BB',
 		'LP'=>				'[ Veja mais ]',
 		'LPT'=>				'submarino',
-		'version'=>			'2.0',
+		'version'=>			'2.0.4',
 		'host'=>			'',
 		'orderby'=>			'sortordersell',
 		'categorias'=>		'sim',
 		'cat_track'=>		'nao',
 		'remover'=>			'nao',
-		'shp_url'=>			'/loja',
+		'shp_url'=>			'loja',
 		'shp_orderby'=>		'sortordersell',
 		'shp_show'=>		'21',
 		'shp_word'=>		'Celular',
@@ -194,7 +197,7 @@ function textoparalink ($texto)
 } // 
 
 /***************************************************************************************************
- *  Funcao principal
+ * Função para chamada manual da vitrine. Não permite abas.
  */
 function vs_vitrine ($show = 3, $word = "notebook", $fundo = "#FFFFFF", $borda = "#DDDDDD", $texto = "#000000") {
 
@@ -220,7 +223,7 @@ function vs_vitrine ($show = 3, $word = "notebook", $fundo = "#FFFFFF", $borda =
 function vs_vitrine_tabs($words) {
 
 	global $vs_options;
-
+	
 		for ($i=1; $i<=count($words); $i++) {
 			$vitrine[$i] = vs_core ( $vs_options["ctx_show"], $words[$i-1], "contextual", $vs_options['ctx_bgcolor'], $vs_options['ctx_brdcolor'], $vs_options['ctx_fontcolor']) ;
 		}
@@ -267,7 +270,10 @@ function vs_auto($text) {
 	if (in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugins)) {
 		$words_array = pm_get_words();
 		$word_pm = $words_array[0];
+		if (count($words_array[0]) == 0)
+			$words_array[0] = $vs_options['ctx_word'];
 	}
+	
 	if ($word_pm)
 		$word = $word_pm;
 	else
@@ -276,14 +282,18 @@ function vs_auto($text) {
 	if ((is_single()) AND ($vs_options["ctx_exib_auto"] == 'auto')) {
 
 		if ($vs_options['ctx_style'] == "comabas") {
+			// chama vitrine com abas
 			if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', get_option('active_plugins'))) {
 				$vs_options['ctx_style'] = "semabas";
 				update_option('vs_options',$vs_options);
-			} else 
+			} else {
+				// chama vitrine com abas
 				$vitrine = vs_vitrine_tabs($words_array);
-		} else
+			}
+		} else {
+			// chama vitrine sem abas
 			$vitrine = vs_core ( $vs_options["ctx_show"], $word, "contextual", $vs_options['ctx_bgcolor'], $vs_options['ctx_brdcolor'], $vs_options['ctx_fontcolor']) ;
-
+		}
 
 		if ($vs_options["ctx_local"] == 'antes') {
 		   $text = $vitrine.$text;
@@ -443,7 +453,6 @@ switch ($vitrine) {
 
 ############## COMEÇO DO CORE SCRIPT
 
-#	if ($vitrine != "shopping") {
 	if ($shop == "") {
 
 		// Pego as imagens
@@ -827,7 +836,7 @@ if (count($imagem) > 0) {
 }
 
 /***************************************************************************************************
- *  Menu de configuracao
+ *  Monta o shopping
  */
 function vs_shopping($content) {
     
