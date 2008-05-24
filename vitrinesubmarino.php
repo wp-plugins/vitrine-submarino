@@ -3,7 +3,7 @@
 Plugin Name: Vitrine Submarino
 Plugin URI: http://www.bernabauer.com/wp-plugins/
 Description: Inspirado em <a href='http://jobsonlemos.com/?p=64'>script de Jobson Lemos</a>. O plugin mostra uma quantidade de ofertas configuráveis ao gosto do freguês. Requer tema de wordpress compatível com widgets.
-Version: 2.0.4
+Version: 2.0.5
 Author: Bernardo Bauer
 Author URI: http://www.bernabauer.com/
 */
@@ -938,6 +938,7 @@ function vs_options_subpanel() {
 			$vs_options['shp_word'] = strip_tags(stripslashes($_POST['shp_word']));
 
 		$vs_options['shp_track'] = strip_tags(stripslashes($_POST['shp_track']));
+		$vs_options['shp_show'] = strip_tags(stripslashes($_POST['shp_show']));
 
 
 		// Opções CONTEXTUAL
@@ -1759,5 +1760,6 @@ function vs_widget_init() {
 	$widget_ops = array('classname' => 'widget_Submarino', 'description' => __( 'Vitrine de Produtos do Submarino.com' ) );
 	wp_register_sidebar_widget('vitrine-submarino', 'Vitrine Submarino', 'widget_Submarino', $widget_ops);
 }
+
 
 ?>
