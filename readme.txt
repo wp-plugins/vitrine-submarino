@@ -4,7 +4,7 @@ Donate link: http://bernabauer.com/wp-plugins
 Tags: brasil, monetização, submarino, vitrine 
 Requires at least: 2.5
 Tested up to: 2.5
-Stable tag: 2.0.5
+Stable tag: 2.1
 
 Mostra vitrine de produtos do Submarino.com.
 
@@ -30,7 +30,9 @@ A nova vitrine com abas só funciona com o `Palavras de Monetização` ativo, po
 
 Monta um mini shopping usando uma página do Wordpress. Para colocar um shopping do Submarino no seu blog, basta criar uma página, incluir o código `#shopping#` e informar na página de configuração o slug desta página. Funciona com `permalink` ou não.
 
-Este plugin só foi testado com a versão 2.5 do Wordpress
+Agora é possível pesquisar por produtos e também cadastrar multiplas palavras para mostrar nas vitrines de maneira aleatória. Esta última funcionalidade foi desenvolvida por [Raphael Viera](http://mesquita.blog.br/).
+
+Este plugin só foi testado com a versão 2.5.1 do Wordpress.
 
 == Installation ==
 

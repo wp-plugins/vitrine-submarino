@@ -3,7 +3,7 @@
 Plugin Name: Vitrine Submarino
 Plugin URI: http://www.bernabauer.com/wp-plugins/
 Description: Inspirado em <a href='http://jobsonlemos.com/?p=64'>script de Jobson Lemos</a>. O plugin mostra uma quantidade de ofertas configuráveis ao gosto do freguês. Requer tema de wordpress compatível com widgets.
-Version: 2.0.5
+Version: 2.1
 Author: Bernardo Bauer
 Author URI: http://www.bernabauer.com/
 */
@@ -68,7 +68,7 @@ function vs_activate() {
 		'PCP'=>				'BB',
 		'LP'=>				'[ Veja mais ]',
 		'LPT'=>				'submarino',
-		'version'=>			'2.0.4',
+		'version'=>			'2.1',
 		'host'=>			'',
 		'orderby'=>			'sortordersell',
 		'categorias'=>		'sim',
@@ -95,6 +95,7 @@ function vs_activate() {
 		'ctx_fontcolor'=>	'#000000',
 		'ctx_bgcolor'=>		'#FFFFFF',
 		'ctx_brdcolor'=>	'#DDDDDD',
+		'prccolor'=>	'#3982C6',
 		'ctx_word'=>		'Notebook',
 		'ctx_tipo'=>		'horizontal',
 		'ctx_style'=>		'semabas',
@@ -238,20 +239,20 @@ function vs_vitrine_tabs($words) {
 		for ($i=1; $i<=count($words);$i++) {
 			$vitrines .= "<div>".$vitrine[$i]."</div>";
 		}
-		$vitrine_final = "<br /><br />".$vs_options['ctx_titulo']."<script type=\"text/javascript\">
+		$vitrine_final = "<div style=\"clear:both\"><br /><br />".$vs_options['ctx_titulo']."<script type=\"text/javascript\">
 		var myTabs = new YAHOO.widget.TabView(\"demo\");
 		</script> 
 		<div class=\"yui-skin-xp\">
-		<div id=\"demo\" class=\"yui-navset\">
-			<ul class=\"yui-nav\">
-			".$abas."
-			</ul>            
-			<div class=\"yui-content\">
-			".$vitrines."
+			<div id=\"demo\" class=\"yui-navset\">
+				<ul class=\"yui-nav\">
+				".$abas."
+				</ul>            
+				<div class=\"yui-content\">
+				".$vitrines."
+				</div>
 			</div>
 		</div>
-		</div>
-		".$links_cats."<BR><BR>".$lista_de_produtos."".$credits;
+		".$links_cats."<BR><BR>".$lista_de_produtos."".$credits."</div>";
 
 return $vitrine_final;
 
@@ -321,6 +322,12 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc) {
 		return "ERRO: Código de Afiliado não informado.";
 
 	$idsubmarino = $vs_options['codafil'];			// Define codigo de afiliado para o script funcionar
+
+	// ROV (http://mesquita.blog.br/) - Aqui começa a randomização...
+	$larrWords = explode(",",$word);
+	$word = $larrWords[rand(0, count($larrWords)-1)];
+	// ROV - Aqui termina ....
+
 	$palavrapadrao = $word; // Define a palavra chave para o script funcionar
 	
 	if ($vitrine != "widget") {
@@ -357,49 +364,58 @@ switch ($vitrine) {
 
 	case "shopping":
 		$urlsub = 'http://www.submarino.com.br/HomeCache/AllSearchResult.aspx?PageHits=50&OrderBy='.$vs_options['shp_orderby'].'&Query=';
-		$shop = $_GET['shop'];   
-	
-		switch($shop) {
 		
+		$shop = $_GET['shop'];   
+		switch($shop) {
 			case "LL":
 				//livros lançamento
 				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int02.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28264";
+				$palavrabuscada = "Livros";
 				break;
 			case "DL":
 				//DVDs lançamento
 				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int03.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28262";
+				$palavrabuscada = "DVDs";
 				break;
 			case "CL":
 				//CDs lançamento
 				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int04.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28266";
+				$palavrabuscada = "CDs";
 				break;
 			case "SL":
 				//Shows lançamento
 				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int05.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28268";
+				$palavrabuscada = "Shows";
 				break;
 			case "GL":
 				//Games lançamento
 				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int06.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28270";
+				$palavrabuscada = "Games";
 				break;
 			case "LP":
 				//livros Pré-venda
 				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int02p.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28265";
+				$palavrabuscada = "Livros";
 				break;
 			case "DP":
 				//DVDs Pré-venda
 				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int03p.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28263";
+				$palavrabuscada = "DVDs";
 				break;
 			case "CP":
 				//CDs Pré-venda
 				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int04p.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28267";
+				$palavrabuscada = "CDs";
 				break;
 			case "SP":
 				//Shows Pré-venda
 				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int05p.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28269";
+				$palavrabuscada = "Shows";
 				break;
 			case "GP":
 				//Games Pré-venda
 				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int06p.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28271";
+				$palavrabuscada = "Games";
 				break;
 		}
 
@@ -410,11 +426,15 @@ switch ($vitrine) {
 		} else {
 			$urlshops = $vs_options['shp_url'] ."/?shop=";	
 		}
-		echo "<table width=\"100%\" cellpadding=\"10\">";
-		echo "<tr><th><center>Livros</center></th><th><center>Shows</center></th><th><center>DVDs</center></th><th><center>Games</center></th><th><center>CDs</center></th></tr>";
-		echo "<tr><td><center><a href=\"".get_option(siteurl)."/".$urlshops."LP\">Pré-Venda</a></center></td><td><center><a href=\"".get_option(siteurl)."/".$urlshops."SP\">Pré-Venda</a></center></td><td><center><a href=\"".get_option(siteurl)."/".$urlshops."DP\">Pré-Venda</a></center></td><td><center><a href=\"".get_option(siteurl)."/".$urlshops."GP\">Pré-Venda</a></center></td><td><center><a href=\"".get_option(siteurl)."/".$urlshops."CP\">Pré-Venda</a></center></td></tr>";
-		echo "<tr><td><center><a href=\"".get_option(siteurl)."/".$urlshops."LL\">Lançamentos</a></center></td><td><center><a href=\"".get_option(siteurl)."/".$urlshops."SL\">Lançamentos</a></center></td><td><center><a href=\"".get_option(siteurl)."/".$urlshops."DL\">Lançamentos</a></center></td><td><center><a href=\"".get_option(siteurl)."/".$urlshops."GL\">Lançamentos</a></center></td><td><center><a href=\"".get_option(siteurl)."/".$urlshops."CL\">Lançamentos</a></center></td></tr>";
-		echo "<tr><td colspan=5>";
+		echo "<div style=\"width:100%;\">";
+		echo "<div style=\"float:left;width:20%\"><center>Livros</center><center><a href=\"".get_option(siteurl)."/".$urlshops."LP\">Pré-Venda</a></center><center><a href=\"".get_option(siteurl)."/".$urlshops."LL\">Lançamentos</a></center></div>";
+		echo "<div style=\"float:left;width:20%\"><center>Shows</center><center><a href=\"".get_option(siteurl)."/".$urlshops."SP\">Pré-Venda</a></center><center><a href=\"".get_option(siteurl)."/".$urlshops."SL\">Lançamentos</a></center></div>";
+		echo "<div style=\"float:left;width:20%\"><center>DVDs</center><center><a href=\"".get_option(siteurl)."/".$urlshops."DP\">Pré-Venda</a></center><center><a href=\"".get_option(siteurl)."/".$urlshops."DL\">Lançamentos</a></center></div>";
+		echo "<div style=\"float:left;width:20%\"><center>Games</center><center><a href=\"".get_option(siteurl)."/".$urlshops."GP\">Pré-Venda</a></center><center><a href=\"".get_option(siteurl)."/".$urlshops."GL\">Lançamentos</a></center></div>";
+		echo "<div style=\"float:left;width:20%\"><center>CDs</center><center><a href=\"".get_option(siteurl)."/".$urlshops."CP\">Pré-Venda</a></center><center><a href=\"".get_option(siteurl)."/".$urlshops."CL\">Lançamentos</a></center></div>";
+		$form_pesquisar = '<center><form name="input" action="'.$vs_options['shp_url'].'" method="get"><input type="text" name="pal" size="30"> <input type="submit" value="Pesquisar"></form></center>';		
+		echo "</div><div style=\"clear:both;background-color:Beige;\"><br /><center> Você está vendo ofertas para <div style=\"font-size:25px;\">".str_replace("+", " ", $palavrabuscada)."</div><br />".$form_pesquisar."</center><br /></div>";
+
 		
 		break;
 }
@@ -487,7 +507,7 @@ switch ($vitrine) {
 			}
 	
 		}
-		// Pego os links e os titulos
+		// Pego os links e os titulos para categorias
 	
 		$img = $doc->getElementsByTagName( "a" );
 	
@@ -556,7 +576,6 @@ switch ($vitrine) {
 	
 		foreach( $img as $img ) {
 			$teste = $img->getAttribute("class");
-
 			if($teste == 'priceblue') { 
 				$preco[$i] = utf8_decode($img->nodeValue); 
 				$i++; 
@@ -572,7 +591,7 @@ switch ($vitrine) {
 			$teste = $img->getAttribute("class");
 
 			if($teste == 'marca') { 
-				$marca[$i] = utf8_decode($img->nodeValue); 
+				$marca[$i] = utf8_decode($img->nodeValue);
 				$i++; 
 			}
 		}
@@ -589,12 +608,32 @@ switch ($vitrine) {
 			if($teste == 'titulo') { 
 				$link[$i] = "http://www.submarino.com.br".$img->getAttribute("href").'&franq='.$idsubmarino; 
 				$titulo[$i] = str_replace(utf8_encode($preco[$i]), "", $img->nodeValue); 
-				$titulo[$i] = str_replace(utf8_encode($marca[$i]), "", $titulo[$i]);
-				$titulocompleto[$i] .= $titulo[$i]."<br />".utf8_encode($marca[$i]); 
+				$titulo[$i] = utf8_decode(str_replace(utf8_encode($marca[$i]), "", $titulo[$i]));
+				$titulocompleto[$i] .= utf8_encode($titulo[$i])."<br />".utf8_encode($marca[$i]); 
 				$i++; 
 			}
 	
 		}
+
+		// Pego os links e os titulos para categorias
+	
+		$img = $doc->getElementsByTagName( "a" );
+	
+		$i = 1;
+	
+		foreach( $img as $img ) {
+			$teste = $img->getAttribute("class");
+	
+			if($teste == 'link-mais') { 
+				if (!in_array( substr(utf8_decode($img->nodeValue), strrpos(utf8_decode($img->nodeValue), "/")+1), $titulo_mais)) {
+					$link_mais[$i] = $img->getAttribute("href").'&franq='.$idsubmarino; 
+					$titulo_mais[$i] = substr(utf8_decode($img->nodeValue), strrpos(utf8_decode($img->nodeValue), "/")+1); 
+					$i++; 
+				}
+			}
+	
+		}
+
 
 // Pego as imagens
 		$img = $doc->getElementsByTagName( "img" );
@@ -673,9 +712,16 @@ if (count($imagem) > 0) {
 				}
 				
 				//ajuste quando não há produtos disponíveis
-				if ($preco[$a])
-					$preco_show = utf8_encode($preco[$a]);
-				else
+				if ($preco[$a]) {
+					$preco_show = "<div style=\"font-weight: bold;color:".$vs_options['prccolor'].";\">".utf8_encode($preco[$a])."</div>";
+					//separa valor do produto do valor da parcela
+					$pos_ou = strpos($preco[$a], "ou");
+					if ($pos_ou != 0) {
+						$valor = utf8_encode(substr($preco[$a], 0, $pos_ou - 1));
+						$parcela = utf8_encode(substr($preco[$a], $pos_ou + 3));
+						$preco_show = "<div style=\"font-weight: bold;color:".$vs_options['prccolor'].";\">".$valor."</div><div style=\"color:".$vs_options['prclcolor'].";\"><small>".$parcela."</small></div>";
+					}
+				} else
 					$preco_show = "Esgotado";
 
 				//links para o shopping condicional para permalinks
@@ -705,7 +751,7 @@ if (count($imagem) > 0) {
 						if ($vs_options['ctx_tipo'] == "horizontal") {
 		
 							//mostra vitrine com produtos em uma unica linha (VITRINE HORIZONTAL)
-							$lista_de_produtos .= '<td style="background-color:'.$fundo.';text-align:center;padding:3px;font-size:11px;"><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a><div style="color:'.$desc.';">'.utf8_encode($titulo[$a]).'</div><div style="color:'.$desc.';font-weight: bold;">'.$preco_show.'</div><br /><div style=""><a href="'.$LPT.'" rel="nofollow" target="_blank"'.$tc.'>'.$vs_options["LP"].'</a></div><div>'.$compare_precos.'</div></td>';
+							$lista_de_produtos .= '<td style="background-color:'.$fundo.';text-align:center;padding:3px;font-size:11px;"><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a><div style="font-size:12px;line-height:120%;color:'.$desc.';">'.utf8_encode($titulo[$a]).'</div><div style="font-weight: bold;font-size:12px;line-height:120%;"><a href="'.$LPT.'" rel="nofollow" target="_blank"'.$tc.'>'.$vs_options["LP"].'</a></div><div>'.$preco_show.'</div><div>'.$compare_precos.'</div></td>';
 						} else {
 							
 							//mostra vitrine com um produto por linha (VITRINE VERTICAL)
@@ -722,7 +768,7 @@ if (count($imagem) > 0) {
 
  						$palavras = explode( '_', textoparalink($titulo[$a]) );
 				
-						$lista_de_produtos .= '<div style="float:left;width:30%;height:335px;border:2px solid '.$borda.'color:'.$desc.';background-color:'.$fundo.';padding:3px;"><div><center><p><a href="'.$link[$a].'" rel="nofollow" target="_blank"'.$tc.'><img src="'.$imagem[$a].'"></a></p>'.$titulocompleto[$a].'<br><br><b>'.$preco_show.'</b><br><br>'.'<a href="'.$link[$a].'" rel="nofollow" target="_blank"'.$tc.'>'.$vs_options["LP"].'</a> '.'<br><br>'.	'<small><a href="'.$estaurl.''.$palavras[0].'">'.$palavras[0].'</a>, '.'<a href="'.$estaurl.''.$palavras[0].'%20'.$palavras[1].'">'.$palavras[0].' '.$palavras[1].'</a>, '.'<a href="'.$estaurl.''.$palavras[0].'%20'.$palavras[1].'%20'.$palavras[2].'">'.$palavras[0].' '.$palavras[1].' '.$palavras[2].'</a>'.'</small>'.'</center></div></div>';
+						$lista_de_produtos .= '<div style="float:left;width:30%;height:335px;border:2px solid '.$borda.'color:'.$desc.';background-color:'.$fundo.';padding:5px;"><div><center><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a><div style="font-size:12px;line-height:120%;color:'.$desc.';">'.utf8_encode($titulo[$a]).'</div><div style="font-weight: bold;font-size:12px;line-height:120%;"><a href="'.$LPT.'" rel="nofollow" target="_blank"'.$tc.'>'.$vs_options["LP"].'</a></div><div style="color:#3982C6;">'.$preco_show.'</div><div>'.$compare_precos.'</div></center></div></div>';
 						break;
 				}
 		 }
@@ -816,8 +862,7 @@ if (count($imagem) > 0) {
 		$lista_de_produtos .= "</tr></table>";
 	}
 	if ($vitrine == "shopping") { 
-		$lista_de_produtos .= "</td></tr></table>";
-		$credits = "<br /><br /><div style=\"text-align:center;\"><small><a href='http://www.bernabauer.com/wp-plugins/'>shopping</a> by <a href='http://bernabauer.com'>bernabauer.com</a><br />Baseado em script original de Jobson Lemos</small></div>";
+		$credits = "<br /><br /><div style=\"text-align:center;clear:both;\"><small><a href='http://www.bernabauer.com/wp-plugins/'>shopping</a> by <a href='http://bernabauer.com'>bernabauer.com</a><br />Baseado em script original de Jobson Lemos</small></div>";
 
 		return $lista_de_produtos." ".$credits;
 	}
@@ -830,8 +875,9 @@ if (count($imagem) > 0) {
 		$links_cats = "<div style=\"color:".$desc.";\">Conheça os melhores produtos das categorias:".$categorias."</div>";
 	else
 		$links_cats = '';
-
-	return $titulo."<div style=\"border:2px solid ".$borda.";background-color:$fundo;\">".$links_cats."<BR><BR>".$lista_de_produtos."</div>".$credits;
+		
+	$form_pesquisar = '<center><form name="input" action="'.$vs_options['shp_url'].'" method="get"><input type="text" name="pal" size="15"> <input type="submit" value="Pesquisar"></form></center>';				
+	return $titulo."<div style=\"border:2px solid ".$borda.";background-color:".$fundo.";\">".$links_cats."<BR>".$form_pesquisar."<BR>".$lista_de_produtos."</div>".$credits;
 	}
 }
 
@@ -893,6 +939,11 @@ function vs_options_subpanel() {
            $vs_options['LP'] = $_POST['LP'];
         if (isset($_POST['LCP'])) 
            $vs_options['LCP'] = $_POST['LCP'];
+		if (isset($_POST['prccolor'])) 
+			$vs_options['prccolor'] = strip_tags(stripslashes($_POST['prccolor']));
+		if (isset($_POST['prclcolor'])) 
+			$vs_options['prclcolor'] = strip_tags(stripslashes($_POST['prclcolor']));
+
 		$vs_options['PCP'] = strip_tags(stripslashes($_POST['PCP']));
 		$vs_options['LPT'] = strip_tags(stripslashes($_POST['LPT']));
 		$vs_options['host'] = strip_tags(stripslashes($_POST['host']));
@@ -1305,6 +1356,27 @@ function vs_options_subpanel() {
 		</td>
 	 </tr>
 	</table>
+
+    <table class="form-table">
+	 <tr>
+		<th scope="row" valign="top">Cor do Preço</th>
+		<td>
+  				<input style="width: 60px;" id="prccolor" name="prccolor" type="text" value="<?php echo $vs_options['prccolor']; ?>" /><br />
+ 				<label for="ctx_brdcolor">Cor do preço do produto. Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
+ 		</td>
+	 </tr>
+	</table>
+
+    <table class="form-table">
+	 <tr>
+		<th scope="row" valign="top">Cor da Parcela</th>
+		<td>
+  				<input style="width: 60px;" id="prclcolor" name="prclcolor" type="text" value="<?php echo $vs_options['prclcolor']; ?>" /><br />
+ 				<label for="ctx_prclcolor">Cor da parcela do produto. Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
+ 		</td>
+	 </tr>
+	</table>
+
 <br />
     <h2>Contextual</h2>
 <?php
@@ -1329,7 +1401,7 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		<th scope="row" valign="top">Cor do texto</th>
 		<td>
   				<input style="width: 60px;" id="ctx_fontcolor" name="ctx_fontcolor" type="text" value="<?php echo $vs_options['ctx_fontcolor']; ?>" /><br />
- 				<label for="ctx_fontcolor">Cor do texto de descrição dos produtos. A melhor cor é preta (#000000 ou BLACK).</label><br />
+ 				<label for="ctx_fontcolor">Cor do texto de descrição dos produtos. A melhor cor é preta (#000000 ou BLACK). Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
  		</td>
 	 </tr>
 	</table>
@@ -1339,7 +1411,7 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		<th scope="row" valign="top">Cor de fundo</th>
 		<td>
   				<input style="width: 60px;" id="ctx_bgcolor" name="ctx_bgcolor" type="text" value="<?php echo $vs_options['ctx_bgcolor']; ?>" /><br />
- 				<label for="ctx_bgcolor">Cor de fundo dos produtos. A melhor cor é branca (#FFFFFF).</label><br />
+ 				<label for="ctx_bgcolor">Cor de fundo dos produtos. A melhor cor é branca (#FFFFFF). Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
  		</td>
 	 </tr>
 	</table>
@@ -1349,7 +1421,7 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		<th scope="row" valign="top">Cor da borda</th>
 		<td>
   				<input style="width: 60px;" id="ctx_brdcolor" name="ctx_brdcolor" type="text" value="<?php echo $vs_options['ctx_brdcolor']; ?>" /><br />
- 				<label for="ctx_brdcolor">Cor da borda da vitrine. A melhor cor é cinza (#DDDDDD).</label><br />
+ 				<label for="ctx_brdcolor">Cor da borda da vitrine. A melhor cor é cinza (#DDDDDD). Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
  		</td>
 	 </tr>
 	</table>
@@ -1359,7 +1431,7 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		<th scope="row" valign="top">Produto Padrão</th>
 		<td>
  				<input style="width: 30%;" id="ctx_word" name="ctx_word" type="text" value="<?php echo $vs_options['ctx_word']; ?>" /><br />
- 				<label for="Submarino-word">Informe a palavra para popular a vitrine quando não houver outra fonte para busca de produtos. Evite utilização de acentos.</label><br />
+ 				<label for="shp_word">Informe a palavra para popular a vitrine. Evite utilização de acentos. Você pode definir multiplas palavras, basta separar por vírgulas. A escolha da palavra para exibir produtos na vitrine é aleatória.</label><br />
 		</td>
 	 </tr>
 	</table>
@@ -1485,20 +1557,6 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		</td>
 	 </tr>
 	</table>
-<!--		
-<?php # } else { ?>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Atenção</th>
-		<td>
-			O módulo contextual do Vitrine Submarino requer o plugin Palavras de Monetização.<br />
-		</td>
-	 </tr>
-	</table>
-	
-<?php #}  ?>
--->
 <br />
     <h2>Widget</h2>
     <table class="form-table">
@@ -1526,7 +1584,7 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		<th scope="row" valign="top">Cor do texto</th>
 		<td>
   				<input style="width: 60px;" id="wid_fontcolor" name="wid_fontcolor" type="text" value="<?php echo $vs_options['wid_fontcolor']; ?>" /><br />
- 				<label for="wid_fontcolor">Cor do texto de descrição dos produtos. A melhor cor é preta (#000000 ou BLACK).</label><br />
+ 				<label for="wid_fontcolor">Cor do texto de descrição dos produtos. A melhor cor é preta (#000000 ou BLACK). Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
  		</td>
 	 </tr>
 	</table>
@@ -1536,7 +1594,7 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		<th scope="row" valign="top">Cor de fundo</th>
 		<td>
   				<input style="width: 60px;" id="wid_bgcolor" name="wid_bgcolor" type="text" value="<?php echo $vs_options['wid_bgcolor']; ?>" /><br />
- 				<label for="wid_bgcolor">Cor de fundo dos produtos. A melhor cor é branca (#FFFFFF).</label><br />
+ 				<label for="wid_bgcolor">Cor de fundo dos produtos. A melhor cor é branca (#FFFFFF). Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
  		</td>
 	 </tr>
 	</table>
@@ -1546,7 +1604,7 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		<th scope="row" valign="top">Cor da borda</th>
 		<td>
   				<input style="width: 60px;" id="wid_brdcolor" name="wid_brdcolor" type="text" value="<?php echo $vs_options['wid_brdcolor']; ?>" /><br />
- 				<label for="wid_brdcolor">Cor da borda da vitrine. A melhor cor é cinza (#DDDDDD).</label><br />
+ 				<label for="wid_brdcolor">Cor da borda da vitrine. A melhor cor é cinza (#DDDDDD). Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
  		</td>
 	 </tr>
 	</table>
@@ -1556,7 +1614,7 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		<th scope="row" valign="top">Produto</th>
 		<td>
  				<input style="width: 30%;" id="wid_word" name="wid_word" type="text" value="<?php echo $vs_options['wid_word']; ?>" /><br />
- 				<label for="wid_word">Informe a palavra para popular a vitrine. Evite utilização de acentos.</label><br />
+ 				<label for="shp_word">Informe a palavra para popular a vitrine. Evite utilização de acentos. Você pode definir multiplas palavras, basta separar por vírgulas. A escolha da palavra para exibir produtos na vitrine é aleatória.</label><br />
 		</td>
 	 </tr>
 	</table>
@@ -1652,7 +1710,7 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		<th scope="row" valign="top">Cor de fundo</th>
 		<td>
   				<input style="width: 60px;" id="shp_bgcolor" name="shp_bgcolor" type="text" value="<?php echo $vs_options['shp_bgcolor']; ?>" /><br />
- 				<label for="shp_bgcolor">Cor de fundo dos produtos. A melhor cor é branca (#FFFFFF).</label><br />
+ 				<label for="shp_bgcolor">Cor de fundo dos produtos. A melhor cor é branca (#FFFFFF). Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
  		</td>
 	 </tr>
 	</table>
@@ -1662,7 +1720,7 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		<th scope="row" valign="top">Cor da borda</th>
 		<td>
   				<input style="width: 60px;" id="shp_brdcolor" name="shp_brdcolor" type="text" value="<?php echo $vs_options['shp_brdcolor']; ?>" /><br />
- 				<label for="shp_brdcolor">Cor da borda da vitrine. A melhor cor é cinza (#DDDDDD).</label><br />
+ 				<label for="shp_brdcolor">Cor da borda da vitrine. A melhor cor é cinza (#DDDDDD). Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
  		</td>
 	 </tr>
 	</table>
@@ -1672,7 +1730,7 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		<th scope="row" valign="top">Produto</th>
 		<td>
  				<input style="width: 30%;" id="shp_word" name="shp_word" type="text" value="<?php echo $vs_options['shp_word']; ?>" /><br />
- 				<label for="shp_word">Informe a palavra para popular o shopping na primeira visita. Evite utilização de acentos.</label><br />
+ 				<label for="shp_word">Informe a palavra para popular o shopping na primeira visita. Evite utilização de acentos. Você pode definir multiplas palavras, basta separar por vírgulas. A escolha da palavra para exibir produtos na vitrine é aleatória.</label><br />
 		</td>
 	 </tr>
 	</table>
