@@ -3,16 +3,16 @@ Contributors: Bernardo Bauer
 Donate link: http://bernabauer.com/wp-plugins
 Tags: brasil, monetização, submarino, vitrine 
 Requires at least: 2.5
-Tested up to: 2.5
-Stable tag: 2.1
+Tested up to: 2.7
+Stable tag: 3.0
 
 Mostra vitrine de produtos do Submarino.com.
 
 == Description ==
 
-Inspirado em Script de Jobson Lemos. O plugin mostra uma quantidade de ofertas configuráveis ao gosto do freguês. 
+O plugin mostra uma quantidade de ofertas configuráveis ao gosto do freguês. Até o meio de outubro o plugin funcionava perfeitamente, porém o Submarino mudou o site e agora não é mais possível usar o script que o Jobson criou. Após algumas mensagens com o Submarino consegui montar um esquema de webservice para continuar mostrando os produtos conforme o plugin sempre fez. Para tal, meu servidor passou a importar a base de produtos do Submarino. Com isto a carga de rede e processamento subiu bastante e por isto, em alguns casos o meu código de afiliado será exibido. Assim será possível baixar os custos que acabei assumindo para continuar oferecendo o plugin.
 
-São tres funcionalidades distintas para o plugin. Widget, Contextual e Shopping.
+São duas funcionalidades distintas para o plugin. Widget e Contextual.
 
 **Widget**
 
@@ -26,24 +26,20 @@ Se o `Palavras de Monetização` não estiver ativo, serão mostrados produtos e
 
 A nova vitrine com abas só funciona com o `Palavras de Monetização` ativo, pois ele pega as palavras cadastradas por este plugin para mostrar as diversas vitrines. Quanto mais palavras cadastradas, mais tempo sua página demorará para ser carregada.
 
-**Shopping**
-
-Monta um mini shopping usando uma página do Wordpress. Para colocar um shopping do Submarino no seu blog, basta criar uma página, incluir o código `#shopping#` e informar na página de configuração o slug desta página. Funciona com `permalink` ou não.
-
-Agora é possível pesquisar por produtos e também cadastrar multiplas palavras para mostrar nas vitrines de maneira aleatória. Esta última funcionalidade foi desenvolvida por [Raphael Viera](http://mesquita.blog.br/).
-
-Este plugin só foi testado com a versão 2.5.1 do Wordpress.
-
 == Installation ==
 
 Atenção: Para utilização do widget, é necessário ter um tema compatível com widgets.
 
-1. Faça o upload `vitrinesubmarino.php` para a pasta `/wp-content/plugins/`
+1. Faça o upload da pasta `vitrinesubmarino` para a pasta `/wp-content/plugins/`
 2. Ative o plugin através do menu 'Plugins' na página de administração de seu WordPress
 3. Configure o plugin através do menu 'Settings'
-4. Inclua o widget no seu tema ou insira manualmente o código para exibição da vitrine.
+4. Inclua o widget no seu tema ou insira manualmente o código para exibição da vitrine. Você pode também ativar a exibição automática de produtos, basta ativar a opção na página de configuração do plugin
 
 == Frequently Asked Questions ==
+
+= Como atualizo o plugin? = 
+
+Recomendo desativar o plugin, atualizar e depois reativar. Assim você garante que todas as atualizações foram bem feitas. 
 
 = Recebo a mensagem "* Parece que você atualizou a versão nova sem desativar o plugin!! Por favor desative e re-ative.", mas já desativei e reativei o plugin e nada do plugin funcionar. =
 
@@ -63,15 +59,11 @@ Sei lá. Eu recomendo o uso de widgets. É uma mão na roda, não sei por que vo
 
 = O plugin não funciona! =
 
-O script do Jobson **requer PHP 5** ou superior para funcionar. Se o seu blog está usando a versão 4, não tem como o plugin mostrar a vitrine. Sorry! :-(
+O plugin **requer PHP 5** ou superior para funcionar. Se o seu blog está usando a versão 4, não tem como o plugin mostrar a vitrine. Sorry! :-(
 
 = Onde eu acho o plugin Palavras de Monetização? =
 
 Este plugin é necessário para usar a parte contextual da vitrine. É outro plugin de minha autoria que você acha [aqui](http://www.bernabauer.com/wp-plugins/ "Conheça todos os meus plugins").
-
-= Quem é Jobson Lemos ? =
-
-Jobson Lemos é o autor do script que pega os produtos na página do submarino. O que eu fiz foi apenas criar uma página de administração e toda a personalização necessária para usar o script da maneira mais fácil possível dentro do Wordpress. O script original do Jobson pode ser encontrado [aqui](http://jobsonlemos.com/?p=64 "script criado pelo jobson").
 
 = Meu hospedeiro é a GoDaddy, e o plugin não funciona!!! =
 
@@ -80,3 +72,7 @@ A GoDaddy é um tanto restritiva quanto ao que roda em seus sevidores. Apesar de
 = Como faço um reset nas configurações do plugin? Como removo o plugin totalmente? =
 
 Basta habilitar a opção `Remover opções ao desativar`, atualizar as opções e depois desativar o plugin. Se quiser reabilitar o plugin, as configurações voltarão ao estado "de fábrica".
+
+= Onde eu posso buscar mais ajuda para o meu problema? = 
+
+Você pode tentar buscar ajuda no [fórum do plugin] (http://forum.bernabauer.com/ "fórum"). Lá você pode publicar sua dúvida ou problema. A comunidade poderá ajudar e eu tentarei responder a seua mensagem assim que possível.

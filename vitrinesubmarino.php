@@ -2,13 +2,35 @@
 /*
 Plugin Name: Vitrine Submarino
 Plugin URI: http://www.bernabauer.com/wp-plugins/
-Description: Inspirado em <a href='http://jobsonlemos.com/?p=64'>script de Jobson Lemos</a>. O plugin mostra uma quantidade de ofertas configuráveis ao gosto do freguês. Requer tema de wordpress compatível com widgets.
-Version: 2.1
+Description: Mostre vitrines de produtos do Submarino em seu blog. Com o <a href="http://wordpress.org/extend/plugins/palavras-de-monetizacao/">Palavras de Monetização</a> você pode contextualizar manualmente os produtos. Para usar widgets é neecessário um tema compatível.
+Version: 3.0
 Author: Bernardo Bauer
 Author URI: http://www.bernabauer.com/
 */
+
+/*  Copyright 2008  Bernardo Bauer  (email : bernabauer@bernabauer.com)
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+
+
 global $wpdb;
 global $vs_options;
+global $vs_version;
+
+$vs_version = "3.0";
 $vs_options = get_option('vs_options');
 
 register_activation_hook(__FILE__, 'vs_activate');
@@ -26,29 +48,6 @@ add_action('admin_menu', 'vs_option_menu');
 if ($vs_options['ctx_exib_auto'] == 'auto') {
 	add_filter('the_content', 'vs_auto',99);
 } 
-add_filter('the_content', 'vs_shopping',99);
-
-// Inclui JS da Vitrine Multipla
-add_action('wp_head', 'vs_header');
-
-/***************************************************************************************************
- *  Inclui no header as informações de JS para as abas das vitrines
- */
-
-function vs_header() {
-$url = get_settings('siteurl') . '/wp-content/plugins/' . dirname(plugin_basename(__FILE__));
-echo '<!-- Dependencies --> 
-		<!-- Sam Skin CSS for TabView --> 
-		<link rel="stylesheet" type="text/css" href="'.$url.'/tabs.css">
-
-		<!-- JavaScript Dependencies for Tabview: --> 
-		<script type="text/javascript" src="'.$url.'/yahoo-dom-event.js"></script> 
-		<script type="text/javascript" src="'.$url.'/element-beta-min.js"></script> 
-
-		<!-- Source file for TabView --> 
-		<script type="text/javascript" src="'.$url.'/tabview-min.js"></script>';
-
-}
 
 /***************************************************************************************************
  *  Coisas para serem feitas na instalacao do plugin
@@ -58,56 +57,59 @@ function vs_activate() {
 	require_once(ABSPATH . 'wp-admin/upgrade-functions.php');
 
 	global $wpdb;
+	global $vs_version;
 
-	$vs_options = array(
-		'codafil'=>			'',
-		'cod_BP'=>			'',
-		'cod_ML'=>			'',
-		'cod_JC'=>			'',
-		'LCP'=>				'[ Compare Preços ]',
-		'PCP'=>				'BB',
-		'LP'=>				'[ Veja mais ]',
-		'LPT'=>				'submarino',
-		'version'=>			'2.1',
-		'host'=>			'',
-		'orderby'=>			'sortordersell',
-		'categorias'=>		'sim',
-		'cat_track'=>		'nao',
-		'remover'=>			'nao',
-		'shp_url'=>			'loja',
-		'shp_orderby'=>		'sortordersell',
-		'shp_show'=>		'21',
-		'shp_word'=>		'Celular',
-		'shp_track'=>		'nao',
-		'shp_bgcolor'=>		'#FFFFFF',
-		'shp_brdcolor'=>	'#DDDDDD',
-		'wid_title'=>		'Ofertas Submarino',
-		'wid_orderby'=>		'sortordersell',
-		'wid_show'=>		'5',
-		'wid_fontcolor'=>	'#000000',
-		'wid_bgcolor'=>		'#FFFFFF',
-		'wid_brdcolor'=>	'#DDDDDD',
-		'wid_word'=>		'Celular',
-		'wid_altcode'=>		'BVD',
-		'wid_track'=>		'nao',
-		'wid_word'=>		'Notebook',
-		'ctx_orderby'=>		'sortordersell',
-		'ctx_fontcolor'=>	'#000000',
-		'ctx_bgcolor'=>		'#FFFFFF',
-		'ctx_brdcolor'=>	'#DDDDDD',
-		'prccolor'=>	'#3982C6',
-		'ctx_word'=>		'Notebook',
-		'ctx_tipo'=>		'horizontal',
-		'ctx_style'=>		'semabas',
-		'ctx_local'=>		'depois',
-		'ctx_show'=>		'4',
-		'ctx_exib_auto'=>	'auto',
-		'ctx_titulo'=>		'<h3>Ofertas Submarino</h3>',
-		'ctx_track'=>		'nao',
-		'ctx_altcode'=>		'FBD',
-	);
+	$vs_options = get_option('vs_options');
 
-	add_option('vs_options', $vs_options);
+	if ($vs_options == FALSE) {
+		$vs_options = array(
+			'codafil'=>			'',
+			'cod_BP'=>			'',
+			'cod_ML'=>			'',
+			'cod_JC'=>			'',
+			'LCP'=>				'[ Compare Preços ]',
+			'PCP'=>				'BB',
+			'LP'=>				'[ Veja mais ]',
+			'LPT'=>				'submarino',
+			'version'=>			$vs_version,
+			'orderby'=>			'precoD',
+			'remover'=>			'nao',
+			'wid_title'=>		'Ofertas Submarino',
+			'wid_orderby'=>		'precoD',
+			'wid_show'=>		'3',
+			'wid_fontcolor'=>	'#000000',
+			'wid_bgcolor'=>		'#FFFFFF',
+			'wid_brdcolor'=>	'#DDDDDD',
+			'wid_prcolor'=>		'#3982C6',
+			'wid_procolor'=>	'#3982C6',
+			'wid_prccolor'=>	'#3982C6',
+			'wid_word'=>		'Celular',
+			'wid_valores'=>		'Preco',
+			'wid_altcode'=>		'BVD',
+			'wid_track'=>		'nao',
+			'ctx_orderby'=>		'precoD',
+			'ctx_fontcolor'=>	'#000000',
+			'ctx_bgcolor'=>		'#FFFFFF',
+			'ctx_brdcolor'=>	'#DDDDDD',
+			'ctx_prcolor'=>		'#3982C6',
+			'ctx_procolor'=>	'#3982C6',
+			'ctx_prccolor'=>	'#3982C6',
+			'ctx_valores'=>		'Preco',
+			'ctx_word'=>		'Notebook',
+			'ctx_tipo'=>		'horizontal',
+			'ctx_local'=>		'depois',
+			'ctx_show'=>		'4',
+			'ctx_exib_auto'=>	'auto',
+			'ctx_titulo'=>		'<h3>Ofertas Submarino</h3>',
+			'ctx_track'=>		'nao',
+			'ctx_altcode'=>		'ctx_FBD',
+		);
+		add_option('vs_options', $vs_options);
+	} else {
+		$vs_options['version'] = $vs_version;
+		update_option('vs_options', $vs_options);
+
+	}
 }
 
 /***************************************************************************************************
@@ -133,13 +135,11 @@ function vs_activate() {
 function vs_alerta() {
 
 	global $vs_options;
+	global $vs_version;
 
 	if (  !isset($_POST['info_update']) ) {
-		if(!function_exists(curl_init)) {
-			$msg = '* Seu host não permite a utilização do cURL.';
-		}
-		if ($vs_options == '') {
-			$msg = '* Parece que você atualizou a versão nova sem desativar o plugin!! Por favor desative e re-ative.';
+		if ($vs_options['version'] != $vs_version) {
+			$msg = '* Você atualizou para a versão '.$vs_version.' sem desativar a versão anterior ('.$vs_options['version'].')!! Por favor desative e re-ative <a href="plugins.php">aqui</a>';
 		} else {
 	
 			if ( $vs_options['codafil'] == '') {
@@ -153,6 +153,19 @@ function vs_alerta() {
 		return;
 	}
 }
+
+############################################
+# função criada por bruno alves
+function vs_latin2html ($text) {
+
+$p = array ('/Á/', '/á/', '/Â/', '/â/', '/À/', '/à/', '/Å/', '/å/', '/Ã/', '/ã/', '/Ä/', '/ä/', '/Æ/', '/æ/', '/É/', '/é/', '/Ê/', '/ê/', '/È/', '/è/', '/Ë/', '/ë/', '/Ð/', '/ð/', '/Í/', '/í/', '/Î/', '/î/', '/Ì/', '/ì/', '/Ï/', '/ï/', '/Ó/', '/ó/', '/Ô/', '/ô/', '/Ò/', '/ò/', '/Ø/', '/ø/', '/Õ/', '/õ/', '/Ö/', '/ö/', '/Ú/', '/ú/', '/Û/', '/û/', '/Ù/', '/ù/', '/Ü/', '/ü/', '/Ç/', '/ç/', '/Ñ/', '/ñ/', '/®/', '/©/', '/Ý/', '/ý/','/«/','/»/','/ª/','/º/');
+
+$r = array   ('&Aacute;', '&aacute;', '&Acirc;', '&acirc;', '&Agrave;', '&agrave;', '&Aring;', '&aring;', '&Atilde;', '&atilde;', '&Auml;', '&auml;', '&AElig;', '&aelig;', '&Eacute;', '&eacute;', '&Ecirc;', '&ecirc;', '&Egrave;', '&egrave;', '&Euml;', '&euml;', '&ETH;', '&eth;', '&Iacute;', '&iacute;', '&Icirc;', '&icirc;', '&Igrave;', '&igrave;', '&Iuml;', '&iuml;', '&Oacute;', '&oacute;', '&Ocirc;', '&ocirc;', '&Ograve;', '&ograve;', '&Oslash;', '&oslash;', '&Otilde;', '&otilde;', '&Ouml;', '&ouml;', '&Uacute;', '&uacute;', '&Ucirc;', '&ucirc;', '&Ugrave;', '&ugrave;', '&Uuml;', '&uuml;', '&Ccedil;', '&ccedil;', '&Ntilde;', '&ntilde;', '&reg;', '&copy;', '&Yacute;', '&yacute;','&laquo;','&raquo;','&ordf;','&ordm;');
+
+return preg_replace ($p, $r, $text); 
+
+};
+
 
 /***************************************************************************************************
  *  Formatação de texto para link
@@ -200,63 +213,36 @@ function textoparalink ($texto)
 /***************************************************************************************************
  * Função para chamada manual da vitrine. Não permite abas.
  */
-function vs_vitrine ($show = 3, $word = "notebook", $fundo = "#FFFFFF", $borda = "#DDDDDD", $texto = "#000000") {
+function vs_vitrine () {
 
 	global $vs_options;
 
 	$vs_options = get_option('vs_options');
-	
-	$vitrine_temp = vs_core($show, $word, "contextual", $fundo, $borda, $texto);
+
+	$current_plugins = get_option('active_plugins');
+
+	if (in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugins)) {
+		$words_array = pm_get_words();
+		
+		if (count($words_array) == 0)
+			$word = $vs_options['ctx_word'];
+		else
+			$word = $words_array[rand(0, count($words_array)-1)];
+	} else {
+		$word = $vs_options['ctx_word'];
+	}
+
+	$vitrine_temp = vs_core($vs_options["ctx_show"], $word, "contextual", $vs_options['ctx_bgcolor'], $vs_options['ctx_brdcolor'], $vs_options['ctx_fontcolor'], $vs_options['ctx_prcolor'], $vs_options['ctx_procolor'], $vs_options['ctx_prccolor']);
 
 	if ($vs_options['ctx_exib_auto'] == 'auto') {
 		$vitrine = $vs_options['ctx_titulo'].$vitrine_temp;
 		return $vitrine;
 	} else {
-		echo $vitrine_temp;
+	echo $vitrine_temp;
 		return '';
 	}
 }
 
-/***************************************************************************************************
- *  Vitrine com Abas
- */
-
-function vs_vitrine_tabs($words) {
-
-	global $vs_options;
-	
-		for ($i=1; $i<=count($words); $i++) {
-			$vitrine[$i] = vs_core ( $vs_options["ctx_show"], $words[$i-1], "contextual", $vs_options['ctx_bgcolor'], $vs_options['ctx_brdcolor'], $vs_options['ctx_fontcolor']) ;
-		}
-		
-		for ($i=1; $i<=count($words);$i++) {
-			if ($i == 1)
-				$abas .= "<li class=\"selected\"><a href=\"#tab".$i."\"><em>&nbsp;".$words[$i-1]."&nbsp;</em></a></li>";
-			else
-				$abas .= "<li><a href=\"#tab".$i."\"><em>&nbsp;".$words[$i-1]."&nbsp;</em></a></li>";
-
-		}
-		for ($i=1; $i<=count($words);$i++) {
-			$vitrines .= "<div>".$vitrine[$i]."</div>";
-		}
-		$vitrine_final = "<div style=\"clear:both\"><br /><br />".$vs_options['ctx_titulo']."<script type=\"text/javascript\">
-		var myTabs = new YAHOO.widget.TabView(\"demo\");
-		</script> 
-		<div class=\"yui-skin-xp\">
-			<div id=\"demo\" class=\"yui-navset\">
-				<ul class=\"yui-nav\">
-				".$abas."
-				</ul>            
-				<div class=\"yui-content\">
-				".$vitrines."
-				</div>
-			</div>
-		</div>
-		".$links_cats."<BR><BR>".$lista_de_produtos."".$credits."</div>";
-
-return $vitrine_final;
-
-}
 
 /***************************************************************************************************
  * Vitrine Automatica
@@ -270,31 +256,19 @@ function vs_auto($text) {
 	$current_plugins = get_option('active_plugins');
 	if (in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugins)) {
 		$words_array = pm_get_words();
-		$word_pm = $words_array[0];
-		if (count($words_array[0]) == 0)
-			$words_array[0] = $vs_options['ctx_word'];
+		
+		if (count($words_array) == 0)
+			$word = $vs_options['ctx_word'];
+		else
+			$word = $words_array[rand(0, count($words_array)-1)];
+	} else {
+		$word = $vs_options['ctx_word'];
 	}
 	
-	if ($word_pm)
-		$word = $word_pm;
-	else
-		$word = $vs_options['ctx_word'];
 
 	if ((is_single()) AND ($vs_options["ctx_exib_auto"] == 'auto')) {
 
-		if ($vs_options['ctx_style'] == "comabas") {
-			// chama vitrine com abas
-			if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', get_option('active_plugins'))) {
-				$vs_options['ctx_style'] = "semabas";
-				update_option('vs_options',$vs_options);
-			} else {
-				// chama vitrine com abas
-				$vitrine = vs_vitrine_tabs($words_array);
-			}
-		} else {
-			// chama vitrine sem abas
-			$vitrine = vs_core ( $vs_options["ctx_show"], $word, "contextual", $vs_options['ctx_bgcolor'], $vs_options['ctx_brdcolor'], $vs_options['ctx_fontcolor']) ;
-		}
+		$vitrine = vs_core ( $vs_options["ctx_show"], $word, "contextual", $vs_options['ctx_bgcolor'], $vs_options['ctx_brdcolor'], $vs_options['ctx_fontcolor'], $vs_options['ctx_prcolor'], $vs_options['ctx_procolor'], $vs_options['ctx_prccolor']) ;
 
 		if ($vs_options["ctx_local"] == 'antes') {
 		   $text = $vitrine.$text;
@@ -308,18 +282,120 @@ return $text;
 	
 }
 
+
+/**
+ * xml2array() will convert the given XML text to an array in the XML structure.
+ * Link: http://www.bin-co.com/php/scripts/xml2array/
+ * Arguments : $contents - The XML text
+ *                $get_attributes - 1 or 0. If this is 1 the function will get the attributes as well as the tag values - this results in a different array structure in the return value.
+ * Return: The parsed XML in an array form.
+ */
+function xml2array($contents, $get_attributes=1) {
+    if(!$contents) return array();
+
+    if(!function_exists('xml_parser_create')) {
+        //print "'xml_parser_create()' function not found!";
+        return array();
+    }
+    //Get the XML parser of PHP - PHP must have this module for the parser to work
+    $parser = xml_parser_create();
+    xml_parser_set_option( $parser, XML_OPTION_CASE_FOLDING, 0 );
+    xml_parser_set_option( $parser, XML_OPTION_SKIP_WHITE, 1 );
+    xml_parse_into_struct( $parser, $contents, $xml_values );
+    xml_parser_free( $parser );
+
+    if(!$xml_values) return;//Hmm...
+
+    //Initializations
+    $xml_array = array();
+    $parents = array();
+    $opened_tags = array();
+    $arr = array();
+
+    $current = &$xml_array;
+
+    //Go through the tags.
+    foreach($xml_values as $data) {
+        unset($attributes,$value);//Remove existing values, or there will be trouble
+
+        //This command will extract these variables into the foreach scope
+        // tag(string), type(string), level(int), attributes(array).
+        extract($data);//We could use the array by itself, but this cooler.
+
+        $result = '';
+        if($get_attributes) {//The second argument of the function decides this.
+            $result = array();
+            if(isset($value)) $result['value'] = $value;
+
+            //Set the attributes too.
+            if(isset($attributes)) {
+                foreach($attributes as $attr => $val) {
+                    if($get_attributes == 1) $result['attr'][$attr] = $val; //Set all the attributes in a array called 'attr'
+                    /**  :TODO: should we change the key name to '_attr'? Someone may use the tagname 'attr'. Same goes for 'value' too */
+                }
+            }
+        } elseif(isset($value)) {
+            $result = $value;
+        }
+
+        //See tag status and do the needed.
+        if($type == "open") {//The starting of the tag '<tag>'
+            $parent[$level-1] = &$current;
+
+            if(!is_array($current) or (!in_array($tag, array_keys($current)))) { //Insert New tag
+                $current[$tag] = $result;
+                $current = &$current[$tag];
+
+            } else { //There was another element with the same tag name
+                if(isset($current[$tag][0])) {
+                    array_push($current[$tag], $result);
+                } else {
+                    $current[$tag] = array($current[$tag],$result);
+                }
+                $last = count($current[$tag]) - 1;
+                $current = &$current[$tag][$last];
+            }
+
+        } elseif($type == "complete") { //Tags that ends in 1 line '<tag />'
+            //See if the key is already taken.
+            if(!isset($current[$tag])) { //New Key
+                $current[$tag] = $result;
+
+            } else { //If taken, put all things inside a list(array)
+                if((is_array($current[$tag]) and $get_attributes == 0)//If it is already an array...
+                        or (isset($current[$tag][0]) and is_array($current[$tag][0]) and $get_attributes == 1)) {
+                    array_push($current[$tag],$result); // ...push the new element into that array.
+                } else { //If it is not an array...
+                    $current[$tag] = array($current[$tag],$result); //...Make it an array using using the existing value and the new value
+                }
+            }
+
+        } elseif($type == 'close') { //End of tag '</tag>'
+            $current = &$parent[$level-1];
+        }
+    }
+
+    return($xml_array);
+} 
+
+
+
 /***************************************************************************************************
  *  Funcao principal
  */
-function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc) {
+function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec, $corparc, $corprom) {
 	global $wpdb;
 
 	error_reporting( 0 );
 
 	global $vs_options;
+	global $vs_version;
 	
 	if ($vs_options['codafil'] == '')
 		return "ERRO: Código de Afiliado não informado.";
+
+	if ($vs_options['version'] != $vs_version)
+		return "ERRO: Atualização necessária.";
 
 	$idsubmarino = $vs_options['codafil'];			// Define codigo de afiliado para o script funcionar
 
@@ -330,580 +406,306 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc) {
 
 	$palavrapadrao = $word; // Define a palavra chave para o script funcionar
 	
-	if ($vitrine != "widget") {
-		$palavrabuscada = $_GET['pal'];   
-		if ( !$palavrabuscada ) { 
-			$palavrabuscada = $palavrapadrao; 
-		}
-	} else {
+	if ( !$palavrabuscada ) { 
 		$palavrabuscada = $palavrapadrao; 
 	}
+	$palavrabuscada = vs_latin2html($palavrabuscada);
 
-	$palavrabuscada = urlencode(utf8_decode($palavrabuscada));
-
-	$desde = $_GET['pag'];
-	if ( !$desde ) { 
-		$desde = 1; 
-	}
-
-switch ($vitrine) {
-
-	case "widget":
-		$urlsub = 'http://www.submarino.com.br/HomeCache/AllSearchResult.aspx?PageHits=50&OrderBy='.$vs_options['wid_orderby'].'&Query=';
-		$catsep = "<br /> * ";
-		break;
-
-	case "contextual":
-		$urlsub = 'http://www.submarino.com.br/HomeCache/AllSearchResult.aspx?PageHits=50&OrderBy='.$vs_options['ctx_orderby'].'&Query=';
-		$catsep = ", ";
-
+	if ($vitrine != "widget") {
 		if ($vs_options['ctx_tipo'] == "horizontal") { 
 			$lista_de_produtos = "<table id=\"vs_ctx_tabela_produtos\"><tr>";
 		}
-		break;
-
-	case "shopping":
-		$urlsub = 'http://www.submarino.com.br/HomeCache/AllSearchResult.aspx?PageHits=50&OrderBy='.$vs_options['shp_orderby'].'&Query=';
+		$sort = $vs_options['ctx_orderby'];
+		$valores = $vs_options['ctx_valores'];
+		$cats = $vs_options['ctx_cats'];
 		
-		$shop = $_GET['shop'];   
-		switch($shop) {
-			case "LL":
-				//livros lançamento
-				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int02.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28264";
-				$palavrabuscada = "Livros";
-				break;
-			case "DL":
-				//DVDs lançamento
-				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int03.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28262";
-				$palavrabuscada = "DVDs";
-				break;
-			case "CL":
-				//CDs lançamento
-				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int04.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28266";
-				$palavrabuscada = "CDs";
-				break;
-			case "SL":
-				//Shows lançamento
-				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int05.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28268";
-				$palavrabuscada = "Shows";
-				break;
-			case "GL":
-				//Games lançamento
-				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int06.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28270";
-				$palavrabuscada = "Games";
-				break;
-			case "LP":
-				//livros Pré-venda
-				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int02p.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28265";
-				$palavrabuscada = "Livros";
-				break;
-			case "DP":
-				//DVDs Pré-venda
-				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int03p.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28263";
-				$palavrabuscada = "DVDs";
-				break;
-			case "CP":
-				//CDs Pré-venda
-				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int04p.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28267";
-				$palavrabuscada = "CDs";
-				break;
-			case "SP":
-				//Shows Pré-venda
-				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int05p.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28269";
-				$palavrabuscada = "Shows";
-				break;
-			case "GP":
-				//Games Pré-venda
-				$url_shp = "http://www.submarino.com.br/local/lancamentos/home_lancamentos_int06p.asp?Query=ProductPage&ProdTypeId=4&PROMOID=28271";
-				$palavrabuscada = "Games";
-				break;
-		}
-
-		$lista_de_produtos = "";
-		//links para o shopping condicional para permalinks
-		if (get_option('permalink_structure') == '') {
-			$urlshops = $vs_options['shp_url'] ."&shop=" ;
-		} else {
-			$urlshops = $vs_options['shp_url'] ."/?shop=";	
-		}
-		echo "<div style=\"width:100%;\">";
-		echo "<div style=\"float:left;width:20%\"><center>Livros</center><center><a href=\"".get_option(siteurl)."/".$urlshops."LP\">Pré-Venda</a></center><center><a href=\"".get_option(siteurl)."/".$urlshops."LL\">Lançamentos</a></center></div>";
-		echo "<div style=\"float:left;width:20%\"><center>Shows</center><center><a href=\"".get_option(siteurl)."/".$urlshops."SP\">Pré-Venda</a></center><center><a href=\"".get_option(siteurl)."/".$urlshops."SL\">Lançamentos</a></center></div>";
-		echo "<div style=\"float:left;width:20%\"><center>DVDs</center><center><a href=\"".get_option(siteurl)."/".$urlshops."DP\">Pré-Venda</a></center><center><a href=\"".get_option(siteurl)."/".$urlshops."DL\">Lançamentos</a></center></div>";
-		echo "<div style=\"float:left;width:20%\"><center>Games</center><center><a href=\"".get_option(siteurl)."/".$urlshops."GP\">Pré-Venda</a></center><center><a href=\"".get_option(siteurl)."/".$urlshops."GL\">Lançamentos</a></center></div>";
-		echo "<div style=\"float:left;width:20%\"><center>CDs</center><center><a href=\"".get_option(siteurl)."/".$urlshops."CP\">Pré-Venda</a></center><center><a href=\"".get_option(siteurl)."/".$urlshops."CL\">Lançamentos</a></center></div>";
-		$form_pesquisar = '<center><form name="input" action="'.$vs_options['shp_url'].'" method="get"><input type="text" name="pal" size="30"> <input type="submit" value="Pesquisar"></form></center>';		
-		echo "</div><div style=\"clear:both;background-color:Beige;\"><br /><center> Você está vendo ofertas para <div style=\"font-size:25px;\">".str_replace("+", " ", $palavrabuscada)."</div><br />".$form_pesquisar."</center><br /></div>";
-
-		
-		break;
-}
- 		$urlaserlida = $urlsub.$palavrabuscada;
-
-############## ACESSO A PÁGINA COM PRODUTOS
-
-	// Pego a pagina do produto procurado
-	if(function_exists(curl_init)) {
-	
-		$ch = curl_init();
-		// informar URL e outras funcoes ao CURL
-		curl_setopt($ch, CURLOPT_URL, $urlaserlida);
-
-		if ($vs_options['host'] == 'godaddy') {
-			// BEGIN GoDaddy Hack
-			curl_setopt($this->curl, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
-			curl_setopt($this->curl, CURLOPT_PROXY,"http://proxy.shr.secureserver.net:3128");
-			// END GoDaddy Hack 
-        }
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		// Acessar a URL e retornar a saida
-		$buffer = curl_exec($ch);
-		// liberar
-		curl_close($ch);
-	
 	} else {
-	
-		$buffer = file_get_contents($urlaserlida);
-	
+		$sort = $vs_options['wid_orderby'];
+		$valores = $vs_options['wid_valores'];
+		$cats = $vs_options['wid_cats'];
 	}
 
-	$doc = new DOMDocument();
+	$request = "f=".$vs_options['codafil']."&q=".$palavrabuscada."&s=".$sort."&k=".$vs_options['chave']."&e=".get_option('admin_email')."&u=".get_option('siteurl')."&c=".$cats;
+	
+	$response = vs_http_post($request, "wp.bernabauer.com", "/vs/index.php");
 
-	$doc->loadHTML( $buffer );
+	$data = ltrim($response[1]);
 
-############## COMEÇO DO CORE SCRIPT
+	$produtos = xml2array($data);
 
-	if ($shop == "") {
+	if (is_string($produtos["vitrine_submarino"]["oferta"]["produto"]["value"]))
+		$produtos2 = $produtos["vitrine_submarino"];
+	else
+		$produtos2 = $produtos["vitrine_submarino"]["oferta"];
+	
+	$i=1;
+	foreach ($produtos2 as $produto) {
 
-		// Pego as imagens
-	
-		$img = $doc->getElementsByTagName( "img" );
-	
-		$i = 1;
-	
-		foreach( $img as $img )	{
-			$teste = $img->getAttribute("class");
-	
-			if($teste == 'imgresult') { 
-				$imagem[$i] = $img->getAttribute("src"); 
-				$i++; 
-			}
-		}
-	
-	
-		// Pego os links e os titulos
-	
-		$img = $doc->getElementsByTagName( "a" );
-	
-		$i = 1;
-	
-		foreach( $img as $img ) {
-			$teste = $img->getAttribute("class");
-	
-			if($teste == 'link-prod') { 
-				$link[$i] = $img->getAttribute("href").'&franq='.$idsubmarino; 
-				$titulo[$i] = utf8_decode($img->nodeValue); 
-				$i++; 
-			}
-	
-		}
-		// Pego os links e os titulos para categorias
-	
-		$img = $doc->getElementsByTagName( "a" );
-	
-		$i = 1;
-	
-		foreach( $img as $img ) {
-			$teste = $img->getAttribute("class");
-	
-			if($teste == 'link-mais') { 
-				if (!in_array( substr(utf8_decode($img->nodeValue), strrpos(utf8_decode($img->nodeValue), "/")+1), $titulo_mais)) {
-					$link_mais[$i] = $img->getAttribute("href").'&franq='.$idsubmarino; 
-					$titulo_mais[$i] = substr(utf8_decode($img->nodeValue), strrpos(utf8_decode($img->nodeValue), "/")+1); 
-					$i++; 
-				}
-			}
-	
-		}
-	
-	
-		// Pego os precos e as condicoes
-	
-		$img = $doc->getElementsByTagName( "li" );
-	
-		$i = 1;
-	
-		foreach( $img as $img ) {
-			$teste = $img->getAttribute("class");
-	
-			if($teste == 'preco resultado-comprar') { 
-				$preco[$i] = utf8_decode($img->nodeValue); $i++; 
-			}
-		}
-	} else {
-	#### CORE SCRIPT PARA O SHOPPING PERSONALIZADO
-	// Pego as imagens
-	
-    $send  = "GET ".$url_shp." HTTP/1.1\r\n";
-    $send .= "Host: www.submarino.com.br\r\n";
-    $send .= "User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.2.1) Gecko/20021204\r\n";
-    $send .= "Referer: http://www.yahoo.com/\r\n";
-    $send .= "Accept: text/xml,application/xml,application/xhtml+xml,";
-    $send .= "text/html;q=0.9,text/plain;q=0.8,video/x-mng,image/png,";
-    $send .= "image/jpeg,image/gif;q=0.2,text/css,*/*;q=0.1\r\n";
-    $send .= "Accept-Language: en-us, en;q=0.50\r\n";
-    $send .= "Connection: Close\r\n\r\n";
-	
-		$response = '';
-		if( false != ( $fs = @fsockopen('www.submarino.com.br', 80, $errno, $errstr, 10) ) ) {
-			fwrite($fs, $send);
-	
-			while ( !feof($fs) )
-				$response .= fgets($fs, 1160); // One TCP-IP packet
-			fclose($fs);
-			$response = explode("\r\n\r\n", $response, 2);
-		}
-	
-	$doc = new DOMDocument();
+		$nome = $produto["produto"]["value"];
+		$promo = str_replace(".", ",", $produto["promo"]["value"]);
+		if (strlen($promo) - strpos($promo, ",") == 2 AND (strpos($promo, ",") > 0))
+			$promo = $promo."0";
+		$preco = str_replace(".", ",", $produto["preco"]["value"]);
+		if (strlen($preco) - strpos($preco, ",") == 2 AND (strpos($preco, ",") > 0))
+			$preco = $preco."0";
 
-	$doc->loadHTML( $response[1] );
-
-
-//pega preco
-		$img = $doc->getElementsByTagName( "span" );
+		$preco_parc = $produto["parcela"]["value"];
+		$img = $produto["imagem"]["value"];
+		$link_prod = $produto["link"]["value"];
 	
-		$i = 1;
+		$palavras = explode('_',textoparalink ($nome));
 	
-		foreach( $img as $img ) {
-			$teste = $img->getAttribute("class");
-			if($teste == 'priceblue') { 
-				$preco[$i] = utf8_decode($img->nodeValue); 
-				$i++; 
-			}
-		}
-
-//pega marca
-		$img = $doc->getElementsByTagName( "span" );
+		$tc = '';
 	
-		$i = 1;
+		$texto = $nome;
+		$texto = str_replace( " com ", " ", $texto );
+		$texto = str_replace( " de ", " ", $texto );
+		$texto = str_replace( " do ", " ", $texto );
+		$texto = str_replace( " da ", " ", $texto );
+		$texto = str_replace( " para ", " ", $texto );
+		$texto = str_replace( " por ", " ", $texto );
+		$pal = explode(" ", $texto);
+		$busca = $pal[0]." ".$pal[1]." ".$pal[2]." ".$pal[3];
 	
-		foreach( $img as $img ) {
-			$teste = $img->getAttribute("class");
-
-			if($teste == 'marca') { 
-				$marca[$i] = utf8_decode($img->nodeValue);
-				$i++; 
-			}
-		}
-
-
-// Pego os links e os titulos
-		$img = $doc->getElementsByTagName( "a" );
+		$tccp = 'onclick="javascript: pageTracker._trackPageview (\'/out/sub/compare/uol/'.$nome.'/\');"';
 	
-		$i = 1;
+		//código de tracking do Google Analytics
+		$tc = 'onclick="javascript: pageTracker._trackPageview (\'/out/sub/'.$vitrine.'/'.$nome.'\');"';
 	
-		foreach( $img as $img ) {
-			$teste = $img->getAttribute("class");
-	
-			if($teste == 'titulo') { 
-				$link[$i] = "http://www.submarino.com.br".$img->getAttribute("href").'&franq='.$idsubmarino; 
-				$titulo[$i] = str_replace(utf8_encode($preco[$i]), "", $img->nodeValue); 
-				$titulo[$i] = utf8_decode(str_replace(utf8_encode($marca[$i]), "", $titulo[$i]));
-				$titulocompleto[$i] .= utf8_encode($titulo[$i])."<br />".utf8_encode($marca[$i]); 
-				$i++; 
-			}
-	
-		}
-
-		// Pego os links e os titulos para categorias
-	
-		$img = $doc->getElementsByTagName( "a" );
-	
-		$i = 1;
-	
-		foreach( $img as $img ) {
-			$teste = $img->getAttribute("class");
-	
-			if($teste == 'link-mais') { 
-				if (!in_array( substr(utf8_decode($img->nodeValue), strrpos(utf8_decode($img->nodeValue), "/")+1), $titulo_mais)) {
-					$link_mais[$i] = $img->getAttribute("href").'&franq='.$idsubmarino; 
-					$titulo_mais[$i] = substr(utf8_decode($img->nodeValue), strrpos(utf8_decode($img->nodeValue), "/")+1); 
-					$i++; 
-				}
-			}
-	
-		}
-
-
-// Pego as imagens
-		$img = $doc->getElementsByTagName( "img" );
-	
-		$i = 1;
-	
-		foreach( $img as $img )	{
-			$teste = $img->getAttribute("vspace");
-	
-			if($teste == '10') { 
-				$imagem[$i] = $img->getAttribute("src"); 
-				$i++; 
-			}
-		}
-}
-
-
-############## FIM DO CORE SCRIPT
-
-if (count($imagem) > 0) {
-
-	for($a = 1; $a <= $show ; $a++) {
-
-		if (($imagem[$a])) { 
-
-			$palavras = explode('_',textoparalink ($titulo[$a]));
-
+		if (($vs_options['ctx_track'] == "nao") AND $vitrine == "contextual") {
 			$tc = '';
-
-				$texto = utf8_encode($titulo[$a]);
-				$texto = str_replace( " com ", " ", $texto );
-				$texto = str_replace( " de ", " ", $texto );
-				$texto = str_replace( " do ", " ", $texto );
-				$texto = str_replace( " da ", " ", $texto );
-				$texto = str_replace( " para ", " ", $texto );
-				$texto = str_replace( " por ", " ", $texto );
-				$pal = explode(" ", $texto);
-				$busca = $pal[0]." ".$pal[1]." ".$pal[2]." ".$pal[3];
-
-				$tccp = 'onClick="javascript: pageTracker._trackPageview (\'/out/sub/compare/uol/'.utf8_encode($titulo[$a]).'/\');"';
-
-				//código de tracking do Google Analytics
-				$tc = 'onClick="javascript: pageTracker._trackPageview (\'/out/sub/'.$vitrine.'/'.utf8_encode($titulo[$a]).'\');"';
-
-				if (($vs_options['ctx_track'] == "nao") AND $vitrine == "contextual") {
-					$tc = '';
-				}
-				if (($vs_options['wid_track'] == "nao") AND $vitrine == "widget")  {
-					$tc = '';
-				}
-				if (($vs_options['shp_track'] == "nao")  AND $vitrine == "shopping") {
-					$tc = '';
-				}
-				if ($vs_options['cat_track'] == "nao") {
-					$tccat = '';
-				}
-				
-				//FIM do código de tracking
-
-				switch ($vs_options['PCP']) {
-					case "BP":
-						$compare_precos = "<a href=\"http://busca.buscape.com.br/cprocura?lkout=1&site_origem=".$cod_BP."&produto=".urlencode(utf8_decode($busca))."\" ".$tccp.">".$vs_options['LCP']."</a>"; 
-						break;
-					case "ML":
-						$compare_precos = "<a href=\"http://pmstrk.mercadolivre.com.br/jm/PmsTrk?tool=".$cod_ML."&go=http://lista.mercadolivre.com.br/".urlencode($busca)."\"  ".$tccp.">".$vs_options['LCP']."</a>"; 
-						break;
-					case "JC":
-						$compare_precos = "<a href=\"http://www.jacotei.com.br/mod.php?module=jacotei.pesquisa&texto=".urlencode($busca)."&precomin=&precomax=&af=".$cod_JC."\" ".$tccp.">".$vs_options['LCP']."</a>";  
-						break;
-					case "NS":
-						$compare_precos = ''; 
-						break;
-					case "BB":
-						$compare_precos = "<a href=\"http://bernabauer.shopping.busca.uol.com.br/busca.html?q=".urlencode(utf8_decode($busca))."\" ".$tccp.">".$vs_options['LCP']."</a>"; 
-						break;
-				}
-				
-				//ajuste quando não há produtos disponíveis
-				if ($preco[$a]) {
-					$preco_show = "<div style=\"font-weight: bold;color:".$vs_options['prccolor'].";\">".utf8_encode($preco[$a])."</div>";
-					//separa valor do produto do valor da parcela
-					$pos_ou = strpos($preco[$a], "ou");
-					if ($pos_ou != 0) {
-						$valor = utf8_encode(substr($preco[$a], 0, $pos_ou - 1));
-						$parcela = utf8_encode(substr($preco[$a], $pos_ou + 3));
-						$preco_show = "<div style=\"font-weight: bold;color:".$vs_options['prccolor'].";\">".$valor."</div><div style=\"color:".$vs_options['prclcolor'].";\"><small>".$parcela."</small></div>";
-					}
-				} else
-					$preco_show = "Esgotado";
-
-				//links para o shopping condicional para permalinks
-				if (get_option('permalink_structure') == '') {
-					//não usa permalink
-					$estaurl = $vs_options['shp_url'] ."&pal=";
-				} else {
-					//usa permalink
-					$estaurl = $vs_options['shp_url'] ."/?pal=";	
-				}
-				
-				//para onde é o link do produto?
-				if ($vs_options['LPT'] == 'shopping') {
-					$LPT = $estaurl."".$palavrabuscada;
-				} else {
-					$LPT = $link[$a];	
-				}
-
-				//código de tracking do Google Analytics
-				$tccat = 'onClick="javascript: pageTracker._trackPageview (\'/out/sub/categoria/'.utf8_encode($titulo_mais[$a]).'\');"';
-				$categorias .= $catsep."<a href=\"http://www.submarino.com.br".$link_mais[$a]."\" ".$tccat.">".utf8_encode($titulo_mais[$a])."</a>";
-
-				switch ($vitrine) {
-
-					case "contextual":
-						// vitrine contextual
-						if ($vs_options['ctx_tipo'] == "horizontal") {
+		}
+		if (($vs_options['wid_track'] == "nao") AND $vitrine == "widget")  {
+			$tc = '';
+		}
 		
-							//mostra vitrine com produtos em uma unica linha (VITRINE HORIZONTAL)
-							$lista_de_produtos .= '<td style="background-color:'.$fundo.';text-align:center;padding:3px;font-size:11px;"><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a><div style="font-size:12px;line-height:120%;color:'.$desc.';">'.utf8_encode($titulo[$a]).'</div><div style="font-weight: bold;font-size:12px;line-height:120%;"><a href="'.$LPT.'" rel="nofollow" target="_blank"'.$tc.'>'.$vs_options["LP"].'</a></div><div>'.$preco_show.'</div><div>'.$compare_precos.'</div></td>';
-						} else {
-							
-							//mostra vitrine com um produto por linha (VITRINE VERTICAL)
-							$lista_de_produtos .= '<div style="color:'.$desc.';border:2px solid '.$borda.';height:104px;"><div style="background-color:'.$fundo.';padding:3px;"><table><tr><td><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a></td><td>'.utf8_encode($titulo[$a]).'<br><b>'.$preco_show.'</b><br><br><a href="'.$LPT.'" rel="nofollow" target="_blank"'.$tc.'>'.$vs_options["LP"].'</a><div>'.$compare_precos.'</div></td></tr></table></div></div>';
-						}
-			
-						break;
-
-					case "widget":
-						$lista_de_produtos .= '<div style="color:'.$desc.';background-color:'.$fundo.';padding:3px;"><center><p><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a></p>'.utf8_encode($titulo[$a]).'<br><br><a href="'.$LPT.'" rel="nofollow" target="_blank"'.$tc.'><strong>'.$vs_options["LP"].'</strong></a><br><br>'.$preco_show.'<br><br><div>'.$compare_precos.'</div></center></div>';
-						break;
-
-					case "shopping":
-
- 						$palavras = explode( '_', textoparalink($titulo[$a]) );
-				
-						$lista_de_produtos .= '<div style="float:left;width:30%;height:335px;border:2px solid '.$borda.'color:'.$desc.';background-color:'.$fundo.';padding:5px;"><div><center><a href="'.$link[$a].'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$imagem[$a].'"></a><div style="font-size:12px;line-height:120%;color:'.$desc.';">'.utf8_encode($titulo[$a]).'</div><div style="font-weight: bold;font-size:12px;line-height:120%;"><a href="'.$LPT.'" rel="nofollow" target="_blank"'.$tc.'>'.$vs_options["LP"].'</a></div><div style="color:#3982C6;">'.$preco_show.'</div><div>'.$compare_precos.'</div></center></div></div>';
-						break;
+		//FIM do código de tracking
+	
+		switch ($vs_options['PCP']) {
+			case "BP":
+				$compare_precos = "<a href=\"http://busca.buscape.com.br/cprocura?lkout=1&amp;site_origem=".$cod_BP."&produto=".urlencode(utf8_decode($busca))."\" ".$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
+				break;
+			case "ML":
+				$compare_precos = "<a href=\"http://pmstrk.mercadolivre.com.br/jm/PmsTrk?tool=".$cod_ML."&amp;go=http://lista.mercadolivre.com.br/".urlencode($busca)."\"  ".$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
+				break;
+			case "JC":
+				$compare_precos = "<a href=\"http://www.jacotei.com.br/mod.php?module=jacotei.pesquisa&amp;texto=".urlencode($busca)."&amp;precomin=&amp;precomax=&amp;af=".$cod_JC."\" ".$tccp." target='_blank'>".$vs_options['LCP']."</a>";  
+				break;
+			case "NS":
+				$compare_precos = ''; 
+				break;
+			case "BB":
+				$compare_precos = "<a href=\"http://bernabauer.shopping.busca.uol.com.br/busca.html?q=".urlencode(utf8_decode($busca))."\" "	.$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
+				break;
+		}
+		
+		//ajuste quando não há produtos disponíveis
+		switch ($valores) {
+			case "Preco":
+				if ($preco AND $promo != 0)
+					$preco = $promo;			
+				$preco = "<div style=\"font-weight: bold;color:".$corprec.";\">R$ ".utf8_encode($preco)."</div>";
+				$promo='';
+				$parce='';
+				break;
+			case "Promo":
+				if ($promo == 0)
+					$promo = $preco;
+				$promo = "<div style=\"font-weight: bold;color:".$corprom.";\">R$ ".utf8_encode($promo)."</div>";
+				$preco='';
+				$parce='';
+				break;
+			case "Parce":
+				if ($preco_parc)
+					$parce = "<div style=\"color:".$corparc.";\"><small>".str_replace("X","x R\$", $preco_parc)."</small></div>";
+				else {
+					if ($preco AND $promo != 0)
+						$preco = $promo;			
+					$preco = "<div style=\"font-weight: bold;color:".$corprom.";\">R$ ".utf8_encode($preco)."</div>";
+					$parc = '';
 				}
-		 }
-	}
-}	
+				$preco='';
+				$promo='';
+				break;
+			case "Preco,Promo":
+				if ($preco AND $promo != 0)
+					$preco = "<div style=\"font-weight: bold;color:gray;\"><small>De <strike>R$ ".utf8_encode($preco)."</strike></small><div style=\"font-weight: bold;color:".$corprom.";\">Por R$ ".utf8_encode($promo)."</div></div>";
+				else {
+					$preco = "<div style=\"font-weight: bold;color:".$corprec.";\">R$ ".utf8_encode($preco)."</div>";
+					$promo='';
+				}
+				$parce='';
+				break;
+			case "Preco,Parce":
+				if ($preco AND $preco_parc) {
+					if ($preco AND $promo != 0)
+						$preco = $promo;			
+					$preco = "<div style=\"font-weight: bold;color:gray;\"><small>R$ ".utf8_encode($preco)."</small><div style=\"font-weight: bold;color:".$corprom.";\">Ou ".str_replace("X","x R\$", $preco_parc)."</div></div>";
+				} else {
+					$preco = "<div style=\"font-weight: bold;color:".$corprec.";\">R$ ".utf8_encode($preco)."</div>";
+					$parce='';
+				}
+				$promo='';
+				break;
+			case "Preco,Promo,Parce":
+				if ($preco AND $promo != 0) {
+					$preco = "<div style=\"font-weight: bold;color:gray;\"><small>De <strike>R$ ".utf8_encode($preco)."</strike></small><div style=\"font-weight: bold;color:".$corprom.";\">Por R$ ".utf8_encode($promo)."</div></div>";
+					$promo = '';
+				} else {
+					$preco = "<div style=\"font-weight: bold;color:".$corprec.";\">R$ ".utf8_encode($preco)."</div>";
+					$promo = '';
+				}
+				if ($preco_parc)
+					$parce = "<div style=\"color:".$corparc.";\"><small>".str_replace("X","x R\$", $preco_parc)."</small></div>";
+				else {
+					$parce='';
+				}
+				break;
+			case "Promo,Parce":
+				if ($preco AND $preco_parc)
+					$preco = "<div style=\"font-weight: bold;color:gray;\"><small>R$ ".utf8_encode($preco)."</small><div style=\"font-weight: bold;color:".$corparc.";\">Ou ".str_replace("X","x R\$", $preco_parc)."</div></div>";
+				else {
+					$preco = "<div style=\"font-weight: bold;color:".$corprec.";\">R$ ".utf8_encode($preco)."</div>";
+					$parce='';
+				}
+				$promo='';		
+				break;
+			case "":
+				$preco='';
+				$promo='';
+				$parce='';
+				break;
+				
+		}
 
 	
-	if (count($imagem) == 0) {
+			$preco_show = $preco.$promo.$parce;
+
+		
+		switch ($vitrine) {
+	
+			case "contextual":
+				// vitrine contextual
+				if ($vs_options['ctx_tipo'] == "horizontal") {
+					$td = 100 / $vs_options['ctx_show'];
+
+					//mostra vitrine com produtos em uma unica linha (VITRINE HORIZONTAL)
+					$lista_de_produtos .= '<td width="'. $td.'%'.'" style="background-color:'.$fundo.';text-align:center;padding:3px;font-size:11px;border:0px;"><a href="'.$link_prod.'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$img.'" alt="'.$nome.'" /></a><div style="font-size:12px;line-height:120%;color:'.$desc.';height:45px;overflow: hidden;">'.$nome.'</div><div><div style="font-weight: bold;font-size:12px;line-height:120%;"><a href="'.$link_prod.'" rel="nofollow"target="_blank"'.$tc.'>'.$vs_options["LP"].'</a></div><div>'.$preco_show.'</div><div>'.$compare_precos.'</div></div></td>';
+				} else {
+					
+					//mostra vitrine com um produto por linha (VITRINE VERTICAL)
+					$lista_de_produtos .= '<div style="color:'.$desc.';border:2px solid '.$borda.';height:104px;"><div style="background-color:'.$fundo.';padding:3px;"><table><tr><td style="border:0px;" ><a href="'.$link_prod.'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$img.'" alt="'.$nome.'" /></a></td><td style="border:0px;" >'.$nome.'<br /><b>'.$preco_show.'</b><br /><br /><a href="'.$link_prod.'" rel="nofollow" target="_blank"'.$tc.'>'.$vs_options["LP"].'</a><div>'.$compare_precos.'</div></td></tr></table></div></div>';
+				}
+	
+				break;
+	
+			case "widget":
+				$lista_de_produtos .= '<div style="color:'.$desc.';background-color:'.$fundo.';padding:3px;"><center><p><a href="'.$link_prod.'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$img.'" alt="'.$nome.'" /></a></p>'.$nome.'<br /><a href="'.$link_prod.'" rel="nofollow" target="_blank"'.$tc.'><strong>'.$vs_options["LP"].'</strong></a><br />'.$preco_show.'<div>'.$compare_precos.'</div></center></div>';
+				break;
+	
+		} //switch
+	if ($i == $show) 
+		break;
+	else
+		$i++;
+	} //foreach	
+
+
+	if (array_key_exists("oferta", $produtos['vitrine_submarino']) == FALSE) {
 		if ($vitrine == "contextual") { 
 			// anuncio alternativo contextual
 			
 			switch ($vs_options['ctx_altcode']) {
 				case "ctx_FBD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=full&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=full&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "ctx_FBG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=full2&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=full2&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "ctx_SBD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=super&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=super&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "ctx_SBG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=super2&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=super2&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "ctx_SKYD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=sky&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=sky&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "ctx_SKYG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=sky2&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=sky2&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "ctx_BTD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=botao&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=botao&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "ctx_BTG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=botao2&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=botao2&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "ctx_HBD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=half&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=half&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "ctx_HBG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=half&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=half&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
-			}
+			} // switch
 		} else {
 			// anuncio alternativo widget
 			switch ($vs_options['wid_altcode']) {
 				case "FBD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=full&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=full&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "FBG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=full2&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=full2&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "SBD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=super&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=super&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "SBG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=super2&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=super2&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "BVD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=vertical&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=vertical&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "BVD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=vertical2&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=vertical2&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "SKYD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=sky&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=sky&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "SKYG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=sky2&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=sky2&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "BTD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=botao&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=botao&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "BTG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=botao2&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=botao2&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "HBD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=half&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=half&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
 				case "HBG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=half&franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=half&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
-			}
-		}
-		return $altcode;
+			} //if
+		} //if
+		return "<center>".$altcode."</center>";
 	} else {
 	
-	$credits = "<div style=\"text-align:right;\"><small><a href='http://www.bernabauer.com/wp-plugins/'>vitrine</a> by <a href='http://bernabauer.com'>bernabauer.com</a></small></div>";
+	$credits = "<div style=\"text-align:right;\"><small><a href='http://www.bernabauer.com/wp-plugins/'>Vitrine Submarino ".$vs_options['version']."</a></small></div>";
 
 	if (($vitrine == "contextual") AND  ($vs_options['ctx_tipo'] == "horizontal")) { 
 		$lista_de_produtos .= "</tr></table>";
 	}
-	if ($vitrine == "shopping") { 
-		$credits = "<br /><br /><div style=\"text-align:center;clear:both;\"><small><a href='http://www.bernabauer.com/wp-plugins/'>shopping</a> by <a href='http://bernabauer.com'>bernabauer.com</a><br />Baseado em script original de Jobson Lemos</small></div>";
 
-		return $lista_de_produtos." ".$credits;
-	}
-	if (($vitrine == "contextual") AND ($vs_options['ctx_exib_auto'] == 'auto') AND ($vs_options['ctx_style'] == 'semabas'))
+	if (($vitrine == "contextual") AND ($vs_options['ctx_exib_auto'] == 'auto'))
 		$titulo = $vs_options['ctx_titulo'];
 	else
 		$titulo = '';
 
-	if ($vs_options['categorias'] == 'sim')
-		$links_cats = "<div style=\"color:".$desc.";\">Conheça os melhores produtos das categorias:".$categorias."</div>";
-	else
-		$links_cats = '';
-		
-	$form_pesquisar = '<center><form name="input" action="'.$vs_options['shp_url'].'" method="get"><input type="text" name="pal" size="15"> <input type="submit" value="Pesquisar"></form></center>';				
-	return $titulo."<div style=\"border:2px solid ".$borda.";background-color:".$fundo.";\">".$links_cats."<BR>".$form_pesquisar."<BR>".$lista_de_produtos."</div>".$credits;
+	return $titulo."<div style=\"border:2px solid ".$borda.";background-color:".$fundo.";\">".$lista_de_produtos."</div>".$credits;
 	}
 }
 
-/***************************************************************************************************
- *  Monta o shopping
- */
-function vs_shopping($content) {
-    
-    global $vs_options;
-
-	//links para o shopping condicional para permalinks
-	if (get_option('permalink_structure') == '') {
-		//não usa permalink
-		$pag_shop = substr( $vs_options['shp_url'], stripos($vs_options['shp_url'], "=")+1);
-	} else {
-		//usa permalink
-		$pag_shop = $vs_options['shp_url'];
-	}
-
-	if (is_page($pag_shop)) { 
-		$lista_de_produtos = vs_core ( $vs_options['shp_show'], $vs_options['shp_word'], "shopping", $vs_options['shp_bgcolor'], $vs_options['shp_border'], "#000000") ;
-	  
-		$content = str_ireplace("#shopping#", $lista_de_produtos, $content);
-	}
-    return $content;
-}
 
 /***************************************************************************************************
  *  Menu de configuracao
@@ -929,6 +731,8 @@ function vs_options_subpanel() {
 
         if (isset($_POST['id'])) 
            $vs_options['codafil'] = $_POST['id'];
+        if (isset($_POST['chave'])) 
+           $vs_options['chave'] = $_POST['chave'];
         if (isset($_POST['cod_BP'])) 
            $vs_options['cod_BP'] = $_POST['cod_BP'];
         if (isset($_POST['cod_ML'])) 
@@ -939,17 +743,10 @@ function vs_options_subpanel() {
            $vs_options['LP'] = $_POST['LP'];
         if (isset($_POST['LCP'])) 
            $vs_options['LCP'] = $_POST['LCP'];
-		if (isset($_POST['prccolor'])) 
-			$vs_options['prccolor'] = strip_tags(stripslashes($_POST['prccolor']));
-		if (isset($_POST['prclcolor'])) 
-			$vs_options['prclcolor'] = strip_tags(stripslashes($_POST['prclcolor']));
 
 		$vs_options['PCP'] = strip_tags(stripslashes($_POST['PCP']));
 		$vs_options['LPT'] = strip_tags(stripslashes($_POST['LPT']));
-		$vs_options['host'] = strip_tags(stripslashes($_POST['host']));
 		$vs_options['remover'] = strip_tags(stripslashes($_POST['remover']));
-		$vs_options['categorias'] = strip_tags(stripslashes($_POST['categorias']));
-		$vs_options['cat_track'] = strip_tags(stripslashes($_POST['cat_track']));
             
 		// Opções WIDGET
 		$vs_options['wid_orderby'] = strip_tags(stripslashes($_POST['wid_orderby']));
@@ -968,29 +765,31 @@ function vs_options_subpanel() {
 		if (isset($_POST['wid_brdcolor'])) 
 			$vs_options['wid_brdcolor'] = strip_tags(stripslashes($_POST['wid_brdcolor']));
 
+		if (isset($_POST['wid_prcolor'])) 
+			$vs_options['wid_prcolor'] = strip_tags(stripslashes($_POST['wid_prcolor']));
+
+		if (isset($_POST['wid_procolor'])) 
+			$vs_options['wid_procolor'] = strip_tags(stripslashes($_POST['wid_procolor']));
+
+		if (isset($_POST['wid_prccolor'])) 
+			$vs_options['wid_prccolor'] = strip_tags(stripslashes($_POST['wid_prccolor']));
+
+		if (isset($_POST['wid_valores'])) 
+			$vs_options['wid_valores'] = stripslashes(implode(",", $_POST['wid_valores']));
+		else
+			$vs_options['wid_valores'] = '';
+
+		if (isset($_POST['wid_cats'])) 
+			$vs_options['wid_cats'] = stripslashes(implode(",", $_POST['wid_cats']));
+		else
+			$vs_options['wid_cats'] = '';
+		
+
 		if (isset($_POST['wid_word'])) 
 			$vs_options['wid_word'] = strip_tags(stripslashes($_POST['wid_word']));
 
 		$vs_options['wid_altcode'] = strip_tags(stripslashes($_POST['wid_altcode']));
 		$vs_options['wid_track'] = strip_tags(stripslashes($_POST['wid_track']));
-
-		// Opções SHOPPING
-		$vs_options['shp_orderby'] = strip_tags(stripslashes($_POST['shp_orderby']));
-		if (isset($_POST['shp_url'])) 
-			$vs_options['shp_url'] = strip_tags(stripslashes($_POST['shp_url']));
-
-		if (isset($_POST['shp_bgcolor'])) 
-			$vs_options['shp_bgcolor'] = strip_tags(stripslashes($_POST['shp_bgcolor']));
-
-		if (isset($_POST['shp_brdcolor'])) 
-			$vs_options['shp_brdcolor'] = strip_tags(stripslashes($_POST['shp_brdcolor']));
-
-		if (isset($_POST['shp_word'])) 
-			$vs_options['shp_word'] = strip_tags(stripslashes($_POST['shp_word']));
-
-		$vs_options['shp_track'] = strip_tags(stripslashes($_POST['shp_track']));
-		$vs_options['shp_show'] = strip_tags(stripslashes($_POST['shp_show']));
-
 
 		// Opções CONTEXTUAL
 		$vs_options['ctx_orderby'] = strip_tags(stripslashes($_POST['ctx_orderby']));
@@ -1003,6 +802,20 @@ function vs_options_subpanel() {
 		if (isset($_POST['ctx_brdcolor'])) 
 			$vs_options['ctx_brdcolor'] = strip_tags(stripslashes($_POST['ctx_brdcolor']));
 
+		if (isset($_POST['ctx_prcolor'])) 
+			$vs_options['ctx_prcolor'] = strip_tags(stripslashes($_POST['ctx_prcolor']));
+
+		if (isset($_POST['ctx_procolor'])) 
+			$vs_options['ctx_procolor'] = strip_tags(stripslashes($_POST['ctx_procolor']));
+
+		if (isset($_POST['ctx_prccolor'])) 
+			$vs_options['ctx_prccolor'] = strip_tags(stripslashes($_POST['ctx_prccolor']));
+
+		if (isset($_POST['ctx_valores'])) 
+			$vs_options['ctx_valores'] = stripslashes(implode(",", $_POST['ctx_valores']));
+		else
+			$vs_options['ctx_valores'] = '';
+		
 		if (isset($_POST['ctx_titulo'])) 
 			$vs_options['ctx_titulo'] = stripslashes($_POST['ctx_titulo']);
 
@@ -1022,9 +835,30 @@ function vs_options_subpanel() {
 
 		//atualiza base de dados com informacaoes do formulario		
 		update_option('vs_options',$vs_options);
-		
     }
+
+	$cat_arr = array('Bebês', 'Beleza e Saúde', 'Brinquedos', 'Cama, Mesa e Banho', 'CD', 'Cine & Foto', 'DVD', 'Eletrodomésticos', 'Eletrônicos', 'Eletroportáteis', 'Esporte e Lazer', 'Ferramentas', 'Games', 'Informática', 'Instrumentos Musicais', 'Jóias e Relógios', 'Moda', 'Papelaria', 'Perfumaria', 'Telefonia', 'Utilidades Domésticas', 'Vinhos e Cia');
     
+    if ( stripos($vs_options['ctx_valores'], "Preco") !== FALSE) 
+		$ctx_showpreco = 'checked';
+
+    if ( stripos($vs_options['ctx_valores'], "Promo") !== FALSE) 
+		$ctx_showpromo = 'checked';
+
+    if ( stripos($vs_options['ctx_valores'], "Parce") !== FALSE) 
+		$ctx_showparce = 'checked';
+
+
+    if ( stripos($vs_options['wid_valores'], "Preco") !== FALSE) 
+		$wid_showpreco = 'checked';
+
+    if ( stripos($vs_options['wid_valores'], "Promo") !== FALSE) 
+		$wid_showpromo = 'checked';
+
+    if ( stripos($vs_options['wid_valores'], "Parce") !== FALSE) 
+		$wid_showparce = 'checked';
+
+
     if ( $vs_options['ctx_exib_auto'] == 'auto') {
 		$auto = 'checked=\"checked\"';
     } else {
@@ -1049,52 +883,16 @@ function vs_options_subpanel() {
     	$widtrknao = 'checked=\"checked\"';
     }
 
-    if ( $vs_options['cat_track'] == 'sim') {
-		$cattrksim = 'checked=\"checked\"';
-    } else {
-    	$cattrknao = 'checked=\"checked\"';
-    }
-
-    if ( $vs_options['shp_track'] == 'sim') {
-		$shptrksim = 'checked=\"checked\"';
-    } else {
-    	$shptrknao = 'checked=\"checked\"';
-    }
-
-    if ( $vs_options['host'] == '') {
-		$outro = 'checked=\"checked\"';
-    } else {
-    	$godaddy = 'checked=\"checked\"';
-    }
-
-    if ( $vs_options['LPT'] == 'shopping') {
-		$LPT_shp = 'checked=\"checked\"';
-    } else {
-    	$LPT_sub = 'checked=\"checked\"';
-    }
-
     if ( $vs_options['ctx_tipo'] == 'horizontal') {
 		$horizontal = 'checked=\"checked\"';
     } else {
     	$vertical = 'checked=\"checked\"';
     }
 
-    if ( $vs_options['ctx_style'] == 'comabas') {
-		$style_comabas = 'checked=\"checked\"';
-    } else {
-    	$style_semabas = 'checked=\"checked\"';
-    }
-
     if ( $vs_options['remover'] == 'nao') {
 		$remover_nao = 'checked=\"checked\"';
     } else {
     	$remover_sim = 'checked=\"checked\"';
-    }
-    
-    if ( $vs_options['categorias'] == 'nao') {
-		$cat_nao = 'checked=\"checked\"';
-    } else {
-    	$cat_sim = 'checked=\"checked\"';
     }
     
 	switch ($vs_options['wid_altcode']) {
@@ -1194,62 +992,59 @@ function vs_options_subpanel() {
 	}		
 
 	switch ($vs_options['wid_orderby']) {
-		case "sellprice":
-			$wid_sellprice = 'checked=\"checked\"';
+		case "precoA":
+			$wid_precoA = 'checked=\"checked\"';
 			break;
-		case "sortordersell":
-			$wid_sortordersell = 'checked=\"checked\"';
+		case "precoD":
+			$wid_precoD = 'checked=\"checked\"';
 			break;
-		case "searchall":
-			$wid_searchall = 'checked=\"checked\"';
+		case "produtoA":
+			$wid_alfaA = 'checked=\"checked\"';
 			break;
-		case "ranking":
-			$wid_ranking = 'checked=\"checked\"';
+		case "produtoZ":
+			$wid_alfaZ = 'checked=\"checked\"';
 			break;
 		default:
-			$wid_noorder = 'checked=\"checked\"';
+			$wid_precoD = 'checked=\"checked\"';
 			break;
 	}		
 
-	switch ($vs_options['shp_orderby']) {
-		case "sellprice":
-			$shp_sellprice = 'checked=\"checked\"';
-			break;
-		case "sortordersell":
-			$shp_sortordersell = 'checked=\"checked\"';
-			break;
-		case "searchall":
-			$shp_searchall = 'checked=\"checked\"';
-			break;
-		case "ranking":
-			$shp_ranking = 'checked=\"checked\"';
-			break;
-		default:
-			$shp_noorder = 'checked=\"checked\"';
-			break;
-	}		
 
 	switch ($vs_options['ctx_orderby']) {
-		case "sellprice":
-			$ctx_sellprice = 'checked=\"checked\"';
+		case "precoA":
+			$ctx_precoA = 'checked=\"checked\"';
 			break;
-		case "sortordersell":
-			$ctx_sortordersell = 'checked=\"checked\"';
+		case "precoD":
+			$ctx_precoD = 'checked=\"checked\"';
 			break;
-		case "searchall":
-			$ctx_searchall = 'checked=\"checked\"';
+		case "produtoA":
+			$ctx_alfaA = 'checked=\"checked\"';
 			break;
-		case "ranking":
-			$ctx_ranking = 'checked=\"checked\"';
+		case "produtoZ":
+			$ctx_alfaZ = 'checked=\"checked\"';
 			break;
 		default:
-			$ctx_noorder = 'checked=\"checked\"';
+			$ctx_preco = 'checked=\"checked\"';
 			break;
 	}		
+        //pede a chave
+        if (isset($_POST['genkey'])) {
+        		$dados  = "genkey=".get_option('admin_email')."#".get_option('siteurl');
+        		$dados .= "&f=".$vs_options['codafil'];
+        		$dados .= "&i=".$_SERVER['SERVER_ADDR'];
+        		$dados .= "&h=".$_SERVER['HTTP_HOST'];
+				vs_http_post($dados, "wp.bernabauer.com", "/vs/index.php");
+				?>
+				<div id="message" class="updated fade"><p><strong>ALERTA Vitrine Submarino</strong>: A chave foi solicitada, por favor, verifique sua caixa de entrada e a caixa de SPAM dentro dos próximos minutos.</p></div>
+				<?php
+		}
 
 	
 ?>
+
 	<div class=wrap>
+
+<p>Você pode buscar ajuda para este plugin no <a href="http://forum.bernabauer.com">fórum</a> do <a href="http://www.bernabauer.com">bernabauer.com</a>.</p>
 
     <h2>Configurações</h2>
   <form method="post">
@@ -1265,6 +1060,23 @@ function vs_options_subpanel() {
 
     <table class="form-table">
 	 <tr>
+		<th scope="row" valign="top">Chave</th>
+		<td>
+		
+			<input type="textbox" name="chave" size="40" value="<?php echo $vs_options['chave']; ?>">
+		
+			<br />Sem a chave a vitrine não funciona.<br />
+			<input type="checkbox" id="genkey" name="genkey" value="gerar" <?php if ($vs_options['chave'] != '') echo "DISABLED"; ?>> <label for="genkey">Gerar chave</label>
+		
+			<br />Você precisa gerar uma chave para mostrar produtos do submarino no seu blog. <strong>ATENÇÃO!</strong> Gerar uma chave para o seu blog quer dizer que você autoriza que o código do autor do plugin será usado em algumas exibições. Isto ajudará a pagar os custos de manter o plugin funcionando. Para gerar a chave habilite a opção e clique em atualizar. Você receberá mais informações através do email <strong><?php echo get_option('admin_email');?></strong>. Para gerar a chave serão enviados apenas o seu endereço de email, endereço e o nome do blog . Assim que você receber a chave, informe na caixa de texto acima.
+			
+		</td>
+	 </tr>
+	</table>
+	<br />
+
+    <table class="form-table">
+	 <tr>
 		<th scope="row" valign="top">Comparação de Preços</th>
 		<td>
 			 <input name="cod_BP" type="text" id="cod_BP" value="<?php echo $vs_options['cod_BP']; ?>" size=8  /> Informe o código do BuscaPé
@@ -1277,69 +1089,15 @@ function vs_options_subpanel() {
 			<br />
 			<br />
 			Escolha abaixo qual programa será mostrado: <br />
-			<input type="radio" name="PCP" value="BP" <?php echo $PCP_BP; ?>> BuscaPé
+			<input type="radio" id="PCP_BP" name="PCP" value="BP" <?php echo $PCP_BP; ?> /><label for="PCP_BP"> BuscaPé</label>
 			<br />
-			<input type="radio" name="PCP" value="ML" <?php echo $PCP_ML; ?>> Mercado Livre
+			<input type="radio" id="PCP_ML" name="PCP" value="ML" <?php echo $PCP_ML; ?> /> <label for="PCP_ML">Mercado Livre</label>
 			<br />
-			<input type="radio" name="PCP" value="JC" <?php echo $PCP_JC; ?>> Jacotei
+			<input type="radio" id="PCP_JC" name="PCP" value="JC" <?php echo $PCP_JC; ?> /> <label for="PCP_JC">Jacotei</label>
 			<br />
-			<input type="radio" name="PCP" value="NS" <?php echo $PCP_NS; ?>> Não mostrar nada
+			<input type="radio" id="PCP_NS" name="PCP" value="NS" <?php echo $PCP_NS; ?> /> <label for="PCP_NS">Não mostrar nada</label>
 			<br />
-			<input type="radio" name="PCP" value="BB" <?php echo $PCP_BB; ?>> Shopping bernabauer.com
-			<br />
-		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Hospedagem</th>
-		<td>
-			<input type="radio" name="host" value="" <?php echo $outro; ?>> Outro
-			<br />
-			<input type="radio" name="host" value="godaddy" <?php echo $godaddy; ?>> Godaddy
-			<br />Este host precisa de uma configuração especial para usar a função cURL. Escolha esta opção se este for o seu host. Caso contrário escolha a opção "Outro".
-		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Link do Produto</th>
-		<td>
-			 <input name="LP" type="text" id="LP" value="<?php echo $vs_options['LP']; ?>" size=15  /><br />
-			 Informe o que você quer mostrar como nome do link para o produto no Submarino. Bons exemplos são: "[ COMPRAR ]", "Veja mais" e "Compre agora". 
-			<br />
-			<br />
-			<input type="radio" name="LPT" value="submarino" <?php echo $LPT_sub; ?>> Link aponta para o Submarino
-			<br />
-			<input type="radio" name="LPT" value="shopping" <?php echo $LPT_shp; ?>> Link aponta para o Shopping
-			<br />
-			Esta opção não afeta o link da imagem do produto.
-		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Mostrar categorias</th>
-		<td>
-			<input type="radio" name="categorias" value="nao" <?php echo $cat_nao; ?>> Não
-			<br />
-			<input type="radio" name="categorias" value="sim" <?php echo $cat_sim; ?>> Sim
-			<br />
-		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Rastrear Cliques em Categorias</th>
-		<td>
-			É necessário ter uma conta no Google Analytics.<br />
-			<input type="radio" name="cat_track" value="sim" <?php echo $cattrksim; ?>> Sim
-			<br />
-			<input type="radio" name="cat_track" value="nao" <?php echo $cattrknao; ?>> Não
+			<input type="radio" id="PCP_BB" name="PCP" value="BB" <?php echo $PCP_BB; ?> /> <label for="PCP_BB">Shopping bernabauer.com</label>
 			<br />
 		</td>
 	 </tr>
@@ -1349,31 +1107,11 @@ function vs_options_subpanel() {
 	 <tr>
 		<th scope="row" valign="top">Remover opções ao desativar</th>
 		<td>
-			<input type="radio" name="remover" value="nao" <?php echo $remover_nao; ?>> Não
+			<input type="radio" id="RemoN" name="remover" value="nao" <?php echo $remover_nao; ?> /> <label for="RemoN">Não</label>
 			<br />
-			<input type="radio" name="remover" value="sim" <?php echo $remover_sim; ?>> Sim
+			<input type="radio" id="RemoS" name="remover" value="sim" <?php echo $remover_sim; ?> /> <label for="RemoS">Sim</label>
 			<br />
 		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Cor do Preço</th>
-		<td>
-  				<input style="width: 60px;" id="prccolor" name="prccolor" type="text" value="<?php echo $vs_options['prccolor']; ?>" /><br />
- 				<label for="ctx_brdcolor">Cor do preço do produto. Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
- 		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Cor da Parcela</th>
-		<td>
-  				<input style="width: 60px;" id="prclcolor" name="prclcolor" type="text" value="<?php echo $vs_options['prclcolor']; ?>" /><br />
- 				<label for="ctx_prclcolor">Cor da parcela do produto. Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
- 		</td>
 	 </tr>
 	</table>
 
@@ -1398,30 +1136,16 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 
     <table class="form-table">
 	 <tr>
-		<th scope="row" valign="top">Cor do texto</th>
+		<th scope="row" valign="top">Cores</th>
 		<td>
-  				<input style="width: 60px;" id="ctx_fontcolor" name="ctx_fontcolor" type="text" value="<?php echo $vs_options['ctx_fontcolor']; ?>" /><br />
- 				<label for="ctx_fontcolor">Cor do texto de descrição dos produtos. A melhor cor é preta (#000000 ou BLACK). Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
- 		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Cor de fundo</th>
-		<td>
-  				<input style="width: 60px;" id="ctx_bgcolor" name="ctx_bgcolor" type="text" value="<?php echo $vs_options['ctx_bgcolor']; ?>" /><br />
- 				<label for="ctx_bgcolor">Cor de fundo dos produtos. A melhor cor é branca (#FFFFFF). Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
- 		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Cor da borda</th>
-		<td>
-  				<input style="width: 60px;" id="ctx_brdcolor" name="ctx_brdcolor" type="text" value="<?php echo $vs_options['ctx_brdcolor']; ?>" /><br />
- 				<label for="ctx_brdcolor">Cor da borda da vitrine. A melhor cor é cinza (#DDDDDD). Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
+  				Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.<br /><br />
+  				<table><td style="border-width:2px;"><strong>Texto:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="ctx_fontcolor" name="ctx_fontcolor" type="text" value="<?php echo $vs_options['ctx_fontcolor']; ?>" /><label for="ctx_fontcolor"> Cor do texto de descrição dos produtos. A melhor cor é preta (#000000 ou BLACK). </label></td></tr>
+  				<tr><td style="border-width:2px;"><strong>Fundo:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="ctx_bgcolor" name="ctx_bgcolor" type="text" value="<?php echo $vs_options['ctx_bgcolor']; ?>" /><label for="ctx_bgcolor"> Cor de fundo dos produtos. A melhor cor é branca (#FFFFFF).</label></td></tr>
+  				<tr><td style="border-width:2px;"><strong>Borda:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="ctx_brdcolor" name="ctx_brdcolor" type="text" value="<?php echo $vs_options['ctx_brdcolor']; ?>" /><label for="ctx_brdcolor"> Cor da borda da vitrine. A melhor cor é cinza (#DDDDDD). </label></td></tr>
+  				<tr><td style="border-width:2px;"><strong>Preço:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="ctx_prcolor" name="ctx_prcolor" type="text" value="<?php echo $vs_options['ctx_prcolor']; ?>" /><label for="ctx_prcolor"> Cor do preço dos produtos.</label></td></tr>
+  				<tr><td style="border-width:2px;"><strong>Promoção:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="ctx_procolor" name="ctx_procolor" type="text" value="<?php echo $vs_options['ctx_procolor']; ?>" /><label for="ctx_procolor"> Cor do valor promocional.</label></td></tr>
+  				<tr><td style="border-width:2px;"><strong>Parcela:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="ctx_prccolor" name="ctx_prccolor" type="text" value="<?php echo $vs_options['ctx_prccolor']; ?>" /><label for="ctx_prccolor"> Cor do valor da parcela. </label></td></tr>
+  				</table>
  		</td>
 	 </tr>
 	</table>
@@ -1431,7 +1155,20 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		<th scope="row" valign="top">Produto Padrão</th>
 		<td>
  				<input style="width: 30%;" id="ctx_word" name="ctx_word" type="text" value="<?php echo $vs_options['ctx_word']; ?>" /><br />
- 				<label for="shp_word">Informe a palavra para popular a vitrine. Evite utilização de acentos. Você pode definir multiplas palavras, basta separar por vírgulas. A escolha da palavra para exibir produtos na vitrine é aleatória.</label><br />
+ 				Informe a palavra para popular a vitrine. Evite utilização de acentos. Você pode definir multiplas palavras, basta separar por vírgulas. A escolha da palavra para exibir produtos na vitrine é aleatória.<br />
+		</td>
+	 </tr>
+	</table>
+
+    <table class="form-table">
+	 <tr>
+		<th scope="row" valign="top">Valores</th>
+		<td>
+				<input type="checkbox" id="Valpre" name="ctx_valores[]" value="Preco" <?php echo $ctx_showpreco; ?>> <label for="Valpre">Preço</label><br />
+				<input type="checkbox" id="Valpro" name="ctx_valores[]" value="Promo" <?php echo $ctx_showpromo; ?>> <label for="Valpro">Promoção</label><br />
+				<input type="checkbox" id="Valpar" name="ctx_valores[]" value="Parce" <?php echo $ctx_showparce; ?>> <label for="Valpar">Parcela</label><br />
+
+				<label for="Submarino-show">Informe quais valores deverão ser mostrados na vitrine.</label><br />
 		</td>
 	 </tr>
 	</table>
@@ -1441,7 +1178,7 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		<th scope="row" valign="top">Quant. Produtos</th>
 		<td>
 				<input style="width: 20px;" id="ctx_show" name="ctx_show" type="text" value="<?php echo $vs_options['ctx_show']; ?>" /><br />
-				<label for="Submarino-show">Quantos produtos deverão ser motrados na vitrine.</label><br />
+				Quantos produtos deverão ser motrados na vitrine.<br />
 		</td>
 	 </tr>
 	</table>
@@ -1450,12 +1187,13 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 	 <tr>
 		<th scope="row" valign="top">Exibição da Vitrine</th>
 		<td>
-			<input type="radio" name="ctx_exib_auto" value="auto" <?php echo $auto; ?>> Automática 
+			<input type="radio" id="vitauto" name="ctx_exib_auto" value="auto" <?php echo $auto; ?> /> <label for="vitauto">Automática</label>
 			<br />
-			<input type="radio" name="ctx_exib_auto" value="manual" <?php echo $manual; ?>> Manual
+			<input type="radio" id="vitman" name="ctx_exib_auto" value="manual" <?php echo $manual; ?> /> <label for="vitman">Manual</label>
 			<br />
-			Para mostrar 3 produtos, com cor de fundo branca, vitrine para "iPod" e borda cinza, por exemplo:<br />
-			 &lt;?php if(function_exists('vs_vitrine')) { vs_vitrine (3, "#FFFFFF", "iPod", "#DDDDDD"); } ?&gt;<br />
+			Para mostrar a vitrine manualmente basta usar o código abaixo. As configurações são feitas nesta página.<br />
+			 <code>&lt;?php if(function_exists('vs_vitrine')) { vs_vitrine (); } ?&gt;</code><br />
+			 O código deve ser inserido dentro do <a href="http://codex.wordpress.org/The_Loop" target="_blank">Loop</a>.
 		</td>
 	 </tr>
 	</table>
@@ -1464,17 +1202,10 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 	 <tr>
 		<th scope="row" valign="top">Tipo de Vitrine</th>
 		<td>
-			<input type="radio" name="ctx_tipo" value="horizontal" <?php echo $horizontal; ?>> Horizontal (produtos em uma única linha)
+			<input type="radio" id="vithor" name="ctx_tipo" value="horizontal" <?php echo $horizontal; ?> /> <label for="vithor">Horizontal (produtos em uma única linha)</label>
 			<br />
-			<input type="radio" name="ctx_tipo" value="vertical" <?php echo $vertical; ?>> Vertical (um produto por linha)
+			<input type="radio" if="vitver" name="ctx_tipo" value="vertical" <?php echo $vertical; ?> /> <label for="vitver">Vertical (um produto por linha)</label>
 			<br />
-			<br />
-			<input <?php echo $PMdisabled; ?> type="radio" name="ctx_style" value="comabas" <?php echo $style_comabas; ?>> Com Abas (Requer <a href="http://www.bernabauer.com/wp-plugins/">Palavras de Monetização</a>)
-			<br />
-			<input type="radio" name="ctx_style" value="semabas" <?php echo $style_semabas; ?>> Sem Abas 
-			<br />
-			
-			
 		</td>
 	 </tr>
 	</table>
@@ -1483,17 +1214,14 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 	 <tr>
 		<th scope="row" valign="top">Ordem dos Produtos</th>
 		<td>
-			<input type="radio" name="ctx_orderby" value="" <?php echo $ctx_noorder; ?>> Não Ordenar
+			<input type="radio" name="ctx_orderby" id="precoD" value="precoD" <?php echo $ctx_precoD; ?> /> <label for="precoD">Maior Preço</label>
 			<br />
-			<input type="radio" name="ctx_orderby" value="sellprice" <?php echo $ctx_sellprice; ?>> Preço
+			<input type="radio" name="ctx_orderby" id="precoA" value="precoA" <?php echo $ctx_precoA; ?> /> <label for="precoA">Menor Preço</label>
 			<br />
-			<input type="radio" name="ctx_orderby" value="sortordersell" <?php echo $ctx_sortordersell; ?>> Mais Vendidos
+			<input type="radio" name="ctx_orderby" id="produtoA" value="produtoA" <?php echo $ctx_alfaA; ?> /> <label for="produtoA">Alfabética (A-Z)</label>
 			<br />
-			<input type="radio" name="ctx_orderby" value="searchall" <?php echo $ctx_searchall; ?>> Relevância
+			<input type="radio" name="ctx_orderby" id="produtoZ" value="produtoZ" <?php echo $ctx_alfaZ; ?> /> <label for="produtoZ">Alfabética (Z-A)</label>
 			<br />
-			<input type="radio" name="ctx_orderby" value="ranking" <?php echo $ctx_ranking; ?>> Avaliações
-			<br />
-			<label for="orderby">Ordem dos produtos a serem mostrados. Se a vitrine estiver mostrando produtos estranhos, mude a ordem selecionada. Às vezes a ordem "Mais Vendidos" não funciona corretamente e trocando a opção para "Não Ordenar" ou "Relevância" resolve a questão</label>
 		</td>
 	 </tr>
 	</table>
@@ -1502,10 +1230,10 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 	 <tr>
 		<th scope="row" valign="top">Rastrear Cliques</th>
 		<td>
-			É necessário ter uma conta no Google Analytics.<br />
-			<input type="radio" name="ctx_track" value="sim" <?php echo $ctxtrksim; ?>> Sim
+			É necessário ter uma conta no Google Analytics.<br /> Para ver a estatística de cliques você precisa acessar sua conta no Google Analytics, acionar o relatório "Conteúdo Principal" e incluir o filtro abaixo da tabela "Desempenho de conteúdo". Em "Localizar Página" escolha a opção  "contendo" e escreva "/sub/" na caixa de texto (sem as aspas, é claro!). Pressione "Ir".<br />
+			<input type="radio" name="ctx_track" id="ctrackS" value="sim" <?php echo $ctxtrksim; ?> /> <label for="ctrackS">Sim</label>
 			<br />
-			<input type="radio" name="ctx_track" value="nao" <?php echo $ctxtrknao; ?>> Não
+			<input type="radio" name="ctx_track" id="ctrackN" value="nao" <?php echo $ctxtrknao; ?> /> <label for="ctrackN">Não</label>
 			<br />
 		</td>
 	 </tr>
@@ -1515,31 +1243,31 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 	 <tr>
 		<th scope="row" valign="top">Anúncio alternativo</th>
 		<td>
-			<input type="radio" name="ctx_altcode" value="ctx_FBD" <?php echo $ctx_FBD; ?>> Fullbanner (468x60px) Campanha de Duráveis
-			<br>
-			<input type="radio" name="ctx_altcode" value="ctx_FBG" <?php echo $ctx_FBG; ?>> Fullbanner (468x60px) Campanha de Giro
-			<br>
-			<input type="radio" name="ctx_altcode" value="ctx_SBD" <?php echo $ctx_SBD; ?>> Superbanner (728x90px) Campanha de Duráveis
-			<br>
-			<input type="radio" name="ctx_altcode" value="ctx_SBG" <?php echo $ctx_SBG; ?>> Superbanner (728x90px) Campanha de Giro
-			<br>
-			<input type="radio" name="ctx_altcode" value="ctx_BVD" <?php echo $ctx_BVD; ?>> Barra Vertical (150x350px) Campanha de Duráveis
-			<br>
-			<input type="radio" name="ctx_altcode" value="ctx_BVG" <?php echo $ctx_BVG; ?>> Barra Vertical (150x350px) Campanha de Giro
-			<br>
-			<input type="radio" name="ctx_altcode" value="ctx_SKYD" <?php echo $ctx_SKYD; ?>> Sky (120x600px) Campanha de Duráveis
-			<br>
-			<input type="radio" name="ctx_altcode" value="ctx_SKYG" <?php echo $ctx_SKYG; ?>> Sky (120x600px) Campanha de Giro
-			<br>
-			<input type="radio" name="ctx_altcode" value="ctx_BTD" <?php echo $ctx_BTD; ?>> Botão (125x125px) Campanha de Duráveis
-			<br>
-			<input type="radio" name="ctx_altcode" value="ctx_BTG" <?php echo $ctx_BTG; ?>> Botão (125x125px) Campanha de Giro
-			<br>
-			<input type="radio" name="ctx_altcode" value="ctx_HBD" <?php echo $ctx_HBD; ?>> HalfBanner (120x60px) Campanha de Duráveis
-			<br>
-			<input type="radio" name="ctx_altcode" value="ctx_HBG" <?php echo $ctx_HBG; ?>> HalfBanner (120x60px) Campanha de Giro
-			<br>
-			<label for="ctx_altcode">Código HTML para ser mostrado caso não sejam encontrados produtos com a palavra acima.</label>
+			<input type="radio" name="ctx_altcode" id="cfbd" value="ctx_FBD" <?php echo $ctx_FBD; ?> /> <label for="cfbd">Fullbanner (468x60px) Campanha de Duráveis</label>
+			<br />
+			<input type="radio" name="ctx_altcode" id="cfbg" value="ctx_FBG" <?php echo $ctx_FBG; ?> /> <label for="cfbg">Fullbanner (468x60px) Campanha de Giro</label>
+			<br />
+			<input type="radio" name="ctx_altcode" id="csbd" value="ctx_SBD" <?php echo $ctx_SBD; ?> /> <label for="csbd">Superbanner (728x90px) Campanha de Duráveis</label>
+			<br />
+			<input type="radio" name="ctx_altcode" id="csbg" value="ctx_SBG" <?php echo $ctx_SBG; ?> /> <label for="csbg">Superbanner (728x90px) Campanha de Giro</label>
+			<br />
+			<input type="radio" name="ctx_altcode" id="cbvd" value="ctx_BVD" <?php echo $ctx_BVD; ?> /> <label for="cbvd">Barra Vertical (150x350px) Campanha de Duráveis</label>
+			<br />
+			<input type="radio" name="ctx_altcode" id="cbvg" value="ctx_BVG" <?php echo $ctx_BVG; ?> /> <label for="cbvg">Barra Vertical (150x350px) Campanha de Giro</label>
+			<br />
+			<input type="radio" name="ctx_altcode" id="cskyd" value="ctx_SKYD" <?php echo $ctx_SKYD; ?> /> <label for="cskyd">Sky (120x600px) Campanha de Duráveis</label>
+			<br />
+			<input type="radio" name="ctx_altcode" id="cskyg" value="ctx_SKYG" <?php echo $ctx_SKYG; ?> /> <label for="cskyg">Sky (120x600px) Campanha de Giro</label>
+			<br />
+			<input type="radio" name="ctx_altcode" id="cbtd" value="ctx_BTD" <?php echo $ctx_BTD; ?> /> <label for="cbtd">Botão (125x125px) Campanha de Duráveis</label>
+			<br />
+			<input type="radio" name="ctx_altcode" id="cbtg" value="ctx_BTG" <?php echo $ctx_BTG; ?> /> <label for="cbtg">Botão (125x125px) Campanha de Giro</label>
+			<br />
+			<input type="radio" name="ctx_altcode" id="chbd" value="ctx_HBD" <?php echo $ctx_HBD; ?> /> <label for="chbd">HalfBanner (120x60px) Campanha de Duráveis</label>
+			<br />
+			<input type="radio" name="ctx_altcode" id="chbg" value="ctx_HBG" <?php echo $ctx_HBG; ?> /> <label for="chbg">HalfBanner (120x60px) Campanha de Giro</label>
+			<br />
+			Código HTML para ser mostrado caso não sejam encontrados produtos com a palavra acima.
 		</td>
 	 </tr>
 	</table>
@@ -1550,9 +1278,9 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		<th scope="row" valign="top">Localização da Vitrine</th>
 		<td>
 			Estas opções só funcionam caso a exibição da vitrine esteja configurada para automática.<br />
-			<input type="radio" name="ctx_local" value="antes" <?php echo $antes; ?>> Antes do artigo
+			<input type="radio" name="ctx_local" id="vant" value="antes" <?php echo $antes; ?> /> <label for="vant">Antes do artigo</label>
 			<br />
-			<input type="radio" name="ctx_local" value="depois" <?php echo $depois; ?>> Depois do artigo
+			<input type="radio" name="ctx_local" id="vdep" value="depois" <?php echo $depois; ?> /> <label for="vdep">Depois do artigo</label>
 			<br />
 		</td>
 	 </tr>
@@ -1581,40 +1309,66 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 
     <table class="form-table">
 	 <tr>
-		<th scope="row" valign="top">Cor do texto</th>
+		<th scope="row" valign="top">Cores</th>
 		<td>
-  				<input style="width: 60px;" id="wid_fontcolor" name="wid_fontcolor" type="text" value="<?php echo $vs_options['wid_fontcolor']; ?>" /><br />
- 				<label for="wid_fontcolor">Cor do texto de descrição dos produtos. A melhor cor é preta (#000000 ou BLACK). Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
+  				Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.<br /><br />
+  				<table><td style="border-width:2px;"><strong>Texto:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="wid_fontcolor" name="wid_fontcolor" type="text" value="<?php echo $vs_options['wid_fontcolor']; ?>" /><label for="wid_fontcolor"> Cor do texto de descrição dos produtos. A melhor cor é preta (#000000 ou BLACK). </label></td></tr>
+  				<tr><td style="border-width:2px;"><strong>Fundo:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="wid_bgcolor" name="wid_bgcolor" type="text" value="<?php echo $vs_options['wid_bgcolor']; ?>" /><label for="wid_bgcolor"> Cor de fundo dos produtos. A melhor cor é branca (#FFFFFF).</label></td></tr>
+  				<tr><td style="border-width:2px;"><strong>Borda:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="wid_brdcolor" name="wid_brdcolor" type="text" value="<?php echo $vs_options['wid_brdcolor']; ?>" /><label for="wid_brdcolor"> Cor da borda da vitrine. A melhor cor é cinza (#DDDDDD). </label></td></tr>
+  				<tr><td style="border-width:2px;"><strong>Preço:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="wid_prcolor" name="wid_prcolor" type="text" value="<?php echo $vs_options['wid_prcolor']; ?>" /><label for="wid_prcolor"> Cor do preço dos produtos.</label></td></tr>
+  				<tr><td style="border-width:2px;"><strong>Promoção:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="wid_procolor" name="wid_procolor" type="text" value="<?php echo $vs_options['wid_procolor']; ?>" /><label for="wid_procolor"> Cor do valor promocional.</label></td></tr>
+  				<tr><td style="border-width:2px;"><strong>Parcela:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="wid_prccolor" name="wid_prccolor" type="text" value="<?php echo $vs_options['wid_prccolor']; ?>" /><label for="wid_prccolor"> Cor do valor da parcela. </label></td></tr>
+  				</table>
  		</td>
 	 </tr>
 	</table>
 
     <table class="form-table">
 	 <tr>
-		<th scope="row" valign="top">Cor de fundo</th>
-		<td>
-  				<input style="width: 60px;" id="wid_bgcolor" name="wid_bgcolor" type="text" value="<?php echo $vs_options['wid_bgcolor']; ?>" /><br />
- 				<label for="wid_bgcolor">Cor de fundo dos produtos. A melhor cor é branca (#FFFFFF). Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
- 		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Cor da borda</th>
-		<td>
-  				<input style="width: 60px;" id="wid_brdcolor" name="wid_brdcolor" type="text" value="<?php echo $vs_options['wid_brdcolor']; ?>" /><br />
- 				<label for="wid_brdcolor">Cor da borda da vitrine. A melhor cor é cinza (#DDDDDD). Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
- 		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Produto</th>
+		<th scope="row" valign="top">Produto Padrão</th>
 		<td>
  				<input style="width: 30%;" id="wid_word" name="wid_word" type="text" value="<?php echo $vs_options['wid_word']; ?>" /><br />
- 				<label for="shp_word">Informe a palavra para popular a vitrine. Evite utilização de acentos. Você pode definir multiplas palavras, basta separar por vírgulas. A escolha da palavra para exibir produtos na vitrine é aleatória.</label><br />
+ 				<label for="wid_word">Informe a palavra para popular a vitrine. Evite utilização de acentos. Você pode definir multiplas palavras, basta separar por vírgulas. A escolha da palavra para exibir produtos na vitrine é aleatória.</label><br /><br />
+
+				<strong>Selecione as categorias relevantes às palavras informadas na caixa de texto acima. A busca será restrita as categorias aqui informadas. Se você não escolher categorias, todas as categorias serão utilizadas, ou seja, escolher todas ou nenhuma dá na mesma. ;-)</strong>
+  				<table>
+  				<tr>
+  				
+  				<?php 
+
+  				for($i=1;$i<23;$i++) {
+  					$cats = explode(",", $vs_options['wid_cats']);
+  					foreach ($cats as $cat) {
+  					    if ( stripos($cat, $cat_arr[$i-1]) !== FALSE) {
+							$wid_cat_checked = 'checked';
+							break;
+						} else
+							$wid_cat_checked = '';
+					}							
+					echo '<td style="border-width:2px;"><input type="checkbox" id="wid_cat'.$i.'" name="wid_cats[]" value="'.$cat_arr[$i-1].'" '.$wid_cat_checked.'> <label for="wid_cat'.$i.'">'.$cat_arr[$i-1].'</label></td>';
+					if ($i % 5 == 0) {
+						echo "</tr><tr>";
+					}
+				}
+				?>
+				</tr>
+  				</table>
+
+
+
+		</td>
+	 </tr>
+	</table>
+
+    <table class="form-table">
+	 <tr>
+		<th scope="row" valign="top">Valores</th>
+		<td>
+				<input type="checkbox" id="Valpre" name="wid_valores[]" value="Preco" <?php echo $wid_showpreco; ?>> <label for="Valpre">Preço</label><br />
+				<input type="checkbox" id="Valpro" name="wid_valores[]" value="Promo" <?php echo $wid_showpromo; ?>> <label for="Valpro">Promoção</label><br />
+				<input type="checkbox" id="Valpar" name="wid_valores[]" value="Parce" <?php echo $wid_showparce; ?>> <label for="Valpar">Parcela</label><br />
+
+				<label for="Submarino-show">Informe quais valores deverão ser mostrados na vitrine.</label><br />
 		</td>
 	 </tr>
 	</table>
@@ -1623,17 +1377,14 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 	 <tr>
 		<th scope="row" valign="top">Ordem dos Produtos</th>
 		<td>
-			<input type="radio" name="wid_orderby" value="" <?php echo $wid_noorder; ?>> Não Ordenar
+			<input type="radio" name="wid_orderby" id="wprecod" value="precoD" <?php echo $wid_precoD; ?> /> <label for="wprecod">Maior Preço</label>
 			<br />
-			<input type="radio" name="wid_orderby" value="sellprice" <?php echo $wid_sellprice; ?>> Preço
+			<input type="radio" name="wid_orderby" id ="wprecoa" value="precoA" <?php echo $wid_precoA; ?> /> <label for="wprecoa">Menor Preço</label>
 			<br />
-			<input type="radio" name="wid_orderby" value="sortordersell" <?php echo $wid_sortordersell; ?>> Mais Vendidos
+			<input type="radio" name="wid_orderby" id="wprodutoa" value="produtoA" <?php echo $wid_alfaA; ?> /> <label for="wprodutoa">Alfabética (A-Z)</label>
 			<br />
-			<input type="radio" name="wid_orderby" value="searchall" <?php echo $wid_searchall; ?>> Relevância
+			<input type="radio" name="wid_orderby" id="wprodutoz" value="produtoZ" <?php echo $wid_alfaZ; ?> /> <label for="wprodutoz">Alfabética (Z-A)</label>
 			<br />
-			<input type="radio" name="wid_orderby" value="ranking" <?php echo $wid_ranking; ?>> Avaliações
-			<br />
-			<label for="orderby">Ordem dos produtos a serem mostrados. Se a vitrine estiver mostrando produtos estranhos, mude a ordem selecionada. Às vezes a ordem "Mais Vendidos" não funciona corretamente e trocando a opção para "Não Ordenar" ou "Relevância" resolve a questão</label>
 		</td>
 	 </tr>
 	</table>
@@ -1642,10 +1393,10 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 	 <tr>
 		<th scope="row" valign="top">Rastrear Cliques</th>
 		<td>
-			É necessário ter uma conta no Google Analytics.<br />
-			<input type="radio" name="wid_track" value="sim" <?php echo $widtrksim; ?>> Sim
+			É necessário ter uma conta no Google Analytics.<br /> Para ver a estatística de cliques você precisa acessar sua conta no Google Analytics, acionar o relatório "Conteúdo Principal" e incluir o filtro abaixo da tabela "Desempenho de conteúdo". Em "Localizar Página" escolha a opção  "contendo" e escreva "/sub/" na caixa de texto (sem as aspas, é claro!). Pressione "Ir".<br />
+			<input type="radio" name="wid_track" id="wts" value="sim" <?php echo $widtrksim; ?> /> <label for="wts">Sim</label>
 			<br />
-			<input type="radio" name="wid_track" value="nao" <?php echo $widtrknao; ?>> Não
+			<input type="radio" name="wid_track" id="wtn" value="nao" <?php echo $widtrknao; ?> /> <label for="wtn">Não</label>
 			<br />
 		</td>
 	 </tr>
@@ -1655,118 +1406,35 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 	 <tr>
 		<th scope="row" valign="top">Anúncio alternativo</th>
 		<td>
-			<input type="radio" name="wid_altcode" value="FBD" <?php echo $FBD; ?>> Fullbanner (468x60px) Campanha de Duráveis
-			<br>
-			<input type="radio" name="wid_altcode" value="FBG" <?php echo $FBG; ?>> Fullbanner (468x60px) Campanha de Giro
-			<br>
-			<input type="radio" name="wid_altcode" value="SBD" <?php echo $SBD; ?>> Superbanner (728x90px) Campanha de Duráveis
-			<br>
-			<input type="radio" name="wid_altcode" value="SBG" <?php echo $SBG; ?>> Superbanner (728x90px) Campanha de Giro
-			<br>
-			<input type="radio" name="wid_altcode" value="BVD" <?php echo $BVD; ?>> Barra Vertical (150x350px) Campanha de Duráveis
-			<br>
-			<input type="radio" name="wid_altcode" value="BVG" <?php echo $BVG; ?>> Barra Vertical (150x350px) Campanha de Giro
-			<br>
-			<input type="radio" name="wid_altcode" value="SKYD" <?php echo $SKYD; ?>> Sky (120x600px) Campanha de Duráveis
-			<br>
-			<input type="radio" name="wid_altcode" value="SKYG" <?php echo $SKYG; ?>> Sky (120x600px) Campanha de Giro
-			<br>
-			<input type="radio" name="wid_altcode" value="BTD" <?php echo $BTD; ?>> Botão (125x125px) Campanha de Duráveis
-			<br>
-			<input type="radio" name="wid_altcode" value="BTG" <?php echo $BTG; ?>> Botão (125x125px) Campanha de Giro
-			<br>
-			<input type="radio" name="wid_altcode" value="HBD" <?php echo $HBD; ?>> HalfBanner (120x60px) Campanha de Duráveis
-			<br>
-			<input type="radio" name="wid_altcode" value="HBG" <?php echo $HBG; ?>> HalfBanner (120x60px) Campanha de Giro
-			<br>
-			<label for="wid_altcode">Código HTML para ser mostrado caso não sejam encontrados produtos com a palavra acima.</label>
+			<input type="radio" name="wid_altcode" value="FBD" id="wfbd" <?php echo $FBD; ?> /> <label for="wFBD">Fullbanner (468x60px) Campanha de Duráveis</label>
+			<br />
+			<input type="radio" name="wid_altcode" value="FBG" id="wfbg" <?php echo $FBG; ?> /> <label for="wfbg">Fullbanner (468x60px) Campanha de Giro</label>
+			<br />
+			<input type="radio" name="wid_altcode" value="SBD" id="wsbd" <?php echo $SBD; ?> /> <label for="wsbd">Superbanner (728x90px) Campanha de Duráveis</label>
+			<br />
+			<input type="radio" name="wid_altcode" value="SBG" id="wsbg" <?php echo $SBG; ?> /> <label for="wsbg">Superbanner (728x90px) Campanha de Giro</label>
+			<br />
+			<input type="radio" name="wid_altcode" value="BVD" id="wbvd" <?php echo $BVD; ?> /> <label for="wbvd">Barra Vertical (150x350px) Campanha de Duráveis</label>
+			<br />
+			<input type="radio" name="wid_altcode" value="BVG" id="wbvg" <?php echo $BVG; ?> /> <label for="wbvg">Barra Vertical (150x350px) Campanha de Giro</label>
+			<br />
+			<input type="radio" name="wid_altcode" value="SKYD" id="wskyd" <?php echo $SKYD; ?> /> <label for="wskyd">Sky (120x600px) Campanha de Duráveis</label>
+			<br />
+			<input type="radio" name="wid_altcode" value="SKYG" id="wskyg" <?php echo $SKYG; ?> /> <label for="wskyg">Sky (120x600px) Campanha de Giro</label>
+			<br />
+			<input type="radio" name="wid_altcode" value="BTD" id="wbtd" <?php echo $BTD; ?> /> <label for="wbtd">Botão (125x125px) Campanha de Duráveis</label>
+			<br />
+			<input type="radio" name="wid_altcode" value="BTG" id="wbtg" <?php echo $BTG; ?> /> <label for="wbtg">Botão (125x125px) Campanha de Giro</label>
+			<br />
+			<input type="radio" name="wid_altcode" value="HBD" id="whbd" <?php echo $HBD; ?> /> <label for="whbd">HalfBanner (120x60px) Campanha de Duráveis</label>
+			<br />
+			<input type="radio" name="wid_altcode" value="HBG" id="whbg" <?php echo $HBG; ?> /> <label for="whbg">HalfBanner (120x60px) Campanha de Giro</label>
+			<br />
+			Código HTML para ser mostrado caso não sejam encontrados produtos com a palavra acima.
 		</td>
 	 </tr>
 	</table>
 <br />
-    <h2>Shopping</h2>
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Página do Shopping</th>
-		<td>
-				<input id="shp_url" name="shp_url" type="text" value="<?php echo $vs_options['shp_url']; ?>" /><br />
-				<label for="shp_url">Se você usar Permalinks não coloque a barra no final. Se a página for www.seusite.com/loja coloque apenas "loja" sem as apas! ;-) Se você não usa permalinks a URL da página do shopping deve ser algo parecido com "?page_id=11".</label><br />
-		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Quant. Produtos</th>
-		<td>
-				<input style="width: 20px;" id="shp_show" name="shp_show" type="text" value="<?php echo $vs_options['shp_show']; ?>" /><br />
-				<label for="shp_show">Quantos produtos deverão ser motrados no shopping.</label><br />
-		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Cor de fundo</th>
-		<td>
-  				<input style="width: 60px;" id="shp_bgcolor" name="shp_bgcolor" type="text" value="<?php echo $vs_options['shp_bgcolor']; ?>" /><br />
- 				<label for="shp_bgcolor">Cor de fundo dos produtos. A melhor cor é branca (#FFFFFF). Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
- 		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Cor da borda</th>
-		<td>
-  				<input style="width: 60px;" id="shp_brdcolor" name="shp_brdcolor" type="text" value="<?php echo $vs_options['shp_brdcolor']; ?>" /><br />
- 				<label for="shp_brdcolor">Cor da borda da vitrine. A melhor cor é cinza (#DDDDDD). Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.</label><br />
- 		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Produto</th>
-		<td>
- 				<input style="width: 30%;" id="shp_word" name="shp_word" type="text" value="<?php echo $vs_options['shp_word']; ?>" /><br />
- 				<label for="shp_word">Informe a palavra para popular o shopping na primeira visita. Evite utilização de acentos. Você pode definir multiplas palavras, basta separar por vírgulas. A escolha da palavra para exibir produtos na vitrine é aleatória.</label><br />
-		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Ordem dos Produtos</th>
-		<td>
-			<input type="radio" name="shp_orderby" value="" <?php echo $shp_noorder; ?>> Não Ordenar
-			<br />
-			<input type="radio" name="shp_orderby" value="sellprice" <?php echo $shp_sellprice; ?>> Preço
-			<br />
-			<input type="radio" name="shp_orderby" value="sortordersell" <?php echo $shp_sortordersell; ?>> Mais Vendidos
-			<br />
-			<input type="radio" name="shp_orderby" value="searchall" <?php echo $shp_searchall; ?>> Relevância
-			<br />
-			<input type="radio" name="shp_orderby" value="ranking" <?php echo $shp_ranking; ?>> Avaliações
-			<br />
-			<label for="orderby">Ordem dos produtos a serem mostrados. Se a vitrine estiver mostrando produtos estranhos, mude a ordem selecionada. Às vezes a ordem "Mais Vendidos" não funciona corretamente e trocando a opção para "Não Ordenar" ou "Relevância" resolve a questão</label>
-		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Rastrear Cliques</th>
-		<td>
-			É necessário ter uma conta no Google Analytics.<br />
-			<input type="radio" name="shp_track" value="sim" <?php echo $shptrksim; ?>> Sim
-			<br />
-			<input type="radio" name="shp_track" value="nao" <?php echo $shptrknao; ?>> Não
-			<br />
-		</td>
-	 </tr>
-	</table>
-	<br />
 
 <div class="submit">
   <input type="submit" name="info_update" value="Atualizar" />
@@ -1803,7 +1471,7 @@ function vs_widget_init() {
 			// start list
 			echo '<ul>';
 				// were there any posts found?
-				$prod = vs_core ( $vs_options['wid_show'], $vs_options['wid_word'], "widget", $vs_options['wid_bgcolor'], $vs_options['wid_brdcolor'], $vs_options['wid_fontcolor']) ;
+				$prod = vs_core ( $vs_options['wid_show'], $vs_options['wid_word'], "widget", $vs_options['wid_bgcolor'], $vs_options['wid_brdcolor'], $vs_options['wid_fontcolor'], $vs_options['wid_prcolor'], $vs_options['wid_procolor'], $vs_options['wid_prccolor']) ;
 				if (!empty($prod)) {
 					echo $prod;
 				}
@@ -1819,5 +1487,32 @@ function vs_widget_init() {
 	wp_register_sidebar_widget('vitrine-submarino', 'Vitrine Submarino', 'widget_Submarino', $widget_ops);
 }
 
+/***********************************************************************/
+// Returns array with headers in $response[0] and body in $response[1]
+
+function vs_http_post($request, $host, $path, $port = 80) {
+
+	global $wp_version;
+
+	$http_request  = "POST $path HTTP/1.0\r\n";
+	$http_request .= "Host: $host\r\n";
+	$http_request .= "Content-Type: application/x-www-form-urlencoded; charset=" . get_option('blog_charset') . "\r\n";
+	$http_request .= "Content-Length: " . strlen($request) . "\r\n";
+    $http_request .= "User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.2.1) Gecko/20021204\r\n";
+    $http_request .= "Referer: ".get_option('siteurl')."\r\n";
+	$http_request .= "\r\n";
+	$http_request .= $request;
+
+	$response = '';
+	if( false != ( $fs = @fsockopen($host, $port, $errno, $errstr, 10) ) ) {
+		fwrite($fs, $http_request);
+
+		while ( !feof($fs) )
+			$response .= fgets($fs, 1160); // One TCP-IP packet
+		fclose($fs);
+		$response = explode("\r\n\r\n", $response, 2);
+	}
+	return $response;
+}
 
 ?>
