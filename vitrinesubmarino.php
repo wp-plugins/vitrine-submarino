@@ -3,7 +3,7 @@
 Plugin Name: Vitrine Submarino
 Plugin URI: http://www.bernabauer.com/wp-plugins/
 Description: Mostre vitrines de produtos do Submarino em seu blog. Com o <a href="http://wordpress.org/extend/plugins/palavras-de-monetizacao/">Palavras de Monetização</a> você pode contextualizar manualmente os produtos. Para usar widgets é neecessário um tema compatível.
-Version: 3.0
+Version: 3.1
 Author: Bernardo Bauer
 Author URI: http://www.bernabauer.com/
 */
@@ -30,7 +30,7 @@ global $wpdb;
 global $vs_options;
 global $vs_version;
 
-$vs_version = "3.0";
+$vs_version = "3.1";
 $vs_options = get_option('vs_options');
 
 register_activation_hook(__FILE__, 'vs_activate');
@@ -47,7 +47,9 @@ add_action('admin_menu', 'vs_option_menu');
 // Vitrine Contextual Automática
 if ($vs_options['ctx_exib_auto'] == 'auto') {
 	add_filter('the_content', 'vs_auto',99);
-} 
+}
+
+add_action('vs_cron', 'vs_pegaprodutos_rss' );
 
 /***************************************************************************************************
  *  Coisas para serem feitas na instalacao do plugin
@@ -72,44 +74,93 @@ function vs_activate() {
 			'LP'=>				'[ Veja mais ]',
 			'LPT'=>				'submarino',
 			'version'=>			$vs_version,
-			'orderby'=>			'precoD',
 			'remover'=>			'nao',
-			'wid_title'=>		'Ofertas Submarino',
-			'wid_orderby'=>		'precoD',
 			'wid_show'=>		'3',
 			'wid_fontcolor'=>	'#000000',
 			'wid_bgcolor'=>		'#FFFFFF',
 			'wid_brdcolor'=>	'#DDDDDD',
 			'wid_prcolor'=>		'#3982C6',
-			'wid_procolor'=>	'#3982C6',
-			'wid_prccolor'=>	'#3982C6',
-			'wid_word'=>		'Celular',
-			'wid_valores'=>		'Preco',
-			'wid_altcode'=>		'BVD',
+			'wid_title'=>		'Ofertas Submarino',
 			'wid_track'=>		'nao',
-			'ctx_orderby'=>		'precoD',
-			'ctx_fontcolor'=>	'#000000',
-			'ctx_bgcolor'=>		'#FFFFFF',
-			'ctx_brdcolor'=>	'#DDDDDD',
+			'wid_rss_source'=>	'lan_Geral',
+			'wid_altcode'=>		'BVD',
 			'ctx_prcolor'=>		'#3982C6',
-			'ctx_procolor'=>	'#3982C6',
-			'ctx_prccolor'=>	'#3982C6',
-			'ctx_valores'=>		'Preco',
-			'ctx_word'=>		'Notebook',
 			'ctx_tipo'=>		'horizontal',
 			'ctx_local'=>		'depois',
 			'ctx_show'=>		'4',
 			'ctx_exib_auto'=>	'auto',
 			'ctx_titulo'=>		'<h3>Ofertas Submarino</h3>',
 			'ctx_track'=>		'nao',
+			'ctx_rss_source'=>	'lan_Geral',
 			'ctx_altcode'=>		'ctx_FBD',
 		);
 		add_option('vs_options', $vs_options);
-	} else {
-		$vs_options['version'] = $vs_version;
-		update_option('vs_options', $vs_options);
+		
+		$sql = 'CREATE TABLE wp_vitrinesubmarino (
+				nomep varchar(255) NOT NULL,
+				linkp varchar(255) NOT NULL,
+				imagemp varchar(255) NOT NULL,
+				precop varchar(10) NOT NULL,
+				rss_source varchar(15) NOT NULL
+				) ENGINE=MyISAM DEFAULT CHARSET=utf8;';
 
+		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+		dbDelta($sql);
+		
+	} else {
+		if ($vs_options['version'] != $vs_version) {
+			delete_option('vs_options');
+					$vs_options = array(
+			'codafil'=>			'',
+			'cod_BP'=>			'',
+			'cod_ML'=>			'',
+			'cod_JC'=>			'',
+			'LCP'=>				'[ Compare Preços ]',
+			'PCP'=>				'BB',
+			'LP'=>				'[ Veja mais ]',
+			'LPT'=>				'submarino',
+			'version'=>			$vs_version,
+			'remover'=>			'nao',
+			'wid_show'=>		'3',
+			'wid_fontcolor'=>	'#000000',
+			'wid_bgcolor'=>		'#FFFFFF',
+			'wid_brdcolor'=>	'#DDDDDD',
+			'wid_prcolor'=>		'#3982C6',
+			'wid_title'=>		'Ofertas Submarino',
+			'wid_track'=>		'nao',
+			'wid_rss_source'=>	'lan_Geral',
+			'wid_altcode'=>		'BVD',
+			'ctx_prcolor'=>		'#3982C6',
+			'ctx_tipo'=>		'horizontal',
+			'ctx_local'=>		'depois',
+			'ctx_show'=>		'4',
+			'ctx_exib_auto'=>	'auto',
+			'ctx_titulo'=>		'<h3>Ofertas Submarino</h3>',
+			'ctx_track'=>		'nao',
+			'ctx_rss_source'=>	'lan_Geral',
+			'ctx_altcode'=>		'ctx_FBD',
+		);
+		add_option('vs_options', $vs_options);
+		
+		$sql = 'CREATE TABLE wp_vitrinesubmarino (
+				nomep varchar(255) NOT NULL,
+				linkp varchar(255) NOT NULL,
+				imagemp varchar(255) NOT NULL,
+				precop varchar(10) NOT NULL,
+				rss_source varchar(15) NOT NULL
+				) ENGINE=MyISAM DEFAULT CHARSET=utf8;';
+
+		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+		dbDelta($sql);
+		}
+#		$vs_options['version'] = $vs_version;
+#		update_option('vs_options', $vs_options);
 	}
+
+	if (!wp_next_scheduled('vs_cron')) {
+		wp_schedule_event( time(), 'daily', 'vs_cron' );
+	}
+
 }
 
 /***************************************************************************************************
@@ -232,7 +283,7 @@ function vs_vitrine () {
 		$word = $vs_options['ctx_word'];
 	}
 
-	$vitrine_temp = vs_core($vs_options["ctx_show"], $word, "contextual", $vs_options['ctx_bgcolor'], $vs_options['ctx_brdcolor'], $vs_options['ctx_fontcolor'], $vs_options['ctx_prcolor'], $vs_options['ctx_procolor'], $vs_options['ctx_prccolor']);
+	$vitrine_temp = vs_core($vs_options["ctx_show"], $word, "contextual", $vs_options['ctx_bgcolor'], $vs_options['ctx_brdcolor'], $vs_options['ctx_fontcolor'], $vs_options['ctx_prcolor']);
 
 	if ($vs_options['ctx_exib_auto'] == 'auto') {
 		$vitrine = $vs_options['ctx_titulo'].$vitrine_temp;
@@ -268,7 +319,7 @@ function vs_auto($text) {
 
 	if ((is_single()) AND ($vs_options["ctx_exib_auto"] == 'auto')) {
 
-		$vitrine = vs_core ( $vs_options["ctx_show"], $word, "contextual", $vs_options['ctx_bgcolor'], $vs_options['ctx_brdcolor'], $vs_options['ctx_fontcolor'], $vs_options['ctx_prcolor'], $vs_options['ctx_procolor'], $vs_options['ctx_prccolor']) ;
+		$vitrine = vs_core ( $vs_options["ctx_show"], $word, "contextual", $vs_options['ctx_bgcolor'], $vs_options['ctx_brdcolor'], $vs_options['ctx_fontcolor'], $vs_options['ctx_prcolor']) ;
 
 		if ($vs_options["ctx_local"] == 'antes') {
 		   $text = $vitrine.$text;
@@ -288,21 +339,26 @@ return $text;
  * Link: http://www.bin-co.com/php/scripts/xml2array/
  * Arguments : $contents - The XML text
  *                $get_attributes - 1 or 0. If this is 1 the function will get the attributes as well as the tag values - this results in a different array structure in the return value.
- * Return: The parsed XML in an array form.
+ *                $priority - Can be 'tag' or 'attribute'. This will change the way the resulting array sturcture. For 'tag', the tags are given more importance.
+ * Return: The parsed XML in an array form. Use print_r() to see the resulting array structure.
+ * Examples: $array =  xml2array(file_get_contents('feed.xml'));
+ *              $array =  xml2array(file_get_contents('feed.xml', 1, 'attribute'));
  */
-function xml2array($contents, $get_attributes=1) {
+function vs_xml2array($contents, $get_attributes=1, $priority = 'tag') {
     if(!$contents) return array();
 
     if(!function_exists('xml_parser_create')) {
         //print "'xml_parser_create()' function not found!";
         return array();
     }
+
     //Get the XML parser of PHP - PHP must have this module for the parser to work
-    $parser = xml_parser_create();
-    xml_parser_set_option( $parser, XML_OPTION_CASE_FOLDING, 0 );
-    xml_parser_set_option( $parser, XML_OPTION_SKIP_WHITE, 1 );
-    xml_parse_into_struct( $parser, $contents, $xml_values );
-    xml_parser_free( $parser );
+    $parser = xml_parser_create('');
+    xml_parser_set_option($parser, XML_OPTION_TARGET_ENCODING, "UTF-8"); # http://minutillo.com/steve/weblog/2004/6/17/php-xml-and-character-encodings-a-tale-of-sadness-rage-and-data-loss
+    xml_parser_set_option($parser, XML_OPTION_CASE_FOLDING, 0);
+    xml_parser_set_option($parser, XML_OPTION_SKIP_WHITE, 1);
+    xml_parse_into_struct($parser, trim($contents), $xml_values);
+    xml_parser_free($parser);
 
     if(!$xml_values) return;//Hmm...
 
@@ -312,9 +368,10 @@ function xml2array($contents, $get_attributes=1) {
     $opened_tags = array();
     $arr = array();
 
-    $current = &$xml_array;
+    $current = &$xml_array; //Refference
 
     //Go through the tags.
+    $repeated_tag_index = array();//Multiple tags with same name will be turned into an array
     foreach($xml_values as $data) {
         unset($attributes,$value);//Remove existing values, or there will be trouble
 
@@ -322,51 +379,84 @@ function xml2array($contents, $get_attributes=1) {
         // tag(string), type(string), level(int), attributes(array).
         extract($data);//We could use the array by itself, but this cooler.
 
-        $result = '';
-        if($get_attributes) {//The second argument of the function decides this.
-            $result = array();
-            if(isset($value)) $result['value'] = $value;
+        $result = array();
+        $attributes_data = array();
+        
+        if(isset($value)) {
+            if($priority == 'tag') $result = $value;
+            else $result['value'] = $value; //Put the value in a assoc array if we are in the 'Attribute' mode
+        }
 
-            //Set the attributes too.
-            if(isset($attributes)) {
-                foreach($attributes as $attr => $val) {
-                    if($get_attributes == 1) $result['attr'][$attr] = $val; //Set all the attributes in a array called 'attr'
-                    /**  :TODO: should we change the key name to '_attr'? Someone may use the tagname 'attr'. Same goes for 'value' too */
-                }
+        //Set the attributes too.
+        if(isset($attributes) and $get_attributes) {
+            foreach($attributes as $attr => $val) {
+                if($priority == 'tag') $attributes_data[$attr] = $val;
+                else $result['attr'][$attr] = $val; //Set all the attributes in a array called 'attr'
             }
-        } elseif(isset($value)) {
-            $result = $value;
         }
 
         //See tag status and do the needed.
         if($type == "open") {//The starting of the tag '<tag>'
             $parent[$level-1] = &$current;
-
             if(!is_array($current) or (!in_array($tag, array_keys($current)))) { //Insert New tag
                 $current[$tag] = $result;
+                if($attributes_data) $current[$tag. '_attr'] = $attributes_data;
+                $repeated_tag_index[$tag.'_'.$level] = 1;
+
                 $current = &$current[$tag];
 
             } else { //There was another element with the same tag name
-                if(isset($current[$tag][0])) {
-                    array_push($current[$tag], $result);
-                } else {
-                    $current[$tag] = array($current[$tag],$result);
+
+                if(isset($current[$tag][0])) {//If there is a 0th element it is already an array
+                    $current[$tag][$repeated_tag_index[$tag.'_'.$level]] = $result;
+                    $repeated_tag_index[$tag.'_'.$level]++;
+                } else {//This section will make the value an array if multiple tags with the same name appear together
+                    $current[$tag] = array($current[$tag],$result);//This will combine the existing item and the new item together to make an array
+                    $repeated_tag_index[$tag.'_'.$level] = 2;
+                    
+                    if(isset($current[$tag.'_attr'])) { //The attribute of the last(0th) tag must be moved as well
+                        $current[$tag]['0_attr'] = $current[$tag.'_attr'];
+                        unset($current[$tag.'_attr']);
+                    }
+
                 }
-                $last = count($current[$tag]) - 1;
-                $current = &$current[$tag][$last];
+                $last_item_index = $repeated_tag_index[$tag.'_'.$level]-1;
+                $current = &$current[$tag][$last_item_index];
             }
 
         } elseif($type == "complete") { //Tags that ends in 1 line '<tag />'
             //See if the key is already taken.
             if(!isset($current[$tag])) { //New Key
                 $current[$tag] = $result;
+                $repeated_tag_index[$tag.'_'.$level] = 1;
+                if($priority == 'tag' and $attributes_data) $current[$tag. '_attr'] = $attributes_data;
 
             } else { //If taken, put all things inside a list(array)
-                if((is_array($current[$tag]) and $get_attributes == 0)//If it is already an array...
-                        or (isset($current[$tag][0]) and is_array($current[$tag][0]) and $get_attributes == 1)) {
-                    array_push($current[$tag],$result); // ...push the new element into that array.
+                if(isset($current[$tag][0]) and is_array($current[$tag])) {//If it is already an array...
+
+                    // ...push the new element into that array.
+                    $current[$tag][$repeated_tag_index[$tag.'_'.$level]] = $result;
+                    
+                    if($priority == 'tag' and $get_attributes and $attributes_data) {
+                        $current[$tag][$repeated_tag_index[$tag.'_'.$level] . '_attr'] = $attributes_data;
+                    }
+                    $repeated_tag_index[$tag.'_'.$level]++;
+
                 } else { //If it is not an array...
                     $current[$tag] = array($current[$tag],$result); //...Make it an array using using the existing value and the new value
+                    $repeated_tag_index[$tag.'_'.$level] = 1;
+                    if($priority == 'tag' and $get_attributes) {
+                        if(isset($current[$tag.'_attr'])) { //The attribute of the last(0th) tag must be moved as well
+                            
+                            $current[$tag]['0_attr'] = $current[$tag.'_attr'];
+                            unset($current[$tag.'_attr']);
+                        }
+                        
+                        if($attributes_data) {
+                            $current[$tag][$repeated_tag_index[$tag.'_'.$level] . '_attr'] = $attributes_data;
+                        }
+                    }
+                    $repeated_tag_index[$tag.'_'.$level]++; //0 and 1 index is already taken
                 }
             }
 
@@ -374,16 +464,330 @@ function xml2array($contents, $get_attributes=1) {
             $current = &$parent[$level-1];
         }
     }
-
+    
     return($xml_array);
-} 
+}  
+/***************************************************************************************************
+ *  http://www.sourcerally.net/Scripts/39-Convert-HTML-Entities-to-XML-Entities
+ */
 
+function vs_xmlEntities($str)
+{
+    $xml = array('&#34;','&#38;','&#38;','&#60;','&#62;','&#160;','&#161;','&#162;','&#163;','&#164;','&#165;','&#166;','&#167;','&#168;','&#169;','&#170;','&#171;','&#172;','&#173;','&#174;','&#175;','&#176;','&#177;','&#178;','&#179;','&#180;','&#181;','&#182;','&#183;','&#184;','&#185;','&#186;','&#187;','&#188;','&#189;','&#190;','&#191;','&#192;','&#193;','&#194;','&#195;','&#196;','&#197;','&#198;','&#199;','&#200;','&#201;','&#202;','&#203;','&#204;','&#205;','&#206;','&#207;','&#208;','&#209;','&#210;','&#211;','&#212;','&#213;','&#214;','&#215;','&#216;','&#217;','&#218;','&#219;','&#220;','&#221;','&#222;','&#223;','&#224;','&#225;','&#226;','&#227;','&#228;','&#229;','&#230;','&#231;','&#232;','&#233;','&#234;','&#235;','&#236;','&#237;','&#238;','&#239;','&#240;','&#241;','&#242;','&#243;','&#244;','&#245;','&#246;','&#247;','&#248;','&#249;','&#250;','&#251;','&#252;','&#253;','&#254;','&#255;');
+    $html = array('&quot;','&amp;','&amp;','&lt;','&gt;','&nbsp;','&iexcl;','&cent;','&pound;','&curren;','&yen;','&brvbar;','&sect;','&uml;','&copy;','&ordf;','&laquo;','&not;','&shy;','&reg;','&macr;','&deg;','&plusmn;','&sup2;','&sup3;','&acute;','&micro;','&para;','&middot;','&cedil;','&sup1;','&ordm;','&raquo;','&frac14;','&frac12;','&frac34;','&iquest;','&Agrave;','&Aacute;','&Acirc;','&Atilde;','&Auml;','&Aring;','&AElig;','&Ccedil;','&Egrave;','&Eacute;','&Ecirc;','&Euml;','&Igrave;','&Iacute;','&Icirc;','&Iuml;','&ETH;','&Ntilde;','&Ograve;','&Oacute;','&Ocirc;','&Otilde;','&Ouml;','&times;','&Oslash;','&Ugrave;','&Uacute;','&Ucirc;','&Uuml;','&Yacute;','&THORN;','&szlig;','&agrave;','&aacute;','&acirc;','&atilde;','&auml;','&aring;','&aelig;','&ccedil;','&egrave;','&eacute;','&ecirc;','&euml;','&igrave;','&iacute;','&icirc;','&iuml;','&eth;','&ntilde;','&ograve;','&oacute;','&ocirc;','&otilde;','&ouml;','&divide;','&oslash;','&ugrave;','&uacute;','&ucirc;','&uuml;','&yacute;','&thorn;','&yuml;');
+    $str = str_replace($html,$xml,$str);
+    $str = str_ireplace($html,$xml,$str);
+    return $str;
+} 
 
 
 /***************************************************************************************************
  *  Funcao principal
  */
-function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec, $corparc, $corprom) {
+function vs_pegaprodutos_rss($rss_source) {
+
+	global $wpdb;
+	global $vs_options;
+
+	switch ($rss_source) {
+	
+		case "mv_Bebes":
+			$rss_link = "/rss/rss-mais-vendidos?rss=30";
+			break;
+		case "mv_Beleza":
+			$rss_link = "/rss/rss-mais-vendidos?rss=24";
+			break;
+		case "mv_Brinquedos":
+			$rss_link = "/rss/rss-mais-vendidos?rss=3";
+			break;
+		case "mv_Cama":
+			$rss_link = "/rss/rss-mais-vendidos?rss=36";
+			break;
+		case "mv_Cameras":
+			$rss_link = "/rss/rss-mais-vendidos?rss=26";
+			break;
+		case "mv_Celulares":
+			$rss_link = "/rss/rss-mais-vendidos?rss=11";
+			break;
+		case "mv_CDs":
+			$rss_link = "/rss/rss-mais-vendidos?rss=2";
+			break;
+		case "mv_DVD":
+			$rss_link = "/rss/rss-mais-vendidos?rss=6";
+			break;
+		case "mv_Esporte":
+			$rss_link = "/rss/rss-mais-vendidos?rss=28";
+			break;
+		case "mv_Eletrodomesticos":
+			$rss_link = "/rss/rss-mais-vendidos?rss=27";
+			break;
+		case "mv_Eletronicos":
+			$rss_link = "/rss/rss-mais-vendidos?rss=13";
+			break;
+		case "mv_Eletroportateis":
+			$rss_link = "/rss/rss-mais-vendidos?rss=34";
+			break;
+		case "mv_Ferramentas":
+			$rss_link = "/rss/rss-mais-vendidos?rss=15";
+			break;
+		case "mv_Games":
+			$rss_link = "/rss/rss-mais-vendidos?rss=12";
+			break;
+		case "mv_Informatica":
+			$rss_link = "/rss/rss-mais-vendidos?rss=10";
+			break;
+		case "mv_Instrumentos":
+			$rss_link = "/rss/rss-mais-vendidos?rss=32";
+			break;
+		case "mv_Livros":
+			$rss_link = "/rss/rss-mais-vendidos?rss=1";
+			break;
+		case "mv_livrosImportados":
+			$rss_link = "/rss/rss-mais-vendidos?rss=9";
+			break;
+		case "mv_Papelaria":
+			$rss_link = "/rss/rss-mais-vendidos?rss=37";
+			break;
+		case "mv_Perfumaria":
+			$rss_link = "/rss/rss-mais-vendidos?rss=33";
+			break;
+		case "mv_Relogios":
+			$rss_link = "/rss/rss-mais-vendidos?rss=25";
+			break;
+		case "mv_Utilidades":
+			$rss_link = "/rss/rss-mais-vendidos?rss=18";
+			break;
+		case "mv_Vestuario":
+			$rss_link = "/rss/rss-mais-vendidos?rss=31";
+			break;
+		case "mv_vinhos":
+			$rss_link = "/rss/rss-mais-vendidos?rss=35";
+			break;
+		case "lan_Geral":
+			$rss_link = "/rss/rss-lancamentos";
+			break;
+		case "lan_Bebes":
+			$rss_link = "/rss/rss-lancamentos?rss=30";
+			break;
+		case "lan_Beleza":
+			$rss_link = "/rss/rss-lancamentos?rss=24";
+			break;
+		case "lan_Brinquedos":
+			$rss_link = "/rss/rss-lancamentos?rss=3";
+			break;
+		case "lan_Cama":
+			$rss_link = "/rss/rss-lancamentos?rss=36";
+			break;
+		case "lan_Cameras":
+			$rss_link = "/rss/rss-lancamentos?rss=26";
+			break;
+		case "lan_Celulares":
+			$rss_link = "/rss/rss-lancamentos?rss=11";
+			break;
+		case "lan_CDs":
+			$rss_link = "/rss/rss-lancamentos?rss=2";
+			break;
+		case "lan_DVD":
+			$rss_link = "/rss/rss-lancamentos?rss=6";
+			break;
+		case "lan_Esporte":
+			$rss_link = "/rss/rss-lancamentos?rss=28";
+			break;
+		case "lan_Eletrodomesticos":
+			$rss_link = "/rss/rss-lancamentos?rss=27";
+			break;
+		case "lan_Eletronicos":
+			$rss_link = "/rss/rss-lancamentos?rss=13";
+			break;
+		case "lan_Eletroportateis":
+			$rss_link = "/rss/rss-lancamentos?rss=34";
+			break;
+		case "lan_Ferramentas":
+			$rss_link = "/rss/rss-lancamentos?rss=15";
+			break;
+		case "lan_Games":
+			$rss_link = "/rss/rss-lancamentos?rss=12";
+			break;
+		case "lan_Informatica":
+			$rss_link = "/rss/rss-lancamentos?rss=10";
+			break;
+		case "lan_Instrumentos":
+			$rss_link = "/rss/rss-lancamentos?rss=32";
+			break;
+		case "lan_Livros":
+			$rss_link = "/rss/rss-lancamentos?rss=1";
+			break;
+		case "lan_livrosImportados":
+			$rss_link = "/rss/rss-lancamentos?rss=9";
+			break;
+		case "lan_Papelaria":
+			$rss_link = "/rss/rss-lancamentos?rss=37";
+			break;
+		case "lan_Perfumaria":
+			$rss_link = "/rss/rss-lancamentos?rss=33";
+			break;
+		case "lan_Relogios":
+			$rss_link = "/rss/rss-lancamentos?rss=25";
+			break;
+		case "lan_Utilidades":
+			$rss_link = "/rss/rss-lancamentos?rss=18";
+			break;
+		case "lan_Vestuario":
+			$rss_link = "/rss/rss-lancamentos?rss=31";
+			break;
+		case "lan_vinhos":
+			$rss_link = "/rss/rss-lancamentos?rss=35";
+			break;
+		case "prom_Geral":
+			$rss_link = "/rss/rss-base";
+			break;
+		case "prom_Bebes":
+			$rss_link = "/rss/rss-base?rss=30";
+			break;
+		case "prom_Beleza":
+			$rss_link = "/rss/rss-base?rss=24";
+			break;
+		case "prom_Brinquedos":
+			$rss_link = "/rss/rss-base?rss=3";
+			break;
+		case "prom_Cama":
+			$rss_link = "/rss/rss-base?rss=36";
+			break;
+		case "prom_Cameras":
+			$rss_link = "/rss/rss-base?rss=26";
+			break;
+		case "prom_Celulares":
+			$rss_link = "/rss/rss-base?rss=11";
+			break;
+		case "prom_CDs":
+			$rss_link = "/rss/rss-base?rss=2";
+			break;
+		case "prom_DVD":
+			$rss_link = "/rss/rss-base?rss=6";
+			break;
+		case "prom_Esporte":
+			$rss_link = "/rss/rss-base?rss=28";
+			break;
+		case "prom_Eletrodomesticos":
+			$rss_link = "/rss/rss-base?rss=27";
+			break;
+		case "prom_Eletronicos":
+			$rss_link = "/rss/rss-base?rss=13";
+			break;
+		case "prom_Eletroportateis":
+			$rss_link = "/rss/rss-base?rss=34";
+			break;
+		case "prom_Ferramentas":
+			$rss_link = "/rss/rss-base?rss=15";
+			break;
+		case "prom_Games":
+			$rss_link = "/rss/rss-base?rss=12";
+			break;
+		case "prom_Informatica":
+			$rss_link = "/rss/rss-base?rss=10";
+			break;
+		case "prom_Instrumentos":
+			$rss_link = "/rss/rss-base?rss=32";
+			break;
+		case "prom_Livros":
+			$rss_link = "/rss/rss-base?rss=1";
+			break;
+		case "prom_livrosImportados":
+			$rss_link = "/rss/rss-base?rss=9";
+			break;
+		case "prom_Papelaria":
+			$rss_link = "/rss/rss-base?rss=37";
+			break;
+		case "prom_Perfumaria":
+			$rss_link = "/rss/rss-base?rss=33";
+			break;
+		case "prom_Relogios":
+			$rss_link = "/rss/rss-base?rss=25";
+			break;
+		case "prom_Utilidades":
+			$rss_link = "/rss/rss-base?rss=18";
+			break;
+		case "prom_Vestuario":
+			$rss_link = "/rss/rss-base?rss=31";
+			break;
+		case "prom_vinhos":
+			$rss_link = "/rss/rss-base?rss=35";
+			break;
+	}
+
+	$response = vs_http_get($request, "www.submarino.com.br", $rss_link);
+	$data = vs_xmlEntities($response[1]);
+	$produtos = vs_xml2array($data,0);
+	
+	$produtos2 = $produtos["rss"]["channel"]['item'];
+
+	foreach ($produtos2 as $produto) {
+
+		$nome = $produto["title"];
+		$diz = $produto["description"];
+
+		if (stripos($produto["link"], "?") === FALSE) {
+			$link_prod = $produto["link"]."?franq=".$vs_options['codafil'];
+		} else {
+			$link_prod = $produto["link"]."&franq=".$vs_options['codafil'];
+		}
+		
+		preg_match_all('/<img[^>]+>/i',$diz, $result); 
+		$imagem = $result[0][0];
+
+		$preco = strip_tags("R".strrchr($diz, "$"));
+
+		if ($preco == "R")
+			$preco = '';
+
+		$lprod .= "('" . $wpdb->escape($nome) . "','" . $wpdb->escape($link_prod) . "','" . $wpdb->escape($imagem) . "','" . $wpdb->escape($preco) . "', '". $wpdb->escape($rss_source) ."'), ";
+	} //foreach	
+	
+		//inclui $nome $link_prod $imagem e $preco no BD
+		$insert = "INSERT INTO wp_vitrinesubmarino (nomep, linkp, imagemp, precop, rss_source) VALUES " . rtrim($lprod, ", ");
+		$results = $wpdb->query( $insert );
+
+}
+
+/***************************************************************************************************
+ *  pega produtos da base de dados
+ */
+function vs_pegaprodutos($vitrine){ 
+
+	global $wpdb;
+	global $vs_options;
+	
+	if ($vitrine != "widget") {
+		$rss_source = $vs_options['ctx_rss_source'];
+	} else {
+		$rss_source = $vs_options['wid_rss_source'];
+	}
+
+	$select = "SELECT * FROM wp_vitrinesubmarino WHERE rss_source = '". $rss_source ."'";
+	
+	$results = $wpdb->get_results( $select , ARRAY_A);
+	
+	return $results;
+}
+/***************************************************************************************************
+ *  atualiza o cache
+ */
+function vs_atualiza_produtos(){ 
+
+	global $wpdb;
+	global $vs_options;
+
+	$truncate = "TRUNCATE TABLE wp_vitrinesubmarino";
+	$results = $wpdb->query( $truncate );
+	
+	vs_pegaprodutos_rss($vs_options['ctx_rss_source']);
+	vs_pegaprodutos_rss($vs_options['wid_rss_source']);
+}
+
+/***************************************************************************************************
+ *  Funcao principal
+ */
+function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 	global $wpdb;
 
 	error_reporting( 0 );
@@ -399,62 +803,20 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec, $corp
 
 	$idsubmarino = $vs_options['codafil'];			// Define codigo de afiliado para o script funcionar
 
-	// ROV (http://mesquita.blog.br/) - Aqui começa a randomização...
-	$larrWords = explode(",",$word);
-	$word = $larrWords[rand(0, count($larrWords)-1)];
-	// ROV - Aqui termina ....
+//pega produtos da BD (devolve um array)
 
-	$palavrapadrao = $word; // Define a palavra chave para o script funcionar
-	
-	if ( !$palavrabuscada ) { 
-		$palavrabuscada = $palavrapadrao; 
-	}
-	$palavrabuscada = vs_latin2html($palavrabuscada);
+$produtos = vs_pegaprodutos($vitrine);
+shuffle($produtos);
+if (is_array($produtos)) {
 
-	if ($vitrine != "widget") {
-		if ($vs_options['ctx_tipo'] == "horizontal") { 
-			$lista_de_produtos = "<table id=\"vs_ctx_tabela_produtos\"><tr>";
-		}
-		$sort = $vs_options['ctx_orderby'];
-		$valores = $vs_options['ctx_valores'];
-		$cats = $vs_options['ctx_cats'];
-		
-	} else {
-		$sort = $vs_options['wid_orderby'];
-		$valores = $vs_options['wid_valores'];
-		$cats = $vs_options['wid_cats'];
-	}
+	foreach ($produtos as $produto) {
 
-	$request = "f=".$vs_options['codafil']."&q=".$palavrabuscada."&s=".$sort."&k=".$vs_options['chave']."&e=".get_option('admin_email')."&u=".get_option('siteurl')."&c=".$cats;
-	
-	$response = vs_http_post($request, "wp.bernabauer.com", "/vs/index.php");
 
-	$data = ltrim($response[1]);
+		$nome = $produto['nomep'];
+		$link_prod = $produto['linkp'];
+		$imagem = $produto['imagemp'];
+		$preco = $produto['precop'];
 
-	$produtos = xml2array($data);
-
-	if (is_string($produtos["vitrine_submarino"]["oferta"]["produto"]["value"]))
-		$produtos2 = $produtos["vitrine_submarino"];
-	else
-		$produtos2 = $produtos["vitrine_submarino"]["oferta"];
-	
-	$i=1;
-	foreach ($produtos2 as $produto) {
-
-		$nome = $produto["produto"]["value"];
-		$promo = str_replace(".", ",", $produto["promo"]["value"]);
-		if (strlen($promo) - strpos($promo, ",") == 2 AND (strpos($promo, ",") > 0))
-			$promo = $promo."0";
-		$preco = str_replace(".", ",", $produto["preco"]["value"]);
-		if (strlen($preco) - strpos($preco, ",") == 2 AND (strpos($preco, ",") > 0))
-			$preco = $preco."0";
-
-		$preco_parc = $produto["parcela"]["value"];
-		$img = $produto["imagem"]["value"];
-		$link_prod = $produto["link"]["value"];
-	
-		$palavras = explode('_',textoparalink ($nome));
-	
 		$tc = '';
 	
 		$texto = $nome;
@@ -498,120 +860,35 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec, $corp
 				$compare_precos = "<a href=\"http://bernabauer.shopping.busca.uol.com.br/busca.html?q=".urlencode(utf8_decode($busca))."\" "	.$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
 				break;
 		}
-		
-		//ajuste quando não há produtos disponíveis
-		switch ($valores) {
-			case "Preco":
-				if ($preco AND $promo != 0)
-					$preco = $promo;			
-				$preco = "<div style=\"font-weight: bold;color:".$corprec.";\">R$ ".utf8_encode($preco)."</div>";
-				$promo='';
-				$parce='';
-				break;
-			case "Promo":
-				if ($promo == 0)
-					$promo = $preco;
-				$promo = "<div style=\"font-weight: bold;color:".$corprom.";\">R$ ".utf8_encode($promo)."</div>";
-				$preco='';
-				$parce='';
-				break;
-			case "Parce":
-				if ($preco_parc)
-					$parce = "<div style=\"color:".$corparc.";\"><small>".str_replace("X","x R\$", $preco_parc)."</small></div>";
-				else {
-					if ($preco AND $promo != 0)
-						$preco = $promo;			
-					$preco = "<div style=\"font-weight: bold;color:".$corprom.";\">R$ ".utf8_encode($preco)."</div>";
-					$parc = '';
-				}
-				$preco='';
-				$promo='';
-				break;
-			case "Preco,Promo":
-				if ($preco AND $promo != 0)
-					$preco = "<div style=\"font-weight: bold;color:gray;\"><small>De <strike>R$ ".utf8_encode($preco)."</strike></small><div style=\"font-weight: bold;color:".$corprom.";\">Por R$ ".utf8_encode($promo)."</div></div>";
-				else {
-					$preco = "<div style=\"font-weight: bold;color:".$corprec.";\">R$ ".utf8_encode($preco)."</div>";
-					$promo='';
-				}
-				$parce='';
-				break;
-			case "Preco,Parce":
-				if ($preco AND $preco_parc) {
-					if ($preco AND $promo != 0)
-						$preco = $promo;			
-					$preco = "<div style=\"font-weight: bold;color:gray;\"><small>R$ ".utf8_encode($preco)."</small><div style=\"font-weight: bold;color:".$corprom.";\">Ou ".str_replace("X","x R\$", $preco_parc)."</div></div>";
-				} else {
-					$preco = "<div style=\"font-weight: bold;color:".$corprec.";\">R$ ".utf8_encode($preco)."</div>";
-					$parce='';
-				}
-				$promo='';
-				break;
-			case "Preco,Promo,Parce":
-				if ($preco AND $promo != 0) {
-					$preco = "<div style=\"font-weight: bold;color:gray;\"><small>De <strike>R$ ".utf8_encode($preco)."</strike></small><div style=\"font-weight: bold;color:".$corprom.";\">Por R$ ".utf8_encode($promo)."</div></div>";
-					$promo = '';
-				} else {
-					$preco = "<div style=\"font-weight: bold;color:".$corprec.";\">R$ ".utf8_encode($preco)."</div>";
-					$promo = '';
-				}
-				if ($preco_parc)
-					$parce = "<div style=\"color:".$corparc.";\"><small>".str_replace("X","x R\$", $preco_parc)."</small></div>";
-				else {
-					$parce='';
-				}
-				break;
-			case "Promo,Parce":
-				if ($preco AND $preco_parc)
-					$preco = "<div style=\"font-weight: bold;color:gray;\"><small>R$ ".utf8_encode($preco)."</small><div style=\"font-weight: bold;color:".$corparc.";\">Ou ".str_replace("X","x R\$", $preco_parc)."</div></div>";
-				else {
-					$preco = "<div style=\"font-weight: bold;color:".$corprec.";\">R$ ".utf8_encode($preco)."</div>";
-					$parce='';
-				}
-				$promo='';		
-				break;
-			case "":
-				$preco='';
-				$promo='';
-				$parce='';
-				break;
-				
-		}
 
-	
-			$preco_show = $preco.$promo.$parce;
-
-		
 		switch ($vitrine) {
 	
 			case "contextual":
 				// vitrine contextual
 				if ($vs_options['ctx_tipo'] == "horizontal") {
 					$td = 100 / $vs_options['ctx_show'];
-
 					//mostra vitrine com produtos em uma unica linha (VITRINE HORIZONTAL)
-					$lista_de_produtos .= '<td width="'. $td.'%'.'" style="background-color:'.$fundo.';text-align:center;padding:3px;font-size:11px;border:0px;"><a href="'.$link_prod.'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$img.'" alt="'.$nome.'" /></a><div style="font-size:12px;line-height:120%;color:'.$desc.';height:45px;overflow: hidden;">'.$nome.'</div><div><div style="font-weight: bold;font-size:12px;line-height:120%;"><a href="'.$link_prod.'" rel="nofollow"target="_blank"'.$tc.'>'.$vs_options["LP"].'</a></div><div>'.$preco_show.'</div><div>'.$compare_precos.'</div></div></td>';
+					$lista_de_produtos .= '<div style="width:'. $td.'%;background-color:white;text-align:center;padding:0px;font-size:12px;border:0px;float:left;"><a href="'.$link_prod.'">'.$imagem.'</a><br /><a href="'.$link_prod.'" target="_blank">'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
 				} else {
-					
+					$imagem = str_replace("<img ", "<img style=\" display: inline; float: left; margin: 0 10px 10px 0;\" alt=\"".$nome."\"", $imagem);
 					//mostra vitrine com um produto por linha (VITRINE VERTICAL)
-					$lista_de_produtos .= '<div style="color:'.$desc.';border:2px solid '.$borda.';height:104px;"><div style="background-color:'.$fundo.';padding:3px;"><table><tr><td style="border:0px;" ><a href="'.$link_prod.'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$img.'" alt="'.$nome.'" /></a></td><td style="border:0px;" >'.$nome.'<br /><b>'.$preco_show.'</b><br /><br /><a href="'.$link_prod.'" rel="nofollow" target="_blank"'.$tc.'>'.$vs_options["LP"].'</a><div>'.$compare_precos.'</div></td></tr></table></div></div>';
+					$lista_de_produtos .= '<div style="height:130px;background-color:white;padding:3px;"><a href="'.$link_prod.'">'.$imagem.'</a><a href="'.$link_prod.'" target="_blank">'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
 				}
-	
 				break;
 	
 			case "widget":
-				$lista_de_produtos .= '<div style="color:'.$desc.';background-color:'.$fundo.';padding:3px;"><center><p><a href="'.$link_prod.'" rel="nofollow" target="_blank" '.$tc.'><img src="'.$img.'" alt="'.$nome.'" /></a></p>'.$nome.'<br /><a href="'.$link_prod.'" rel="nofollow" target="_blank"'.$tc.'><strong>'.$vs_options["LP"].'</strong></a><br />'.$preco_show.'<div>'.$compare_precos.'</div></center></div>';
+				$lista_de_produtos .= '<div style="color:'.$desc.';background-color:'.$fundo.';text-align:center;padding:3px;"><a href="'.$link_prod.'" target="_blank">'.$imagem.'<br />'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
 				break;
 	
 		} //switch
-	if ($i == $show) 
+	if ($i == $show-1) 
 		break;
 	else
 		$i++;
 	} //foreach	
 
 
-	if (array_key_exists("oferta", $produtos['vitrine_submarino']) == FALSE) {
+} else {
 		if ($vitrine == "contextual") { 
 			// anuncio alternativo contextual
 			
@@ -686,24 +963,25 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec, $corp
 				case "HBG":
 					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=half&amp;franq='.$vs_options['codafil'].'></script>';
 					break;
-			} //if
+			} //switch
 		} //if
 		return "<center>".$altcode."</center>";
-	} else {
+	}# else {
 	
 	$credits = "<div style=\"text-align:right;\"><small><a href='http://www.bernabauer.com/wp-plugins/'>Vitrine Submarino ".$vs_options['version']."</a></small></div>";
-
-	if (($vitrine == "contextual") AND  ($vs_options['ctx_tipo'] == "horizontal")) { 
-		$lista_de_produtos .= "</tr></table>";
-	}
 
 	if (($vitrine == "contextual") AND ($vs_options['ctx_exib_auto'] == 'auto'))
 		$titulo = $vs_options['ctx_titulo'];
 	else
 		$titulo = '';
 
-	return $titulo."<div style=\"border:2px solid ".$borda.";background-color:".$fundo.";\">".$lista_de_produtos."</div>".$credits;
-	}
+	if ($vitrine == "widget") {
+		$combordas = "border:2px solid ".$borda.";background-color:".$fundo.";";
+	} else
+		$combordas = '';
+
+	return "<br clear=both />".$titulo."<div style=\"".$combordas."\">".$lista_de_produtos."</div>".$credits;
+	#}
 }
 
 
@@ -731,8 +1009,6 @@ function vs_options_subpanel() {
 
         if (isset($_POST['id'])) 
            $vs_options['codafil'] = $_POST['id'];
-        if (isset($_POST['chave'])) 
-           $vs_options['chave'] = $_POST['chave'];
         if (isset($_POST['cod_BP'])) 
            $vs_options['cod_BP'] = $_POST['cod_BP'];
         if (isset($_POST['cod_ML'])) 
@@ -768,53 +1044,13 @@ function vs_options_subpanel() {
 		if (isset($_POST['wid_prcolor'])) 
 			$vs_options['wid_prcolor'] = strip_tags(stripslashes($_POST['wid_prcolor']));
 
-		if (isset($_POST['wid_procolor'])) 
-			$vs_options['wid_procolor'] = strip_tags(stripslashes($_POST['wid_procolor']));
-
-		if (isset($_POST['wid_prccolor'])) 
-			$vs_options['wid_prccolor'] = strip_tags(stripslashes($_POST['wid_prccolor']));
-
-		if (isset($_POST['wid_valores'])) 
-			$vs_options['wid_valores'] = stripslashes(implode(",", $_POST['wid_valores']));
-		else
-			$vs_options['wid_valores'] = '';
-
-		if (isset($_POST['wid_cats'])) 
-			$vs_options['wid_cats'] = stripslashes(implode(",", $_POST['wid_cats']));
-		else
-			$vs_options['wid_cats'] = '';
-		
-
-		if (isset($_POST['wid_word'])) 
-			$vs_options['wid_word'] = strip_tags(stripslashes($_POST['wid_word']));
-
+		$vs_options['wid_rss_source'] = strip_tags(stripslashes($_POST['wid_rss_source']));
 		$vs_options['wid_altcode'] = strip_tags(stripslashes($_POST['wid_altcode']));
 		$vs_options['wid_track'] = strip_tags(stripslashes($_POST['wid_track']));
 
 		// Opções CONTEXTUAL
-		$vs_options['ctx_orderby'] = strip_tags(stripslashes($_POST['ctx_orderby']));
-		if (isset($_POST['ctx_fontcolor'])) 
-			$vs_options['ctx_fontcolor'] = strip_tags(stripslashes($_POST['ctx_fontcolor']));
-
-		if (isset($_POST['ctx_bgcolor'])) 
-			$vs_options['ctx_bgcolor'] = strip_tags(stripslashes($_POST['ctx_bgcolor']));
-
-		if (isset($_POST['ctx_brdcolor'])) 
-			$vs_options['ctx_brdcolor'] = strip_tags(stripslashes($_POST['ctx_brdcolor']));
-
 		if (isset($_POST['ctx_prcolor'])) 
 			$vs_options['ctx_prcolor'] = strip_tags(stripslashes($_POST['ctx_prcolor']));
-
-		if (isset($_POST['ctx_procolor'])) 
-			$vs_options['ctx_procolor'] = strip_tags(stripslashes($_POST['ctx_procolor']));
-
-		if (isset($_POST['ctx_prccolor'])) 
-			$vs_options['ctx_prccolor'] = strip_tags(stripslashes($_POST['ctx_prccolor']));
-
-		if (isset($_POST['ctx_valores'])) 
-			$vs_options['ctx_valores'] = stripslashes(implode(",", $_POST['ctx_valores']));
-		else
-			$vs_options['ctx_valores'] = '';
 		
 		if (isset($_POST['ctx_titulo'])) 
 			$vs_options['ctx_titulo'] = stripslashes($_POST['ctx_titulo']);
@@ -822,9 +1058,8 @@ function vs_options_subpanel() {
 		if (isset($_POST['ctx_show'])) 
 			$vs_options['ctx_show'] = strip_tags(stripslashes($_POST['ctx_show']));
 
-		if (isset($_POST['ctx_word'])) 
-			$vs_options['ctx_word'] = strip_tags(stripslashes($_POST['ctx_word']));
 
+		$vs_options['ctx_rss_source'] = strip_tags(stripslashes($_POST['ctx_rss_source']));
 		$vs_options['ctx_altcode'] = strip_tags(stripslashes($_POST['ctx_altcode']));
 		$vs_options['ctx_exib_auto'] = strip_tags(stripslashes($_POST['ctx_exib_auto']));
 		$vs_options['ctx_local'] = strip_tags(stripslashes($_POST['ctx_local']));
@@ -835,30 +1070,11 @@ function vs_options_subpanel() {
 
 		//atualiza base de dados com informacaoes do formulario		
 		update_option('vs_options',$vs_options);
+
+		//atualiza o cache local de produtos com a nova configuracao
+		vs_atualiza_produtos();
     }
-
-	$cat_arr = array('Bebês', 'Beleza e Saúde', 'Brinquedos', 'Cama, Mesa e Banho', 'CD', 'Cine & Foto', 'DVD', 'Eletrodomésticos', 'Eletrônicos', 'Eletroportáteis', 'Esporte e Lazer', 'Ferramentas', 'Games', 'Informática', 'Instrumentos Musicais', 'Jóias e Relógios', 'Moda', 'Papelaria', 'Perfumaria', 'Telefonia', 'Utilidades Domésticas', 'Vinhos e Cia');
     
-    if ( stripos($vs_options['ctx_valores'], "Preco") !== FALSE) 
-		$ctx_showpreco = 'checked';
-
-    if ( stripos($vs_options['ctx_valores'], "Promo") !== FALSE) 
-		$ctx_showpromo = 'checked';
-
-    if ( stripos($vs_options['ctx_valores'], "Parce") !== FALSE) 
-		$ctx_showparce = 'checked';
-
-
-    if ( stripos($vs_options['wid_valores'], "Preco") !== FALSE) 
-		$wid_showpreco = 'checked';
-
-    if ( stripos($vs_options['wid_valores'], "Promo") !== FALSE) 
-		$wid_showpromo = 'checked';
-
-    if ( stripos($vs_options['wid_valores'], "Parce") !== FALSE) 
-		$wid_showparce = 'checked';
-
-
     if ( $vs_options['ctx_exib_auto'] == 'auto') {
 		$auto = 'checked=\"checked\"';
     } else {
@@ -991,64 +1207,394 @@ function vs_options_subpanel() {
 			break;
 	}		
 
-	switch ($vs_options['wid_orderby']) {
-		case "precoA":
-			$wid_precoA = 'checked=\"checked\"';
-			break;
-		case "precoD":
-			$wid_precoD = 'checked=\"checked\"';
-			break;
-		case "produtoA":
-			$wid_alfaA = 'checked=\"checked\"';
-			break;
-		case "produtoZ":
-			$wid_alfaZ = 'checked=\"checked\"';
-			break;
-		default:
-			$wid_precoD = 'checked=\"checked\"';
-			break;
-	}		
-
-
-	switch ($vs_options['ctx_orderby']) {
-		case "precoA":
-			$ctx_precoA = 'checked=\"checked\"';
-			break;
-		case "precoD":
-			$ctx_precoD = 'checked=\"checked\"';
-			break;
-		case "produtoA":
-			$ctx_alfaA = 'checked=\"checked\"';
-			break;
-		case "produtoZ":
-			$ctx_alfaZ = 'checked=\"checked\"';
-			break;
-		default:
-			$ctx_preco = 'checked=\"checked\"';
-			break;
-	}		
-        //pede a chave
-        if (isset($_POST['genkey'])) {
-        		$dados  = "genkey=".get_option('admin_email')."#".get_option('siteurl');
-        		$dados .= "&f=".$vs_options['codafil'];
-        		$dados .= "&i=".$_SERVER['SERVER_ADDR'];
-        		$dados .= "&h=".$_SERVER['HTTP_HOST'];
-				vs_http_post($dados, "wp.bernabauer.com", "/vs/index.php");
-				?>
-				<div id="message" class="updated fade"><p><strong>ALERTA Vitrine Submarino</strong>: A chave foi solicitada, por favor, verifique sua caixa de entrada e a caixa de SPAM dentro dos próximos minutos.</p></div>
-				<?php
-		}
-
+	switch ($vs_options['wid_rss_source']) {
 	
+		case "mv_Bebes":
+			$wid_mv_Bebes = 'checked=\"checked\"';
+			break;
+		case "mv_Beleza":
+			$wid_mv_Beleza = 'checked=\"checked\"';
+			break;
+		case "mv_Brinquedos":
+			$wid_mv_Brinquedos = 'checked=\"checked\"';
+			break;
+		case "mv_Cama":
+			$wid_mv_Cama = 'checked=\"checked\"';
+			break;
+		case "mv_Cameras":
+			$wid_mv_Cameras = 'checked=\"checked\"';
+			break;
+		case "mv_Celulares":
+			$wid_mv_Celulares = 'checked=\"checked\"';
+			break;
+		case "mv_CDs":
+			$wid_mv_CDs = 'checked=\"checked\"';
+			break;
+		case "mv_DVD":
+			$wid_mv_DVD = 'checked=\"checked\"';
+			break;
+		case "mv_Esporte":
+			$wid_mv_Esporte = 'checked=\"checked\"';
+			break;
+		case "mv_Eletrodomesticos":
+			$wid_mv_Eletrodomesticos = 'checked=\"checked\"';
+			break;
+		case "mv_Eletronicos":
+			$wid_mv_Eletronicos = 'checked=\"checked\"';
+			break;
+		case "mv_Eletroportateis":
+			$wid_mv_Eletroportateis = 'checked=\"checked\"';
+			break;
+		case "mv_Ferramentas":
+			$wid_mv_Ferramentas = 'checked=\"checked\"';
+			break;
+		case "mv_Games":
+			$wid_mv_Games = 'checked=\"checked\"';
+			break;
+		case "mv_Informatica":
+			$wid_mv_Informatica = 'checked=\"checked\"';
+			break;
+		case "mv_Instrumentos":
+			$wid_mv_Instrumentos = 'checked=\"checked\"';
+			break;
+		case "mv_Livros":
+			$wid_mv_Livros = 'checked=\"checked\"';
+			break;
+		case "mv_livrosImportados":
+			$wid_mv_livrosImportados = 'checked=\"checked\"';
+			break;
+		case "mv_Papelaria":
+			$wid_mv_Papelaria = 'checked=\"checked\"';
+			break;
+		case "mv_Perfumaria":
+			$wid_mv_Perfumaria = 'checked=\"checked\"';
+			break;
+		case "mv_Relogios":
+			$wid_mv_Relogios = 'checked=\"checked\"';
+			break;
+		case "mv_Utilidades":
+			$wid_mv_Utilidades = 'checked=\"checked\"';
+			break;
+		case "mv_Vestuario":
+			$wid_mv_Vestuario = 'checked=\"checked\"';
+			break;
+		case "mv_vinhos":
+			$wid_mv_vinhos = 'checked=\"checked\"';
+			break;
+		case "lan_Geral":
+			$wid_lan_Geral = 'checked=\"checked\"';
+			break;
+		case "lan_Bebes":
+			$wid_lan_Bebes = 'checked=\"checked\"';
+			break;
+		case "lan_Beleza":
+			$wid_lan_Beleza = 'checked=\"checked\"';
+			break;
+		case "lan_Brinquedos":
+			$wid_lan_Brinquedos = 'checked=\"checked\"';
+			break;
+		case "lan_Cama":
+			$wid_lan_Cama = 'checked=\"checked\"';
+			break;
+		case "lan_Cameras":
+			$wid_lan_Cameras = 'checked=\"checked\"';
+			break;
+		case "lan_Celulares":
+			$wid_lan_Celulares = 'checked=\"checked\"';
+			break;
+		case "lan_CDs":
+			$wid_lan_CDs = 'checked=\"checked\"';
+			break;
+		case "lan_DVD":
+			$wid_lan_DVD = 'checked=\"checked\"';
+			break;
+		case "lan_Esporte":
+			$wid_lan_Esporte = 'checked=\"checked\"';
+			break;
+		case "lan_Eletrodomesticos":
+			$wid_lan_Eletrodomesticos = 'checked=\"checked\"';
+			break;
+		case "lan_Eletronicos":
+			$wid_lan_Eletronicos = 'checked=\"checked\"';
+			break;
+		case "lan_Eletroportateis":
+			$wid_lan_Eletroportateis = 'checked=\"checked\"';
+			break;
+		case "lan_Ferramentas":
+			$wid_lan_Ferramentas = 'checked=\"checked\"';
+			break;
+		case "lan_Games":
+			$wid_lan_Games = 'checked=\"checked\"';
+			break;
+		case "lan_Informatica":
+			$wid_lan_Informatica = 'checked=\"checked\"';
+			break;
+		case "lan_Instrumentos":
+			$wid_lan_Instrumentos = 'checked=\"checked\"';
+			break;
+		case "lan_Livros":
+			$wid_lan_Livros = 'checked=\"checked\"';
+			break;
+		case "lan_Papelaria":
+			$wid_lan_Papelaria = 'checked=\"checked\"';
+			break;
+		case "lan_Perfumaria":
+			$wid_lan_Perfumaria = 'checked=\"checked\"';
+			break;
+		case "lan_Relogios":
+			$wid_lan_Relogios = 'checked=\"checked\"';
+			break;
+		case "lan_Utilidades":
+			$wid_lan_Utilidades = 'checked=\"checked\"';
+			break;
+		case "lan_vinhos":
+			$wid_lan_vinhos = 'checked=\"checked\"';
+			break;
+		case "prom_Geral":
+			$wid_prom_Geral = 'checked=\"checked\"';
+			break;
+		case "prom_Beleza":
+			$wid_prom_Beleza = 'checked=\"checked\"';
+			break;
+		case "prom_Brinquedos":
+			$wid_prom_Brinquedos = 'checked=\"checked\"';
+			break;
+		case "prom_Cameras":
+			$wid_prom_Cameras = 'checked=\"checked\"';
+			break;
+		case "prom_Celulares":
+			$wid_prom_Celulares = 'checked=\"checked\"';
+			break;
+		case "prom_CDs":
+			$wid_prom_CDs = 'checked=\"checked\"';
+			break;
+		case "prom_DVD":
+			$wid_prom_DVD = 'checked=\"checked\"';
+			break;
+		case "prom_Esporte":
+			$wid_prom_Esporte = 'checked=\"checked\"';
+			break;
+		case "prom_Eletrodomesticos":
+			$wid_prom_Eletrodomesticos = 'checked=\"checked\"';
+			break;
+		case "prom_Eletronicos":
+			$wid_prom_Eletronicos = 'checked=\"checked\"';
+			break;
+		case "prom_Games":
+			$wid_prom_Games = 'checked=\"checked\"';
+			break;
+		case "prom_Livros":
+			$wid_prom_Livros = 'checked=\"checked\"';
+			break;
+	}
+	
+	switch ($vs_options['ctx_rss_source']) {
+	
+		case "mv_Bebes":
+			$ctx_mv_Bebes = 'checked=\"checked\"';
+			break;
+		case "mv_Beleza":
+			$ctx_mv_Beleza = 'checked=\"checked\"';
+			break;
+		case "mv_Brinquedos":
+			$ctx_mv_Brinquedos = 'checked=\"checked\"';
+			break;
+		case "mv_Cama":
+			$ctx_mv_Cama = 'checked=\"checked\"';
+			break;
+		case "mv_Cameras":
+			$ctx_mv_Cameras = 'checked=\"checked\"';
+			break;
+		case "mv_Celulares":
+			$ctx_mv_Celulares = 'checked=\"checked\"';
+			break;
+		case "mv_CDs":
+			$ctx_mv_CDs = 'checked=\"checked\"';
+			break;
+		case "mv_DVD":
+			$ctx_mv_DVD = 'checked=\"checked\"';
+			break;
+		case "mv_Esporte":
+			$ctx_mv_Esporte = 'checked=\"checked\"';
+			break;
+		case "mv_Eletrodomesticos":
+			$ctx_mv_Eletrodomesticos = 'checked=\"checked\"';
+			break;
+		case "mv_Eletronicos":
+			$ctx_mv_Eletronicos = 'checked=\"checked\"';
+			break;
+		case "mv_Eletroportateis":
+			$ctx_mv_Eletroportateis = 'checked=\"checked\"';
+			break;
+		case "mv_Ferramentas":
+			$ctx_mv_Ferramentas = 'checked=\"checked\"';
+			break;
+		case "mv_Games":
+			$ctx_mv_Games = 'checked=\"checked\"';
+			break;
+		case "mv_Informatica":
+			$ctx_mv_Informatica = 'checked=\"checked\"';
+			break;
+		case "mv_Instrumentos":
+			$ctx_mv_Instrumentos = 'checked=\"checked\"';
+			break;
+		case "mv_Livros":
+			$ctx_mv_Livros = 'checked=\"checked\"';
+			break;
+		case "mv_livrosImportados":
+			$ctx_mv_livrosImportados = 'checked=\"checked\"';
+			break;
+		case "mv_Papelaria":
+			$ctx_mv_Papelaria = 'checked=\"checked\"';
+			break;
+		case "mv_Perfumaria":
+			$ctx_mv_Perfumaria = 'checked=\"checked\"';
+			break;
+		case "mv_Relogios":
+			$ctx_mv_Relogios = 'checked=\"checked\"';
+			break;
+		case "mv_Utilidades":
+			$ctx_mv_Utilidades = 'checked=\"checked\"';
+			break;
+		case "mv_Vestuario":
+			$ctx_mv_Vestuario = 'checked=\"checked\"';
+			break;
+		case "mv_vinhos":
+			$ctx_mv_vinhos = 'checked=\"checked\"';
+			break;
+		case "lan_Geral":
+			$ctx_lan_Geral = 'checked=\"checked\"';
+			break;
+		case "lan_Bebes":
+			$ctx_lan_Bebes = 'checked=\"checked\"';
+			break;
+		case "lan_Beleza":
+			$ctx_lan_Beleza = 'checked=\"checked\"';
+			break;
+		case "lan_Brinquedos":
+			$ctx_lan_Brinquedos = 'checked=\"checked\"';
+			break;
+		case "lan_Cama":
+			$ctx_lan_Cama = 'checked=\"checked\"';
+			break;
+		case "lan_Cameras":
+			$ctx_lan_Cameras = 'checked=\"checked\"';
+			break;
+		case "lan_Celulares":
+			$ctx_lan_Celulares = 'checked=\"checked\"';
+			break;
+		case "lan_CDs":
+			$ctx_lan_CDs = 'checked=\"checked\"';
+			break;
+		case "lan_DVD":
+			$ctx_lan_DVD = 'checked=\"checked\"';
+			break;
+		case "lan_Esporte":
+			$ctx_lan_Esporte = 'checked=\"checked\"';
+			break;
+		case "lan_Eletrodomesticos":
+			$ctx_lan_Eletrodomesticos = 'checked=\"checked\"';
+			break;
+		case "lan_Eletronicos":
+			$ctx_lan_Eletronicos = 'checked=\"checked\"';
+			break;
+		case "lan_Eletroportateis":
+			$ctx_lan_Eletroportateis = 'checked=\"checked\"';
+			break;
+		case "lan_Ferramentas":
+			$ctx_lan_Ferramentas = 'checked=\"checked\"';
+			break;
+		case "lan_Games":
+			$ctx_lan_Games = 'checked=\"checked\"';
+			break;
+		case "lan_Informatica":
+			$ctx_lan_Informatica = 'checked=\"checked\"';
+			break;
+		case "lan_Instrumentos":
+			$ctx_lan_Instrumentos = 'checked=\"checked\"';
+			break;
+		case "lan_Livros":
+			$ctx_lan_Livros = 'checked=\"checked\"';
+			break;
+		case "lan_Papelaria":
+			$ctx_lan_Papelaria = 'checked=\"checked\"';
+			break;
+		case "lan_Perfumaria":
+			$ctx_lan_Perfumaria = 'checked=\"checked\"';
+			break;
+		case "lan_Relogios":
+			$ctx_lan_Relogios = 'checked=\"checked\"';
+			break;
+		case "lan_Utilidades":
+			$ctx_lan_Utilidades = 'checked=\"checked\"';
+			break;
+		case "lan_vinhos":
+			$ctx_lan_vinhos = 'checked=\"checked\"';
+			break;
+		case "prom_Geral":
+			$ctx_prom_Geral = 'checked=\"checked\"';
+			break;
+		case "prom_Beleza":
+			$ctx_prom_Beleza = 'checked=\"checked\"';
+			break;
+		case "prom_Brinquedos":
+			$ctx_prom_Brinquedos = 'checked=\"checked\"';
+			break;
+		case "prom_Cameras":
+			$ctx_prom_Cameras = 'checked=\"checked\"';
+			break;
+		case "prom_Celulares":
+			$ctx_prom_Celulares = 'checked=\"checked\"';
+			break;
+		case "prom_CDs":
+			$ctx_prom_CDs = 'checked=\"checked\"';
+			break;
+		case "prom_DVD":
+			$ctx_prom_DVD = 'checked=\"checked\"';
+			break;
+		case "prom_Esporte":
+			$ctx_prom_Esporte = 'checked=\"checked\"';
+			break;
+		case "prom_Eletrodomesticos":
+			$ctx_prom_Eletrodomesticos = 'checked=\"checked\"';
+			break;
+		case "prom_Eletronicos":
+			$ctx_prom_Eletronicos = 'checked=\"checked\"';
+			break;
+		case "prom_Games":
+			$ctx_prom_Games = 'checked=\"checked\"';
+			break;
+		case "prom_Livros":
+			$ctx_prom_Livros = 'checked=\"checked\"';
+			break;
+	}
+
+
 ?>
 
 	<div class=wrap>
 
-<p>Você pode buscar ajuda para este plugin no <a href="http://forum.bernabauer.com">fórum</a> do <a href="http://www.bernabauer.com">bernabauer.com</a>.</p>
-
     <h2>Configurações</h2>
   <form method="post">
 
+    <table class="form-table">
+	 <tr>
+		<th scope="row" valign="top">Aviso</th>
+		<td>
+			 Este plugin pega os produtos para serem mostrados em seu blog fornecidos através da <a href="http://www.submarino.com.br/portal/central-rss/?WT.mc_id=rss_left&WT.mc_ev=click" target=_blank>fonte de RSS que o Submarino fornece</a>. Para mostrar os produtos nas vitrines contextual e widget o plugin efetua um cache local que é atualizado uma vez por dia. Fique atento ao seguinte: A página de configuração do plugin pode demorar um pouco para carregar quando as configurações são alteradas. Isto ocorre por que neste momento é forçada uma atualização do cache local a partir da fonte RSS.<br /><br />Próxima atualização de produtos via RSS: 
+			 <?php 
+			 
+				//GET Difference between Server TZ and desired TZ
+				$sec_diff = date('Z') - (get_option('gmt_offset') * 3600);
+				$sec_diff = (($sec_diff <= 0) ? '+' : '-') . abs($sec_diff);			
+									
+				echo date('d/m/Y H:i:s', wp_next_scheduled('vs_cron') + $sec_diff); 
+
+			 
+			 ?>
+		</td>
+	 </tr>
+	</table>
     <table class="form-table">
 	 <tr>
 		<th scope="row" valign="top">Código de Afiliado</th>
@@ -1057,23 +1603,6 @@ function vs_options_subpanel() {
 		</td>
 	 </tr>
 	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Chave</th>
-		<td>
-		
-			<input type="textbox" name="chave" size="40" value="<?php echo $vs_options['chave']; ?>">
-		
-			<br />Sem a chave a vitrine não funciona.<br />
-			<input type="checkbox" id="genkey" name="genkey" value="gerar" <?php if ($vs_options['chave'] != '') echo "DISABLED"; ?>> <label for="genkey">Gerar chave</label>
-		
-			<br />Você precisa gerar uma chave para mostrar produtos do submarino no seu blog. <strong>ATENÇÃO!</strong> Gerar uma chave para o seu blog quer dizer que você autoriza que o código do autor do plugin será usado em algumas exibições. Isto ajudará a pagar os custos de manter o plugin funcionando. Para gerar a chave habilite a opção e clique em atualizar. Você receberá mais informações através do email <strong><?php echo get_option('admin_email');?></strong>. Para gerar a chave serão enviados apenas o seu endereço de email, endereço e o nome do blog . Assim que você receber a chave, informe na caixa de texto acima.
-			
-		</td>
-	 </tr>
-	</table>
-	<br />
 
     <table class="form-table">
 	 <tr>
@@ -1116,7 +1645,7 @@ function vs_options_subpanel() {
 	</table>
 
 <br />
-    <h2>Contextual</h2>
+    <h2>Vitrine Simples</h2>
 <?php
 
 $current_plugins = get_option('active_plugins');
@@ -1130,45 +1659,6 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		<td>
 				<input id="ctx_titulo" name="ctx_titulo" type="text" value="<?php echo $vs_options['ctx_titulo']; ?>" /><br />
 				<label for="ctx_titulo">Este é o texto que será mostrado acima da vitrine. Você pode usar HTML.</label><br />
-		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Cores</th>
-		<td>
-  				Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.<br /><br />
-  				<table><td style="border-width:2px;"><strong>Texto:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="ctx_fontcolor" name="ctx_fontcolor" type="text" value="<?php echo $vs_options['ctx_fontcolor']; ?>" /><label for="ctx_fontcolor"> Cor do texto de descrição dos produtos. A melhor cor é preta (#000000 ou BLACK). </label></td></tr>
-  				<tr><td style="border-width:2px;"><strong>Fundo:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="ctx_bgcolor" name="ctx_bgcolor" type="text" value="<?php echo $vs_options['ctx_bgcolor']; ?>" /><label for="ctx_bgcolor"> Cor de fundo dos produtos. A melhor cor é branca (#FFFFFF).</label></td></tr>
-  				<tr><td style="border-width:2px;"><strong>Borda:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="ctx_brdcolor" name="ctx_brdcolor" type="text" value="<?php echo $vs_options['ctx_brdcolor']; ?>" /><label for="ctx_brdcolor"> Cor da borda da vitrine. A melhor cor é cinza (#DDDDDD). </label></td></tr>
-  				<tr><td style="border-width:2px;"><strong>Preço:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="ctx_prcolor" name="ctx_prcolor" type="text" value="<?php echo $vs_options['ctx_prcolor']; ?>" /><label for="ctx_prcolor"> Cor do preço dos produtos.</label></td></tr>
-  				<tr><td style="border-width:2px;"><strong>Promoção:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="ctx_procolor" name="ctx_procolor" type="text" value="<?php echo $vs_options['ctx_procolor']; ?>" /><label for="ctx_procolor"> Cor do valor promocional.</label></td></tr>
-  				<tr><td style="border-width:2px;"><strong>Parcela:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="ctx_prccolor" name="ctx_prccolor" type="text" value="<?php echo $vs_options['ctx_prccolor']; ?>" /><label for="ctx_prccolor"> Cor do valor da parcela. </label></td></tr>
-  				</table>
- 		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Produto Padrão</th>
-		<td>
- 				<input style="width: 30%;" id="ctx_word" name="ctx_word" type="text" value="<?php echo $vs_options['ctx_word']; ?>" /><br />
- 				Informe a palavra para popular a vitrine. Evite utilização de acentos. Você pode definir multiplas palavras, basta separar por vírgulas. A escolha da palavra para exibir produtos na vitrine é aleatória.<br />
-		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Valores</th>
-		<td>
-				<input type="checkbox" id="Valpre" name="ctx_valores[]" value="Preco" <?php echo $ctx_showpreco; ?>> <label for="Valpre">Preço</label><br />
-				<input type="checkbox" id="Valpro" name="ctx_valores[]" value="Promo" <?php echo $ctx_showpromo; ?>> <label for="Valpro">Promoção</label><br />
-				<input type="checkbox" id="Valpar" name="ctx_valores[]" value="Parce" <?php echo $ctx_showparce; ?>> <label for="Valpar">Parcela</label><br />
-
-				<label for="Submarino-show">Informe quais valores deverão ser mostrados na vitrine.</label><br />
 		</td>
 	 </tr>
 	</table>
@@ -1204,27 +1694,155 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		<td>
 			<input type="radio" id="vithor" name="ctx_tipo" value="horizontal" <?php echo $horizontal; ?> /> <label for="vithor">Horizontal (produtos em uma única linha)</label>
 			<br />
-			<input type="radio" if="vitver" name="ctx_tipo" value="vertical" <?php echo $vertical; ?> /> <label for="vitver">Vertical (um produto por linha)</label>
+			<input type="radio" id="vitver" name="ctx_tipo" value="vertical" <?php echo $vertical; ?> /> <label for="vitver">Vertical (um produto por linha)</label>
 			<br />
 		</td>
+	 </tr>
+	</table>
+	
+    <table class="form-table">
+	 <tr>
+		<th scope="row" valign="top">Cor para preço</th>
+		<td>
+  				<input style="width: 60px;" id="ctx_prcolor" name="ctx_prcolor" type="text" value="<?php echo $vs_options['ctx_prcolor']; ?>" /><label for="ctx_prcolor"> Cor do preço dos produtos.</label><br />
+  				Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.
+ 		</td>
 	 </tr>
 	</table>
 
     <table class="form-table">
 	 <tr>
-		<th scope="row" valign="top">Ordem dos Produtos</th>
-		<td>
-			<input type="radio" name="ctx_orderby" id="precoD" value="precoD" <?php echo $ctx_precoD; ?> /> <label for="precoD">Maior Preço</label>
+		<th scope="row" valign="top">Fonte RSS de Produtos<br />Veja mais informações <a href="http://www.submarino.com.br/portal/central-rss/">aqui</a>.</th>
+		<td VALIGN="TOP">
+			<strong>Mais Vendidos</strong><br />
+			<input type="radio" name="ctx_rss_source" value="mv_Bebes" id="ctx_mv_Bebes" <?php echo $ctx_mv_Bebes; ?> /> <label for="ctx_mv_Bebes">Bebês</label>
 			<br />
-			<input type="radio" name="ctx_orderby" id="precoA" value="precoA" <?php echo $ctx_precoA; ?> /> <label for="precoA">Menor Preço</label>
+			<input type="radio" name="ctx_rss_source" value="mv_Beleza" id="ctx_mv_Beleza" <?php echo $ctx_mv_Beleza; ?> /> <label for="ctx_mv_Beleza">Beleza & Saúde</label>
 			<br />
-			<input type="radio" name="ctx_orderby" id="produtoA" value="produtoA" <?php echo $ctx_alfaA; ?> /> <label for="produtoA">Alfabética (A-Z)</label>
+			<input type="radio" name="ctx_rss_source" value="mv_Brinquedos" id="ctx_mv_Brinquedos" <?php echo $ctx_mv_Brinquedos; ?> /> <label for="ctx_mv_Brinquedos">Brinquedos</label>
 			<br />
-			<input type="radio" name="ctx_orderby" id="produtoZ" value="produtoZ" <?php echo $ctx_alfaZ; ?> /> <label for="produtoZ">Alfabética (Z-A)</label>
+			<input type="radio" name="ctx_rss_source" value="mv_Cama" id="ctx_mv_Cama" <?php echo $ctx_mv_Cama; ?> /> <label for="ctx_mv_Cama">Cama, Mesa & banho</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_Cameras" id="ctx_mv_Cameras" <?php echo $ctx_mv_Cameras; ?> /> <label for="ctx_mv_Cameras">Câmeras Digitais & Filmadoras</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_Celulares" id="ctx_mv_Celulares" <?php echo $ctx_mv_Celulares; ?> /> <label for="ctx_mv_Celulares">Celulares & Telefonia Fixa</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_CDs" id="ctx_mv_CDs" <?php echo $ctx_mv_CDs; ?> /> <label for="ctx_mv_CDs">CDs</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_DVD" id="ctx_mv_DVD" <?php echo $ctx_mv_DVD; ?> /> <label for="ctx_mv_DVD">DVDs & Blu-ray</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_Esporte" id="ctx_mv_Esporte" <?php echo $ctx_mv_Esporte; ?> /> <label for="ctx_mv_Esporte">Esporte & Lazer</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_Eletrodomesticos" id="ctx_mv_Eletrodomesticos" <?php echo $ctx_mv_Eletrodomesticos; ?> /> <label for="ctx_mv_Eletrodomesticos">Eletrodomésticos</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_Eletronicos" id="ctx_mv_Eletronicos" <?php echo $ctx_mv_Eletronicos; ?> /> <label for="ctx_mv_Eletronicos">Eletrônicos Áudio & Vídeo</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_Eletroportateis" id="ctx_mv_Eletroportateis" <?php echo $ctx_mv_Eletroportateis; ?> /> <label for="ctx_mv_Eletroportateis">Eletroportáteis</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_Ferramentas" id="ctx_mv_Ferramentas" <?php echo $ctx_mv_Ferramentas; ?> /> <label for="ctx_mv_Ferramentas">Ferramentas</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_Games" id="ctx_mv_Games" <?php echo $ctx_mv_Games; ?> /> <label for="ctx_mv_Games">Games</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_Informatica" id="ctx_mv_Informatica" <?php echo $ctx_mv_Informatica; ?> /> <label for="ctx_mv_Informatica">Informática & Acessórios</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_Instrumentos" id="ctx_mv_Instrumentos" <?php echo $ctx_mv_Instrumentos; ?> /> <label for="ctx_mv_Instrumentos">Instrumentos Musicais</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_Livros" id="ctx_mv_Livros" <?php echo $ctx_mv_Livros; ?> /> <label for="ctx_mv_Livros">Livros</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_livrosImportados" id="ctx_mv_livrosImportados" <?php echo $ctx_mv_livrosImportados; ?> /> <label for="ctx_mv_livrosImportados">Livros Importados</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_Papelaria" id="ctx_mv_Papelaria" <?php echo $ctx_mv_Papelaria; ?> /> <label for="ctx_mv_Papelaria">Papelaria</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_Perfumaria" id="ctx_mv_Perfumaria" <?php echo $ctx_mv_Perfumaria; ?> /> <label for="ctx_mv_Perfumaria">Perfumaria</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_Relogios" id="ctx_mv_Relogios" <?php echo $ctx_mv_Relogios; ?> /> <label for="ctx_mv_Relogios">Relógios & Presentes</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_Utilidades" id="ctx_mv_Utilidades" <?php echo $ctx_mv_Utilidades; ?> /> <label for="ctx_mv_Utilidades">Utilidades Domésticas</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_Vestuario" id="ctx_mv_Vestuario" <?php echo $ctx_mv_Vestuario; ?> /> <label for="ctx_mv_Vestuario">Vestuário</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="mv_vinhos" id="ctx_mv_vinhos" <?php echo $ctx_mv_vinhos; ?> /> <label for="ctx_mv_vinhos">Vinhos & Bebidas</label>
+			<br />
+			</td>
+			<td VALIGN="TOP">
+			<strong>Lançamento</strong><br />
+			<input type="radio" name="ctx_rss_source" value="lan_Geral" id="ctx_lan_Geral" <?php echo $ctx_lan_Geral; ?> /> <label for="ctx_lan_Geral">Geral (Todo o Site)</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Bebes" id="ctx_lan_Bebes" <?php echo $ctx_lan_Bebes; ?> /> <label for="ctx_lan_Bebes">Bebês</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Beleza" id="ctx_lan_Beleza" <?php echo $ctx_lan_Beleza; ?> /> <label for="ctx_lan_Beleza">Beleza & Saúde</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Brinquedos" id="ctx_lan_Brinquedos" <?php echo $ctx_lan_Brinquedos; ?> /> <label for="ctx_lan_Brinquedos">Brinquedos</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Cama" id="ctx_lan_Cama" <?php echo $ctx_lan_Cama; ?> /> <label for="ctx_lan_Cama">Cama, Mesa & banho</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Cameras" id="ctx_lan_Cameras" <?php echo $ctx_lan_Cameras; ?> /> <label for="ctx_lan_Cameras">Câmeras Digitais & Filmadoras</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Celulares" id="ctx_lan_Celulares" <?php echo $ctx_lan_Celulares; ?> /> <label for="ctx_lan_Celulares">Celulares & Telefonia Fixa</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_CDs" id="ctx_lan_CDs" <?php echo $ctx_lan_CDs; ?> /> <label for="ctx_lan_CDs">CDs</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_DVD" id="ctx_lan_DVD" <?php echo $ctx_lan_DVD; ?> /> <label for="ctx_lan_DVD">DVDs & Blu-ray</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Esporte" id="ctx_lan_Esporte" <?php echo $ctx_lan_Esporte; ?> /> <label for="ctx_lan_Esporte">Esporte & Lazer</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Eletrodomesticos" id="ctx_lan_Eletrodomesticos" <?php echo $ctx_lan_Eletrodomesticos; ?> /> <label for="ctx_lan_Eletrodomesticos">Eletrodomésticos</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Eletronicos" id="ctx_lan_Eletronicos" <?php echo $ctx_lan_Eletronicos; ?> /> <label for="ctx_lan_Eletronicos">Eletrônicos Áudio & Vídeo</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Eletroportateis" id="ctx_lan_Eletroportateis" <?php echo $ctx_lan_Eletroportateis; ?> /> <label for="ctx_lan_Eletroportateis">Eletroportáteis</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Ferramentas" id="ctx_lan_Ferramentas" <?php echo $ctx_lan_Ferramentas; ?> /> <label for="ctx_lan_Ferramentas">Ferramentas</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Games" id="ctx_lan_Games" <?php echo $ctx_lan_Games; ?> /> <label for="ctx_lan_Games">Games</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Informatica" id="ctx_lan_Informatica" <?php echo $ctx_lan_Informatica; ?> /> <label for="ctx_lan_Informatica">Informática & Acessórios</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Instrumentos" id="ctx_lan_Instrumentos" <?php echo $ctx_lan_Instrumentos; ?> /> <label for="ctx_lan_Instrumentos">Instrumentos Musicais</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Livros" id="ctx_lan_Livros" <?php echo $ctx_lan_Livros; ?> /> <label for="ctx_lan_Livros">Livros</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Papelaria" id="ctx_lan_Papelaria" <?php echo $ctx_lan_Papelaria; ?> /> <label for="ctx_lan_Papelaria">Papelaria</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Perfumaria" id="ctx_lan_Perfumaria" <?php echo $ctx_lan_Perfumaria; ?> /> <label for="ctx_lan_Perfumaria">Perfumaria</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Relogios" id="ctx_lan_Relogios" <?php echo $ctx_lan_Relogios; ?> /> <label for="ctx_lan_Relogios">Relógios & Presentes</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_Utilidades" id="ctx_lan_Utilidades" <?php echo $ctx_lan_Utilidades; ?> /> <label for="ctx_lan_Utilidades">Utilidades Domésticas</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="lan_vinhos" id="ctx_lan_vinhos" <?php echo $ctx_lan_vinhos; ?> /> <label for="ctx_lan_vinhos">Vinhos & Bebidas</label>
+			<br />
+			</td>
+			<td VALIGN="TOP">
+			<strong>Promoção</strong><br />
+			<input type="radio" name="ctx_rss_source" value="prom_Geral" id="ctx_prom_Geral" <?php echo $ctx_prom_Geral; ?> /> <label for="ctx_prom_Geral">Geral (Todo o Site)</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="prom_Beleza" id="ctx_prom_Beleza" <?php echo $ctx_prom_Beleza; ?> /> <label for="ctx_prom_Beleza">Beleza & Saúde</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="prom_Brinquedos" id="ctx_prom_Brinquedos" <?php echo $ctx_prom_Brinquedos; ?> /> <label for="ctx_prom_Brinquedos">Brinquedos</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="prom_Cameras" id="ctx_prom_Cameras" <?php echo $ctx_prom_Cameras; ?> /> <label for="ctx_prom_Cameras">Câmeras Digitais & Filmadoras</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="prom_Celulares" id="ctx_prom_Celulares" <?php echo $ctx_prom_Celulares; ?> /> <label for="ctx_prom_Celulares">Celulares & Telefonia Fixa</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="prom_CDs" id="ctx_prom_CDs" <?php echo $ctx_prom_CDs; ?> /> <label for="ctx_prom_CDs">CDs</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="prom_DVD" id="ctx_prom_DVD" <?php echo $ctx_prom_DVD; ?> /> <label for="ctx_prom_DVD">DVDs & Blu-ray</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="prom_Esporte" id="ctx_prom_Esporte" <?php echo $ctx_prom_Esporte; ?> /> <label for="ctx_prom_Esporte">Esporte & Lazer</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="prom_Eletrodomesticos" id="ctx_prom_Eletrodomesticos" <?php echo $ctx_prom_Eletrodomesticos; ?> /> <label for="ctx_prom_Eletrodomesticos">Eletrodomésticos</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="prom_Eletronicos" id="ctx_prom_Eletronicos" <?php echo $ctx_prom_Eletronicos; ?> /> <label for="ctx_prom_Eletronicos">Eletrônicos Áudio & Vídeo</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="prom_Games" id="ctx_prom_Games" <?php echo $ctx_prom_Games; ?> /> <label for="ctx_prom_Games">Games</label>
+			<br />
+			<input type="radio" name="ctx_rss_source" value="prom_Livros" id="ctx_prom_Livros" <?php echo $ctx_prom_Livros; ?> /> <label for="ctx_prom_Livros">Livros</label>
 			<br />
 		</td>
 	 </tr>
 	</table>
+<br />
 
     <table class="form-table">
 	 <tr>
@@ -1285,7 +1903,11 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 		</td>
 	 </tr>
 	</table>
+
+
 <br />
+
+
     <h2>Widget</h2>
     <table class="form-table">
 	 <tr>
@@ -1316,8 +1938,6 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
   				<tr><td style="border-width:2px;"><strong>Fundo:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="wid_bgcolor" name="wid_bgcolor" type="text" value="<?php echo $vs_options['wid_bgcolor']; ?>" /><label for="wid_bgcolor"> Cor de fundo dos produtos. A melhor cor é branca (#FFFFFF).</label></td></tr>
   				<tr><td style="border-width:2px;"><strong>Borda:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="wid_brdcolor" name="wid_brdcolor" type="text" value="<?php echo $vs_options['wid_brdcolor']; ?>" /><label for="wid_brdcolor"> Cor da borda da vitrine. A melhor cor é cinza (#DDDDDD). </label></td></tr>
   				<tr><td style="border-width:2px;"><strong>Preço:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="wid_prcolor" name="wid_prcolor" type="text" value="<?php echo $vs_options['wid_prcolor']; ?>" /><label for="wid_prcolor"> Cor do preço dos produtos.</label></td></tr>
-  				<tr><td style="border-width:2px;"><strong>Promoção:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="wid_procolor" name="wid_procolor" type="text" value="<?php echo $vs_options['wid_procolor']; ?>" /><label for="wid_procolor"> Cor do valor promocional.</label></td></tr>
-  				<tr><td style="border-width:2px;"><strong>Parcela:</strong> </td><td style="border-width:2px;"><input style="width: 60px;" id="wid_prccolor" name="wid_prccolor" type="text" value="<?php echo $vs_options['wid_prccolor']; ?>" /><label for="wid_prccolor"> Cor do valor da parcela. </label></td></tr>
   				</table>
  		</td>
 	 </tr>
@@ -1325,69 +1945,137 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 
     <table class="form-table">
 	 <tr>
-		<th scope="row" valign="top">Produto Padrão</th>
-		<td>
- 				<input style="width: 30%;" id="wid_word" name="wid_word" type="text" value="<?php echo $vs_options['wid_word']; ?>" /><br />
- 				<label for="wid_word">Informe a palavra para popular a vitrine. Evite utilização de acentos. Você pode definir multiplas palavras, basta separar por vírgulas. A escolha da palavra para exibir produtos na vitrine é aleatória.</label><br /><br />
-
-				<strong>Selecione as categorias relevantes às palavras informadas na caixa de texto acima. A busca será restrita as categorias aqui informadas. Se você não escolher categorias, todas as categorias serão utilizadas, ou seja, escolher todas ou nenhuma dá na mesma. ;-)</strong>
-  				<table>
-  				<tr>
-  				
-  				<?php 
-
-  				for($i=1;$i<23;$i++) {
-  					$cats = explode(",", $vs_options['wid_cats']);
-  					foreach ($cats as $cat) {
-  					    if ( stripos($cat, $cat_arr[$i-1]) !== FALSE) {
-							$wid_cat_checked = 'checked';
-							break;
-						} else
-							$wid_cat_checked = '';
-					}							
-					echo '<td style="border-width:2px;"><input type="checkbox" id="wid_cat'.$i.'" name="wid_cats[]" value="'.$cat_arr[$i-1].'" '.$wid_cat_checked.'> <label for="wid_cat'.$i.'">'.$cat_arr[$i-1].'</label></td>';
-					if ($i % 5 == 0) {
-						echo "</tr><tr>";
-					}
-				}
-				?>
-				</tr>
-  				</table>
-
-
-
+		<th scope="row" valign="top">Fonte RSS de Produtos<br />Veja mais informações <a href="http://www.submarino.com.br/portal/central-rss/">aqui</a>.</th>
+		<td VALIGN="TOP">
+			<strong>Mais Vendidos</strong><br />
+			<input type="radio" name="wid_rss_source" value="mv_Bebes" id="wid_mv_Bebes" <?php echo $wid_mv_Bebes; ?> /> <label for="wid_mv_Bebes">Bebês</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Beleza" id="wid_mv_Beleza" <?php echo $wid_mv_Beleza; ?> /> <label for="wid_mv_Beleza">Beleza & Saúde</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Brinquedos" id="wid_mv_Brinquedos" <?php echo $wid_mv_Brinquedos; ?> /> <label for="wid_mv_Brinquedos">Brinquedos</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Cama" id="wid_mv_Cama" <?php echo $wid_mv_Cama; ?> /> <label for="wid_mv_Cama">Cama, Mesa & banho</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Cameras" id="wid_mv_Cameras" <?php echo $wid_mv_Cameras; ?> /> <label for="wid_mv_Cameras">Câmeras Digitais & Filmadoras</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Celulares" id="wid_mv_Celulares" <?php echo $wid_mv_Celulares; ?> /> <label for="wid_mv_Celulares">Celulares & Telefonia Fixa</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_CDs" id="wid_mv_CDs" <?php echo $wid_mv_CDs; ?> /> <label for="wid_mv_CDs">CDs</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_DVD" id="wid_mv_DVD" <?php echo $wid_mv_DVD; ?> /> <label for="wid_mv_DVD">DVDs & Blu-ray</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Esporte" id="wid_mv_Esporte" <?php echo $wid_mv_Esporte; ?> /> <label for="wid_mv_Esporte">Esporte & Lazer</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Eletrodomesticos" id="wid_mv_Eletrodomesticos" <?php echo $wid_mv_Eletrodomesticos; ?> /> <label for="wid_mv_Eletrodomesticos">Eletrodomésticos</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Eletronicos" id="wid_mv_Eletronicos" <?php echo $wid_mv_Eletronicos; ?> /> <label for="wid_mv_Eletronicos">Eletrônicos Áudio & Vídeo</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Eletroportateis" id="wid_mv_Eletroportateis" <?php echo $wid_mv_Eletroportateis; ?> /> <label for="wid_mv_Eletroportateis">Eletroportáteis</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Ferramentas" id="wid_mv_Ferramentas" <?php echo $wid_mv_Ferramentas; ?> /> <label for="wid_mv_Ferramentas">Ferramentas</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Games" id="wid_mv_Games" <?php echo $wid_mv_Games; ?> /> <label for="wid_mv_Games">Games</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Informatica" id="wid_mv_Informatica" <?php echo $wid_mv_Informatica; ?> /> <label for="wid_mv_Informatica">Informática & Acessórios</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Instrumentos" id="wid_mv_Instrumentos" <?php echo $wid_mv_Instrumentos; ?> /> <label for="wid_mv_Instrumentos">Instrumentos Musicais</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Livros" id="wid_mv_Livros" <?php echo $wid_mv_Livros; ?> /> <label for="wid_mv_Livros">Livros</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_livrosImportados" id="wid_mv_livrosImportados" <?php echo $wid_mv_livrosImportados; ?> /> <label for="wid_mv_livrosImportados">Livros Importados</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Papelaria" id="wid_mv_Papelaria" <?php echo $wid_mv_Papelaria; ?> /> <label for="wid_mv_Papelaria">Papelaria</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Perfumaria" id="wid_mv_Perfumaria" <?php echo $wid_mv_Perfumaria; ?> /> <label for="wid_mv_Perfumaria">Perfumaria</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Relogios" id="wid_mv_Relogios" <?php echo $wid_mv_Relogios; ?> /> <label for="wid_mv_Relogios">Relógios & Presentes</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Utilidades" id="wid_mv_Utilidades" <?php echo $wid_mv_Utilidades; ?> /> <label for="wid_mv_Utilidades">Utilidades Domésticas</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_Vestuario" id="wid_mv_Vestuario" <?php echo $wid_mv_Vestuario; ?> /> <label for="wid_mv_Vestuario">Vestuário</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="mv_vinhos" id="wid_mv_vinhos" <?php echo $wid_mv_vinhos; ?> /> <label for="wid_mv_vinhos">Vinhos & Bebidas</label>
+			<br />
+			</td>
+			<td VALIGN="TOP">
+			<strong>Lançamento</strong><br />
+			<input type="radio" name="wid_rss_source" value="lan_Geral" id="wid_lan_Geral" <?php echo $wid_lan_Geral; ?> /> <label for="wid_lan_Geral">Geral (Todo o Site)</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Bebes" id="wid_lan_Bebes" <?php echo $wid_lan_Bebes; ?> /> <label for="wid_lan_Bebes">Bebês</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Beleza" id="wid_lan_Beleza" <?php echo $wid_lan_Beleza; ?> /> <label for="wid_lan_Beleza">Beleza & Saúde</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Brinquedos" id="wid_lan_Brinquedos" <?php echo $wid_lan_Brinquedos; ?> /> <label for="wid_lan_Brinquedos">Brinquedos</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Cama" id="wid_lan_Cama" <?php echo $wid_lan_Cama; ?> /> <label for="wid_lan_Cama">Cama, Mesa & banho</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Cameras" id="wid_lan_Cameras" <?php echo $wid_lan_Cameras; ?> /> <label for="wid_lan_Cameras">Câmeras Digitais & Filmadoras</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Celulares" id="wid_lan_Celulares" <?php echo $wid_lan_Celulares; ?> /> <label for="wid_lan_Celulares">Celulares & Telefonia Fixa</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_CDs" id="wid_lan_CDs" <?php echo $wid_lan_CDs; ?> /> <label for="wid_lan_CDs">CDs</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_DVD" id="wid_lan_DVD" <?php echo $wid_lan_DVD; ?> /> <label for="wid_lan_DVD">DVDs & Blu-ray</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Esporte" id="wid_lan_Esporte" <?php echo $wid_lan_Esporte; ?> /> <label for="wid_lan_Esporte">Esporte & Lazer</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Eletrodomesticos" id="wid_lan_Eletrodomesticos" <?php echo $wid_lan_Eletrodomesticos; ?> /> <label for="wid_lan_Eletrodomesticos">Eletrodomésticos</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Eletronicos" id="wid_lan_Eletronicos" <?php echo $wid_lan_Eletronicos; ?> /> <label for="wid_lan_Eletronicos">Eletrônicos Áudio & Vídeo</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Eletroportateis" id="wid_lan_Eletroportateis" <?php echo $wid_lan_Eletroportateis; ?> /> <label for="wid_lan_Eletroportateis">Eletroportáteis</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Ferramentas" id="wid_lan_Ferramentas" <?php echo $wid_lan_Ferramentas; ?> /> <label for="wid_lan_Ferramentas">Ferramentas</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Games" id="wid_lan_Games" <?php echo $wid_lan_Games; ?> /> <label for="wid_lan_Games">Games</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Informatica" id="wid_lan_Informatica" <?php echo $wid_lan_Informatica; ?> /> <label for="wid_lan_Informatica">Informática & Acessórios</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Instrumentos" id="wid_lan_Instrumentos" <?php echo $wid_lan_Instrumentos; ?> /> <label for="wid_lan_Instrumentos">Instrumentos Musicais</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Livros" id="wid_lan_Livros" <?php echo $wid_lan_Livros; ?> /> <label for="wid_lan_Livros">Livros</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Papelaria" id="wid_lan_Papelaria" <?php echo $wid_lan_Papelaria; ?> /> <label for="wid_lan_Papelaria">Papelaria</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Perfumaria" id="wid_lan_Perfumaria" <?php echo $wid_lan_Perfumaria; ?> /> <label for="wid_lan_Perfumaria">Perfumaria</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Relogios" id="wid_lan_Relogios" <?php echo $wid_lan_Relogios; ?> /> <label for="wid_lan_Relogios">Relógios & Presentes</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_Utilidades" id="wid_lan_Utilidades" <?php echo $wid_lan_Utilidades; ?> /> <label for="wid_lan_Utilidades">Utilidades Domésticas</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="lan_vinhos" id="wid_lan_vinhos" <?php echo $wid_lan_vinhos; ?> /> <label for="wid_lan_vinhos">Vinhos & Bebidas</label>
+			<br />
+			</td>
+			<td VALIGN="TOP">
+			<strong>Promoção</strong><br />
+			<input type="radio" name="wid_rss_source" value="prom_Geral" id="wid_prom_Geral" <?php echo $wid_prom_Geral; ?> /> <label for="wid_prom_Geral">Geral (Todo o Site)</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="prom_Beleza" id="wid_prom_Beleza" <?php echo $wid_prom_Beleza; ?> /> <label for="wid_prom_Beleza">Beleza & Saúde</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="prom_Brinquedos" id="wid_prom_Brinquedos" <?php echo $wid_prom_Brinquedos; ?> /> <label for="wid_prom_Brinquedos">Brinquedos</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="prom_Cameras" id="wid_prom_Cameras" <?php echo $wid_prom_Cameras; ?> /> <label for="wid_prom_Cameras">Câmeras Digitais & Filmadoras</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="prom_Celulares" id="wid_prom_Celulares" <?php echo $wid_prom_Celulares; ?> /> <label for="wid_prom_Celulares">Celulares & Telefonia Fixa</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="prom_CDs" id="wid_prom_CDs" <?php echo $wid_prom_CDs; ?> /> <label for="wid_prom_CDs">CDs</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="prom_DVD" id="wid_prom_DVD" <?php echo $wid_prom_DVD; ?> /> <label for="wid_prom_DVD">DVDs & Blu-ray</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="prom_Esporte" id="wid_prom_Esporte" <?php echo $wid_prom_Esporte; ?> /> <label for="wid_prom_Esporte">Esporte & Lazer</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="prom_Eletrodomesticos" id="wid_prom_Eletrodomesticos" <?php echo $wid_prom_Eletrodomesticos; ?> /> <label for="wid_prom_Eletrodomesticos">Eletrodomésticos</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="prom_Eletronicos" id="wid_prom_Eletronicos" <?php echo $wid_prom_Eletronicos; ?> /> <label for="wid_prom_Eletronicos">Eletrônicos Áudio & Vídeo</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="prom_Games" id="wid_prom_Games" <?php echo $wid_prom_Games; ?> /> <label for="wid_prom_Games">Games</label>
+			<br />
+			<input type="radio" name="wid_rss_source" value="prom_Livros" id="wid_prom_Livros" <?php echo $wid_prom_Livros; ?> /> <label for="wid_prom_Livros">Livros</label>
+			<br />
 		</td>
 	 </tr>
 	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Valores</th>
-		<td>
-				<input type="checkbox" id="Valpre" name="wid_valores[]" value="Preco" <?php echo $wid_showpreco; ?>> <label for="Valpre">Preço</label><br />
-				<input type="checkbox" id="Valpro" name="wid_valores[]" value="Promo" <?php echo $wid_showpromo; ?>> <label for="Valpro">Promoção</label><br />
-				<input type="checkbox" id="Valpar" name="wid_valores[]" value="Parce" <?php echo $wid_showparce; ?>> <label for="Valpar">Parcela</label><br />
-
-				<label for="Submarino-show">Informe quais valores deverão ser mostrados na vitrine.</label><br />
-		</td>
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Ordem dos Produtos</th>
-		<td>
-			<input type="radio" name="wid_orderby" id="wprecod" value="precoD" <?php echo $wid_precoD; ?> /> <label for="wprecod">Maior Preço</label>
-			<br />
-			<input type="radio" name="wid_orderby" id ="wprecoa" value="precoA" <?php echo $wid_precoA; ?> /> <label for="wprecoa">Menor Preço</label>
-			<br />
-			<input type="radio" name="wid_orderby" id="wprodutoa" value="produtoA" <?php echo $wid_alfaA; ?> /> <label for="wprodutoa">Alfabética (A-Z)</label>
-			<br />
-			<input type="radio" name="wid_orderby" id="wprodutoz" value="produtoZ" <?php echo $wid_alfaZ; ?> /> <label for="wprodutoz">Alfabética (Z-A)</label>
-			<br />
-		</td>
-	 </tr>
-	</table>
+<br />
 
     <table class="form-table">
 	 <tr>
@@ -1486,20 +2174,16 @@ function vs_widget_init() {
 	$widget_ops = array('classname' => 'widget_Submarino', 'description' => __( 'Vitrine de Produtos do Submarino.com' ) );
 	wp_register_sidebar_widget('vitrine-submarino', 'Vitrine Submarino', 'widget_Submarino', $widget_ops);
 }
-
-/***********************************************************************/
-// Returns array with headers in $response[0] and body in $response[1]
-
-function vs_http_post($request, $host, $path, $port = 80) {
+function vs_http_get($request, $host, $path, $port = 80) {
 
 	global $wp_version;
+	global $vs_options;	
 
-	$http_request  = "POST $path HTTP/1.0\r\n";
+	$http_request  = "GET $path HTTP/1.0\r\n";
 	$http_request .= "Host: $host\r\n";
 	$http_request .= "Content-Type: application/x-www-form-urlencoded; charset=" . get_option('blog_charset') . "\r\n";
 	$http_request .= "Content-Length: " . strlen($request) . "\r\n";
-    $http_request .= "User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.2.1) Gecko/20021204\r\n";
-    $http_request .= "Referer: ".get_option('siteurl')."\r\n";
+	$http_request .= "User-Agent: WordPress/$wp_version | vitrine-submarino/".$vs_options['version']."\r\n";
 	$http_request .= "\r\n";
 	$http_request .= $request;
 
@@ -1514,5 +2198,7 @@ function vs_http_post($request, $host, $path, $port = 80) {
 	}
 	return $response;
 }
+
+
 
 ?>
