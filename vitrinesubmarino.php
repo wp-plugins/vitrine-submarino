@@ -868,16 +868,16 @@ if (is_array($produtos)) {
 				if ($vs_options['ctx_tipo'] == "horizontal") {
 					$td = 100 / $vs_options['ctx_show'];
 					//mostra vitrine com produtos em uma unica linha (VITRINE HORIZONTAL)
-					$lista_de_produtos .= '<div style="width:'. $td.'%;background-color:white;text-align:center;padding:0px;font-size:12px;border:0px;float:left;"><a href="'.$link_prod.'">'.$imagem.'</a><br /><a href="'.$link_prod.'" target="_blank">'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
+					$lista_de_produtos .= '<div style="width:'. $td.'%;background-color:white;text-align:center;padding:0px;font-size:12px;border:0px;float:left;"><a href="'.$link_prod.'">'.$imagem.'</a><br /><a href="'.$link_prod.'" '.tc.' target="_blank">'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
 				} else {
 					$imagem = str_replace("<img ", "<img style=\" display: inline; float: left; margin: 0 10px 10px 0;\" alt=\"".$nome."\"", $imagem);
 					//mostra vitrine com um produto por linha (VITRINE VERTICAL)
-					$lista_de_produtos .= '<div style="height:130px;background-color:white;padding:3px;"><a href="'.$link_prod.'">'.$imagem.'</a><a href="'.$link_prod.'" target="_blank">'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
+					$lista_de_produtos .= '<div style="height:130px;background-color:white;padding:3px;"><a href="'.$link_prod.'">'.$imagem.'</a><a href="'.$link_prod.'" '.tc.' target="_blank">'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
 				}
 				break;
 	
 			case "widget":
-				$lista_de_produtos .= '<div style="color:'.$desc.';background-color:'.$fundo.';text-align:center;padding:3px;"><a href="'.$link_prod.'" target="_blank">'.$imagem.'<br />'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
+				$lista_de_produtos .= '<div style="color:'.$desc.';background-color:'.$fundo.';text-align:center;padding:3px;"><a href="'.$link_prod.'" '.tc.' target="_blank">'.$imagem.'<br />'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
 				break;
 	
 		} //switch
