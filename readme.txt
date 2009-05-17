@@ -2,9 +2,9 @@
 Contributors: Bernardo Bauer
 Donate link: http://bernabauer.com/wp-plugins
 Tags: brasil, monetização, submarino, vitrine 
-Requires at least: 2.5
+Requires at least: 2.7
 Tested up to: 2.7
-Stable tag: 3.1
+Stable tag: 3.2
 
 Mostra vitrine de produtos do Submarino.com.
 
@@ -12,15 +12,19 @@ Mostra vitrine de produtos do Submarino.com.
 
 Mostre produtos do Submarino de acordo com as fontes RSS que o Submarino oferece. Você pode mostrar Mais Vendidos, Lançamentos e Promoções. Os produtos são coletados através do RSS e mostrados de maneira aleatória nas vitrines. É possível escolher uma categoria para cada tipo de vitrine de produtos.
 
-São duas funcionalidades distintas para o plugin. Widget e Vitrine Simples.
+São duas funcionalidades distintas para o plugin. Widget e Vitrine Simples/Contextual.
 
 **Widget**
 
 Requer tema compatível com Widgets e mostra produtos baseados na escolha de uma palavra chave definida na página de administração.
 
-**Vitrine Simples**
+**Vitrine Simples/Contextual**
 
-Vitrine Simples é a antiga vitrine contextual. Como não é mais possível pesquisar produtos via scraping, a contextualização já não faz mais sentido. Neste momento a Vitrine Simples mostra apenas os produtos da categoria que for escolhida através da página de administração.
+Vitrine Simples é vitrine que mostra produtos oriundos do RSS do Submarino. Já a Vitrine Contextual busca palavras cadastradas através do plugin Palavras de Monetização para mostrar produtos contextuais que estão na loja do Submarino.
+
+A novidade na versão 3.2 é que os produtos da Vitrine Contextual ficam armazenados localmente na base de dados do seu blog. O cache de produtos sempre é descartado a cada 24 horas pegando os produtos com suas descrições e preços a cada primeira visita que a palavra é pedida e não está na base de dados. Na página de administração do plugin é possível ver quantos produtos e palavras compõe o cache.
+
+Com este cache local o Submarino não vai mais bloquear o seu blog para fazer a pesquisa de produtos em suas páginas.
 
 == Installation ==
 

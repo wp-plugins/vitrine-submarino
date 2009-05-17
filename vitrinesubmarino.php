@@ -3,12 +3,11 @@
 Plugin Name: Vitrine Submarino
 Plugin URI: http://www.bernabauer.com/wp-plugins/
 Description: Mostre vitrines de produtos do Submarino em seu blog. Com o <a href="http://wordpress.org/extend/plugins/palavras-de-monetizacao/">Palavras de Monetização</a> você pode contextualizar manualmente os produtos. Para usar widgets é neecessário um tema compatível.
-Version: 3.1
+Version: 3.2
 Author: Bernardo Bauer
 Author URI: http://www.bernabauer.com/
-*/
 
-/*  Copyright 2008  Bernardo Bauer  (email : bernabauer@bernabauer.com)
+	Copyright 2008  Bernardo Bauer  (email : bernabauer@bernabauer.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,12 +24,11 @@ Author URI: http://www.bernabauer.com/
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-
 global $wpdb;
 global $vs_options;
 global $vs_version;
 
-$vs_version = "3.1";
+$vs_version = "3.2";
 $vs_options = get_option('vs_options');
 
 register_activation_hook(__FILE__, 'vs_activate');
@@ -46,10 +44,12 @@ add_action('admin_menu', 'vs_option_menu');
 
 // Vitrine Contextual Automática
 if ($vs_options['ctx_exib_auto'] == 'auto') {
-	add_filter('the_content', 'vs_auto',99);
+	add_filter('the_content', 'vs_auto',1);
 }
 
-add_action('vs_cron', 'vs_pegaprodutos_rss' );
+add_action('vs_cron', 'vs_atualiza_produtos' );
+
+add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), 'vs_plugin_actions' );
 
 /***************************************************************************************************
  *  Coisas para serem feitas na instalacao do plugin
@@ -88,6 +88,7 @@ function vs_activate() {
 			'ctx_tipo'=>		'horizontal',
 			'ctx_local'=>		'depois',
 			'ctx_show'=>		'4',
+			'ctx_word'=>		'notebook',
 			'ctx_exib_auto'=>	'auto',
 			'ctx_titulo'=>		'<h3>Ofertas Submarino</h3>',
 			'ctx_track'=>		'nao',
@@ -100,7 +101,7 @@ function vs_activate() {
 				nomep varchar(255) NOT NULL,
 				linkp varchar(255) NOT NULL,
 				imagemp varchar(255) NOT NULL,
-				precop varchar(10) NOT NULL,
+				precop varchar(15) NOT NULL,
 				rss_source varchar(15) NOT NULL
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8;';
 
@@ -109,58 +110,15 @@ function vs_activate() {
 		
 	} else {
 		if ($vs_options['version'] != $vs_version) {
-			delete_option('vs_options');
-					$vs_options = array(
-			'codafil'=>			'',
-			'cod_BP'=>			'',
-			'cod_ML'=>			'',
-			'cod_JC'=>			'',
-			'LCP'=>				'[ Compare Preços ]',
-			'PCP'=>				'BB',
-			'LP'=>				'[ Veja mais ]',
-			'LPT'=>				'submarino',
-			'version'=>			$vs_version,
-			'remover'=>			'nao',
-			'wid_show'=>		'3',
-			'wid_fontcolor'=>	'#000000',
-			'wid_bgcolor'=>		'#FFFFFF',
-			'wid_brdcolor'=>	'#DDDDDD',
-			'wid_prcolor'=>		'#3982C6',
-			'wid_title'=>		'Ofertas Submarino',
-			'wid_track'=>		'nao',
-			'wid_rss_source'=>	'lan_Geral',
-			'wid_altcode'=>		'BVD',
-			'ctx_prcolor'=>		'#3982C6',
-			'ctx_tipo'=>		'horizontal',
-			'ctx_local'=>		'depois',
-			'ctx_show'=>		'4',
-			'ctx_exib_auto'=>	'auto',
-			'ctx_titulo'=>		'<h3>Ofertas Submarino</h3>',
-			'ctx_track'=>		'nao',
-			'ctx_rss_source'=>	'lan_Geral',
-			'ctx_altcode'=>		'ctx_FBD',
-		);
-		add_option('vs_options', $vs_options);
-		
-		$sql = 'CREATE TABLE wp_vitrinesubmarino (
-				nomep varchar(255) NOT NULL,
-				linkp varchar(255) NOT NULL,
-				imagemp varchar(255) NOT NULL,
-				precop varchar(10) NOT NULL,
-				rss_source varchar(15) NOT NULL
-				) ENGINE=MyISAM DEFAULT CHARSET=utf8;';
-
-		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-		dbDelta($sql);
+			$vs_options['version'] = $vs_version;
+			update_option('vs_options', $vs_options);
 		}
-#		$vs_options['version'] = $vs_version;
-#		update_option('vs_options', $vs_options);
 	}
 
 	if (!wp_next_scheduled('vs_cron')) {
 		wp_schedule_event( time(), 'daily', 'vs_cron' );
 	}
-
+	vs_atualiza_produtos();
 }
 
 /***************************************************************************************************
@@ -175,6 +133,7 @@ function vs_activate() {
 	//pega dados da base
 	global $vs_options;
 
+	wp_clear_scheduled_hook('vs_cron');
 	
 	if ($vs_options['remover'] == 'sim')
 		delete_option('vs_options');
@@ -303,19 +262,6 @@ function vs_auto($text) {
 	global $vs_options;
 
 	$vs_options = get_option('vs_options');
-	
-	$current_plugins = get_option('active_plugins');
-	if (in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugins)) {
-		$words_array = pm_get_words();
-		
-		if (count($words_array) == 0)
-			$word = $vs_options['ctx_word'];
-		else
-			$word = $words_array[rand(0, count($words_array)-1)];
-	} else {
-		$word = $vs_options['ctx_word'];
-	}
-	
 
 	if ((is_single()) AND ($vs_options["ctx_exib_auto"] == 'auto')) {
 
@@ -467,6 +413,7 @@ function vs_xml2array($contents, $get_attributes=1, $priority = 'tag') {
     
     return($xml_array);
 }  
+
 /***************************************************************************************************
  *  http://www.sourcerally.net/Scripts/39-Convert-HTML-Entities-to-XML-Entities
  */
@@ -717,36 +664,42 @@ function vs_pegaprodutos_rss($rss_source) {
 
 	$response = vs_http_get($request, "www.submarino.com.br", $rss_link);
 	$data = vs_xmlEntities($response[1]);
+
 	$produtos = vs_xml2array($data,0);
-	
+
 	$produtos2 = $produtos["rss"]["channel"]['item'];
 
-	foreach ($produtos2 as $produto) {
+	if (count($produtos2) > 0) {
 
-		$nome = $produto["title"];
-		$diz = $produto["description"];
-
-		if (stripos($produto["link"], "?") === FALSE) {
-			$link_prod = $produto["link"]."?franq=".$vs_options['codafil'];
-		} else {
-			$link_prod = $produto["link"]."&franq=".$vs_options['codafil'];
-		}
-		
-		preg_match_all('/<img[^>]+>/i',$diz, $result); 
-		$imagem = $result[0][0];
-
-		$preco = strip_tags("R".strrchr($diz, "$"));
-
-		if ($preco == "R")
-			$preco = '';
-
-		$lprod .= "('" . $wpdb->escape($nome) . "','" . $wpdb->escape($link_prod) . "','" . $wpdb->escape($imagem) . "','" . $wpdb->escape($preco) . "', '". $wpdb->escape($rss_source) ."'), ";
-	} //foreach	
+		foreach ($produtos2 as $produto) {
 	
-		//inclui $nome $link_prod $imagem e $preco no BD
-		$insert = "INSERT INTO wp_vitrinesubmarino (nomep, linkp, imagemp, precop, rss_source) VALUES " . rtrim($lprod, ", ");
-		$results = $wpdb->query( $insert );
+			$nome = $produto["title"];
+			if (is_array($nome))
+				$nome = "";
 
+			$diz = $produto["description"];
+	
+			if (stripos($produto["link"], "?") === FALSE) {
+				$link_prod = $produto["link"]."?franq=".$vs_options['codafil'];
+			} else {
+				$link_prod = $produto["link"]."&franq=".$vs_options['codafil'];
+			}
+			
+			preg_match_all('/<img[^>]+>/i',$diz, $result); 
+			$imagem = $result[0][0];
+	
+			$preco = strip_tags("R".strrchr($diz, "$"));
+
+			if ($preco == "R")
+				$preco = '';
+	
+			$lprod .= "('" . $wpdb->escape($nome) . "','" . $wpdb->escape($link_prod) . "','" . $wpdb->escape($imagem) . "','" . $wpdb->escape($preco) . "', '". $wpdb->escape($rss_source) ."'), ";
+		} //foreach	
+		
+			//inclui $nome $link_prod $imagem e $preco no BD
+			$insert = "INSERT INTO wp_vitrinesubmarino (nomep, linkp, imagemp, precop, rss_source) VALUES " . rtrim($lprod, ", ");
+			$results = $wpdb->query( $insert );
+	}
 }
 
 /***************************************************************************************************
@@ -756,19 +709,148 @@ function vs_pegaprodutos($vitrine){
 
 	global $wpdb;
 	global $vs_options;
-	
+	$word = "";
+
 	if ($vitrine != "widget") {
 		$rss_source = $vs_options['ctx_rss_source'];
+		if ($rss_source == "ctx_contextual") {
+			$current_plugins = get_option('active_plugins');
+			if (in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugins)) {
+				$words_array = pm_get_words();
+				if (count($words_array) == 0)
+					$word = $vs_options['ctx_word'];
+				else
+					$word = $words_array[rand(0, count($words_array)-1)];
+			} else {
+				$word = $vs_options['ctx_word'];
+			}
+			$rss_source = $word;
+		}
 	} else {
 		$rss_source = $vs_options['wid_rss_source'];
 	}
 
 	$select = "SELECT * FROM wp_vitrinesubmarino WHERE rss_source = '". $rss_source ."'";
-	
 	$results = $wpdb->get_results( $select , ARRAY_A);
-	
+
+	if (($results == "") AND ($word != "")) {
+		$results = vs_pesquisaprodutos($word);
+	}
+
 	return $results;
 }
+
+/***************************************************************************************************
+ *  pega produtos da base de dados
+ */
+function vs_pesquisaprodutos($palavra){ 
+
+	global $wpdb;
+	global $vs_options;
+	
+	if ($palavra == '')
+		$palavra = $vs_options['ctx_word'];
+	$urlaserlida = "http://www.submarino.com.br/busca?q=".$palavra;
+
+############## ACESSO A PÁGINA COM PRODUTOS
+
+	// Pego a pagina do produto procurado
+	if(function_exists(curl_init)) {
+	
+		$ch = curl_init();
+		// informar URL e outras funcoes ao CURL
+		curl_setopt($ch, CURLOPT_URL, $urlaserlida);
+
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		// Acessar a URL e retornar a saida
+		$buffer = curl_exec($ch);
+		// liberar
+		curl_close($ch);
+	
+	} else {
+	
+		$buffer = file_get_contents($urlaserlida);
+	
+	}
+
+	$doc = new DOMDocument();
+
+	$doc->loadHTML( str_replace("&", "&amp;", $buffer) );
+
+############## COMEÇO DO CORE SCRIPT
+
+		// Pego as imagens
+	
+		$img = $doc->getElementsByTagName( "img" );
+	
+		$i = 1;
+	
+		foreach( $img as $img )	{
+			$teste = $img->getAttribute("class");
+	
+			if($teste == 'image') { 
+				$imagem[$i] = "<img src=\"".$img->getAttribute("src")."\"  hspace=\"3\" border=\"0\">."; 
+				$i++; 
+			}
+		}
+
+		$totalprod = $i-1;
+	
+		// Pego os links e os titulos
+	
+		$img = $doc->getElementsByTagName( "span" );
+		
+		$i = 1;
+		$j = 1;
+	
+		foreach( $img as $img ) {
+			$teste = $img->getAttribute("class");
+	
+			if($teste == 'name entry-title') { 
+				$titulo[$i] = $img->nodeValue; 
+				$i++; 
+			}
+			if($teste == 'for') { 
+				$preco[$j] = ltrim($img->nodeValue,'por: '); 
+				$j++; 
+			}
+	
+		}
+
+		// Pego os links e os titulos para categorias
+	
+		$img = $doc->getElementsByTagName( "a" );
+	
+		$i = 1;
+	
+		foreach( $img as $img ) {
+			$teste = $img->getAttribute("class");
+	
+			if($teste == 'link') { 
+					$link[$i] = "http://www.submarino.com.br".$img->getAttribute("href").'&franq='.$vs_options['codafil']; 
+					$i++; 
+			}
+		} // foreach
+
+		$produtos = array();
+
+		for($i=1;$i<=$totalprod;$i++) {
+			if ($titulo[$i] != '' AND $link[$i] != '' AND $imagem[$i] != '' AND $preco[$i] != '') 
+				$lprod .= "('" . $wpdb->escape($titulo[$i]) . "','" . $wpdb->escape($link[$i]) . "','" . $wpdb->escape($imagem[$i]) . "','" . $wpdb->escape($preco[$i]) . "', '". $wpdb->escape($palavra) ."'), ";
+		} //for
+
+	if ($lprod != '') {
+		$insert = "INSERT INTO wp_vitrinesubmarino (nomep, linkp, imagemp, precop, rss_source) VALUES " . rtrim($lprod, ", ");
+		$results = $wpdb->query( $insert );
+	}
+
+	$select = "SELECT * FROM wp_vitrinesubmarino WHERE rss_source = '". $palavra ."'";
+	$produtos = $wpdb->get_results( $select , ARRAY_A);
+
+	return $produtos;
+}
+
+
 /***************************************************************************************************
  *  atualiza o cache
  */
@@ -777,17 +859,26 @@ function vs_atualiza_produtos(){
 	global $wpdb;
 	global $vs_options;
 
+	#cache vai pras cucuias
 	$truncate = "TRUNCATE TABLE wp_vitrinesubmarino";
 	$results = $wpdb->query( $truncate );
-	
+
+	#atualiza palavra padrão da vitrine contextual
+	vs_pesquisaprodutos($vs_options['ctx_word']);
+
+	#atualiza produtos do RSS para vitrine simples
 	vs_pegaprodutos_rss($vs_options['ctx_rss_source']);
-	vs_pegaprodutos_rss($vs_options['wid_rss_source']);
+
+	#atualiza produtos do RSS para vitrine widget se for diferente da vitrine simples
+	if ($vs_options['ctx_rss_source'] != $vs_options['wid_rss_source'])
+		vs_pegaprodutos_rss($vs_options['wid_rss_source']);
 }
 
 /***************************************************************************************************
  *  Funcao principal
  */
 function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
+	
 	global $wpdb;
 
 	error_reporting( 0 );
@@ -799,96 +890,97 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 		return "ERRO: Código de Afiliado não informado.";
 
 	if ($vs_options['version'] != $vs_version)
-		return "ERRO: Atualização necessária.";
+		return "Vitrine Submarino ** ERRO: Atualização necessária! **";
 
 	$idsubmarino = $vs_options['codafil'];			// Define codigo de afiliado para o script funcionar
 
-//pega produtos da BD (devolve um array)
+	//pega produtos da BD (devolve um array)
+	$produtos = vs_pegaprodutos($vitrine);
 
-$produtos = vs_pegaprodutos($vitrine);
-shuffle($produtos);
-if (is_array($produtos)) {
+	shuffle($produtos);
 
-	foreach ($produtos as $produto) {
-
-
-		$nome = $produto['nomep'];
-		$link_prod = $produto['linkp'];
-		$imagem = $produto['imagemp'];
-		$preco = $produto['precop'];
-
-		$tc = '';
+	if (is_array($produtos)) {
 	
-		$texto = $nome;
-		$texto = str_replace( " com ", " ", $texto );
-		$texto = str_replace( " de ", " ", $texto );
-		$texto = str_replace( " do ", " ", $texto );
-		$texto = str_replace( " da ", " ", $texto );
-		$texto = str_replace( " para ", " ", $texto );
-		$texto = str_replace( " por ", " ", $texto );
-		$pal = explode(" ", $texto);
-		$busca = $pal[0]." ".$pal[1]." ".$pal[2]." ".$pal[3];
+		foreach ($produtos as $produto) {
 	
-		$tccp = 'onclick="javascript: pageTracker._trackPageview (\'/out/sub/compare/uol/'.$nome.'/\');"';
 	
-		//código de tracking do Google Analytics
-		$tc = 'onclick="javascript: pageTracker._trackPageview (\'/out/sub/'.$vitrine.'/'.$nome.'\');"';
+			$nome = $produto['nomep'];
+			$link_prod = $produto['linkp'];
+			$imagem = $produto['imagemp'];
+			$preco = $produto['precop'];
 	
-		if (($vs_options['ctx_track'] == "nao") AND $vitrine == "contextual") {
 			$tc = '';
-		}
-		if (($vs_options['wid_track'] == "nao") AND $vitrine == "widget")  {
-			$tc = '';
-		}
 		
-		//FIM do código de tracking
+			$texto = $nome;
+			$texto = str_replace( " com ", " ", $texto );
+			$texto = str_replace( " de ", " ", $texto );
+			$texto = str_replace( " do ", " ", $texto );
+			$texto = str_replace( " da ", " ", $texto );
+			$texto = str_replace( " para ", " ", $texto );
+			$texto = str_replace( " por ", " ", $texto );
+			$pal = explode(" ", $texto);
+			$busca = $pal[0]." ".$pal[1]." ".$pal[2]." ".$pal[3];
+		
+			$tccp = 'onclick="javascript: pageTracker._trackPageview (\'/out/sub/compare/uol/'.$nome.'/\');"';
+		
+			//código de tracking do Google Analytics
+			$tc = 'onclick="javascript: pageTracker._trackPageview (\'/out/sub/'.$vitrine.'/'.$nome.'\');"';
 	
-		switch ($vs_options['PCP']) {
-			case "BP":
-				$compare_precos = "<a href=\"http://busca.buscape.com.br/cprocura?lkout=1&amp;site_origem=".$cod_BP."&produto=".urlencode(utf8_decode($busca))."\" ".$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
-				break;
-			case "ML":
-				$compare_precos = "<a href=\"http://pmstrk.mercadolivre.com.br/jm/PmsTrk?tool=".$cod_ML."&amp;go=http://lista.mercadolivre.com.br/".urlencode($busca)."\"  ".$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
-				break;
-			case "JC":
-				$compare_precos = "<a href=\"http://www.jacotei.com.br/mod.php?module=jacotei.pesquisa&amp;texto=".urlencode($busca)."&amp;precomin=&amp;precomax=&amp;af=".$cod_JC."\" ".$tccp." target='_blank'>".$vs_options['LCP']."</a>";  
-				break;
-			case "NS":
-				$compare_precos = ''; 
-				break;
-			case "BB":
-				$compare_precos = "<a href=\"http://bernabauer.shopping.busca.uol.com.br/busca.html?q=".urlencode(utf8_decode($busca))."\" "	.$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
-				break;
-		}
-
-		switch ($vitrine) {
+			if (($vs_options['ctx_track'] == "nao") AND $vitrine == "contextual") {
+				$tc = '';
+			}
+			if (($vs_options['wid_track'] == "nao") AND $vitrine == "widget")  {
+				$tc = '';
+			}
+			
+			//FIM do código de tracking
+		
+			switch ($vs_options['PCP']) {
+				case "BP":
+					$compare_precos = "<a href=\"http://busca.buscape.com.br/cprocura?lkout=1&amp;site_origem=".$cod_BP."&produto=".urlencode(utf8_decode($busca))."\" ".$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
+					break;
+				case "ML":
+					$compare_precos = "<a href=\"http://pmstrk.mercadolivre.com.br/jm/PmsTrk?tool=".$cod_ML."&amp;go=http://lista.mercadolivre.com.br/".urlencode($busca)."\"  ".$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
+					break;
+				case "JC":
+					$compare_precos = "<a href=\"http://www.jacotei.com.br/mod.php?module=jacotei.pesquisa&amp;texto=".urlencode($busca)."&amp;precomin=&amp;precomax=&amp;af=".$cod_JC."\" ".$tccp." target='_blank'>".$vs_options['LCP']."</a>";  
+					break;
+				case "NS":
+					$compare_precos = ''; 
+					break;
+				case "BB":
+					$compare_precos = "<a href=\"http://bernabauer.shopping.busca.uol.com.br/busca.html?q=".urlencode(utf8_decode($busca))."\" "	.$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
+					break;
+			}
 	
-			case "contextual":
-				// vitrine contextual
-				if ($vs_options['ctx_tipo'] == "horizontal") {
-					$td = 100 / $vs_options['ctx_show'];
-					//mostra vitrine com produtos em uma unica linha (VITRINE HORIZONTAL)
-					$lista_de_produtos .= '<div style="width:'. $td.'%;background-color:white;text-align:center;padding:0px;font-size:12px;border:0px;float:left;"><a href="'.$link_prod.'">'.$imagem.'</a><br /><a href="'.$link_prod.'" '.tc.' target="_blank">'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
-				} else {
-					$imagem = str_replace("<img ", "<img style=\" display: inline; float: left; margin: 0 10px 10px 0;\" alt=\"".$nome."\"", $imagem);
-					//mostra vitrine com um produto por linha (VITRINE VERTICAL)
-					$lista_de_produtos .= '<div style="height:130px;background-color:white;padding:3px;"><a href="'.$link_prod.'">'.$imagem.'</a><a href="'.$link_prod.'" '.tc.' target="_blank">'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
-				}
-				break;
+			switch ($vitrine) {
+		
+				case "contextual":
+					// vitrine contextual
+					if ($vs_options['ctx_tipo'] == "horizontal") {
+						$td = 100 / $vs_options['ctx_show'];
+						//mostra vitrine com produtos em uma unica linha (VITRINE HORIZONTAL)
+						$lista_de_produtos .= '<div style="width:'. $td.'%;background-color:white;text-align:center;padding:0px;font-size:12px;border:0px;float:left;"><a href="'.$link_prod.'" '.$tc.'  target="_blank">'.$imagem.'</a><br />'.$nome.'<br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
+					} else {
+						$imagem = str_replace("<img ", "<img style=\" display: inline; float: left; margin: 0 10px 10px 0;\" alt=\"".$nome."\"", $imagem);
+						//mostra vitrine com um produto por linha (VITRINE VERTICAL)
+						$lista_de_produtos .= '<div style="height:130px;background-color:white;padding:3px;"><a href="'.$link_prod.'" '.$tc.'  target="_blank">'.$imagem.'</a><a href="'.$link_prod.'" '.$tc.' target="_blank">'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
+					}
+					break;
+		
+				case "widget":
+					$lista_de_produtos .= '<div style="color:'.$desc.';background-color:'.$fundo.';text-align:center;padding:3px;text-decoration: none ! important;"><a href="'.$link_prod.'" '.$tc.' target="_blank">'.$imagem.'<br />'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
+					break;
+		
+			} //switch
+		if ($i == $show-1) 
+			break;
+		else
+			$i++;
+		} //foreach	
 	
-			case "widget":
-				$lista_de_produtos .= '<div style="color:'.$desc.';background-color:'.$fundo.';text-align:center;padding:3px;"><a href="'.$link_prod.'" '.tc.' target="_blank">'.$imagem.'<br />'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
-				break;
 	
-		} //switch
-	if ($i == $show-1) 
-		break;
-	else
-		$i++;
-	} //foreach	
-
-
-} else {
+	} else {
 		if ($vitrine == "contextual") { 
 			// anuncio alternativo contextual
 			
@@ -965,10 +1057,11 @@ if (is_array($produtos)) {
 					break;
 			} //switch
 		} //if
-		return "<center>".$altcode."</center>";
+		return "<br clear=both /><div style=\"float:center;\" align=\"center\" border=\"0\">
+".$altcode."</div>";
 	}# else {
 	
-	$credits = "<div style=\"text-align:right;\"><small><a href='http://www.bernabauer.com/wp-plugins/'>Vitrine Submarino ".$vs_options['version']."</a></small></div>";
+	$credits = "<br clear=both /><div style=\"text-align:right;\"><small><a href='http://www.bernabauer.com/wp-plugins/'>Vitrine Submarino ".$vs_options['version']."</a></small></div>";
 
 	if (($vitrine == "contextual") AND ($vs_options['ctx_exib_auto'] == 'auto'))
 		$titulo = $vs_options['ctx_titulo'];
@@ -1059,6 +1152,7 @@ function vs_options_subpanel() {
 			$vs_options['ctx_show'] = strip_tags(stripslashes($_POST['ctx_show']));
 
 
+		$vs_options['ctx_word'] = strip_tags(stripslashes($_POST['ctx_word']));
 		$vs_options['ctx_rss_source'] = strip_tags(stripslashes($_POST['ctx_rss_source']));
 		$vs_options['ctx_altcode'] = strip_tags(stripslashes($_POST['ctx_altcode']));
 		$vs_options['ctx_exib_auto'] = strip_tags(stripslashes($_POST['ctx_exib_auto']));
@@ -1073,6 +1167,7 @@ function vs_options_subpanel() {
 
 		//atualiza o cache local de produtos com a nova configuracao
 		vs_atualiza_produtos();
+		vs_pesquisaprodutos($vs_options['ctx_word']);
     }
     
     if ( $vs_options['ctx_exib_auto'] == 'auto') {
@@ -1390,6 +1485,9 @@ function vs_options_subpanel() {
 	
 	switch ($vs_options['ctx_rss_source']) {
 	
+		case "ctx_contextual":
+			$ctx_contextual = 'checked=\"checked\"';
+			break;
 		case "mv_Bebes":
 			$ctx_mv_Bebes = 'checked=\"checked\"';
 			break;
@@ -1581,7 +1679,24 @@ function vs_options_subpanel() {
 	 <tr>
 		<th scope="row" valign="top">Aviso</th>
 		<td>
-			 Este plugin pega os produtos para serem mostrados em seu blog fornecidos através da <a href="http://www.submarino.com.br/portal/central-rss/?WT.mc_id=rss_left&WT.mc_ev=click" target=_blank>fonte de RSS que o Submarino fornece</a>. Para mostrar os produtos nas vitrines contextual e widget o plugin efetua um cache local que é atualizado uma vez por dia. Fique atento ao seguinte: A página de configuração do plugin pode demorar um pouco para carregar quando as configurações são alteradas. Isto ocorre por que neste momento é forçada uma atualização do cache local a partir da fonte RSS.<br /><br />Próxima atualização de produtos via RSS: 
+			 Este plugin pega os produtos para serem mostrados em seu blog fornecidos através da <a href="http://www.submarino.com.br/portal/central-rss/?WT.mc_id=rss_left&WT.mc_ev=click" target=_blank>fonte de RSS que o Submarino fornece</a>. Para mostrar os produtos nas vitrines contextual e widget o plugin efetua um cache local que é atualizado uma vez por dia. Fique atento ao seguinte: A página de configuração do plugin pode demorar um pouco para carregar quando as configurações são alteradas. Isto ocorre por que neste momento é forçada uma atualização do cache local a partir da fonte RSS.<br />
+			<br />
+			<strong>Estatística do cache</strong><br />
+			Produtos : 
+			<?php 
+			$sql = "SELECT count( nomep ) as count FROM wp_vitrinesubmarino";
+			$results = $wpdb->get_results( $sql , ARRAY_A);
+			echo $results['0']['count'];
+			 ?>
+			<br />
+			Palavras distintas de produtos : 
+			<?php 
+			$sql = "SELECT count(distinct rss_source ) as count FROM wp_vitrinesubmarino";
+			$results = $wpdb->get_results( $sql , ARRAY_A);
+			echo $results['0']['count'];
+			
+			?>
+			<br />Próxima atualização do cache de produtos via RSS: 
 			 <?php 
 			 
 				//GET Difference between Server TZ and desired TZ
@@ -1590,7 +1705,6 @@ function vs_options_subpanel() {
 									
 				echo date('d/m/Y H:i:s', wp_next_scheduled('vs_cron') + $sec_diff); 
 
-			 
 			 ?>
 		</td>
 	 </tr>
@@ -1606,7 +1720,7 @@ function vs_options_subpanel() {
 
     <table class="form-table">
 	 <tr>
-		<th scope="row" valign="top">Comparação de Preços</th>
+		<th scope="row" valign="top">Comparação de Preços<br /></th>
 		<td>
 			 <input name="cod_BP" type="text" id="cod_BP" value="<?php echo $vs_options['cod_BP']; ?>" size=8  /> Informe o código do BuscaPé
 			 <br />
@@ -1624,9 +1738,9 @@ function vs_options_subpanel() {
 			<br />
 			<input type="radio" id="PCP_JC" name="PCP" value="JC" <?php echo $PCP_JC; ?> /> <label for="PCP_JC">Jacotei</label>
 			<br />
-			<input type="radio" id="PCP_NS" name="PCP" value="NS" <?php echo $PCP_NS; ?> /> <label for="PCP_NS">Não mostrar nada</label>
-			<br />
 			<input type="radio" id="PCP_BB" name="PCP" value="BB" <?php echo $PCP_BB; ?> /> <label for="PCP_BB">Shopping bernabauer.com</label>
+			<br />
+			<input type="radio" id="PCP_NS" name="PCP" value="NS" <?php echo $PCP_NS; ?> /> <label for="PCP_NS">Não mostrar links para comparação de preços</label>
 			<br />
 		</td>
 	 </tr>
@@ -1645,7 +1759,7 @@ function vs_options_subpanel() {
 	</table>
 
 <br />
-    <h2>Vitrine Simples</h2>
+    <h2>Vitrine Simples/Contextual</h2>
 <?php
 
 $current_plugins = get_option('active_plugins');
@@ -1712,9 +1826,25 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 
     <table class="form-table">
 	 <tr>
-		<th scope="row" valign="top">Fonte RSS de Produtos<br />Veja mais informações <a href="http://www.submarino.com.br/portal/central-rss/">aqui</a>.</th>
+		<th scope="row" valign="top">Fonte de Produtos<br />Veja mais informações sobre a fonte de produtos em RSS <a href="http://www.submarino.com.br/portal/central-rss/">aqui</a>.</th>
 		<td VALIGN="TOP">
-			<strong>Mais Vendidos</strong><br />
+		<?php 
+			if (in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugins)) { 
+				$PM_Present = "";
+				$PM_msg = '';
+			} else {
+				$PM_Present = "DISABLED";
+				$PM_msg = '<center>** Requer plugin <br /><a href="http://wordpress.org/extend/plugins/palavras-de-monetizacao/">Palavras de Monetização</a> <br />instalado e ativado. **</center>';
+			}
+		?>
+			<input type="radio" name="ctx_rss_source" value="ctx_contextual" id="ctx_contextual" <?php echo $ctx_contextual; echo " ".$PM_Present; ?> /> <label for="ctx_contextual">Contextual</label>
+			<br />
+			<input style="width: 60px;" id="ctx_word" name="ctx_word" type="text" value="<?php echo $vs_options['ctx_word']; ?>" <?php echo " ".$PM_Present; ?> /><label for="ctx_word"> Palavra padrão</label><br />
+			<br />
+			<?php echo " ".$PM_msg; ?>
+		</td>
+		<td VALIGN="TOP">
+			<strong>Mais Vendidos RSS</strong><br />
 			<input type="radio" name="ctx_rss_source" value="mv_Bebes" id="ctx_mv_Bebes" <?php echo $ctx_mv_Bebes; ?> /> <label for="ctx_mv_Bebes">Bebês</label>
 			<br />
 			<input type="radio" name="ctx_rss_source" value="mv_Beleza" id="ctx_mv_Beleza" <?php echo $ctx_mv_Beleza; ?> /> <label for="ctx_mv_Beleza">Beleza & Saúde</label>
@@ -1763,9 +1893,9 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 			<br />
 			<input type="radio" name="ctx_rss_source" value="mv_vinhos" id="ctx_mv_vinhos" <?php echo $ctx_mv_vinhos; ?> /> <label for="ctx_mv_vinhos">Vinhos & Bebidas</label>
 			<br />
-			</td>
-			<td VALIGN="TOP">
-			<strong>Lançamento</strong><br />
+		</td>
+		<td VALIGN="TOP">
+			<strong>Lançamento RSS</strong><br />
 			<input type="radio" name="ctx_rss_source" value="lan_Geral" id="ctx_lan_Geral" <?php echo $ctx_lan_Geral; ?> /> <label for="ctx_lan_Geral">Geral (Todo o Site)</label>
 			<br />
 			<input type="radio" name="ctx_rss_source" value="lan_Bebes" id="ctx_lan_Bebes" <?php echo $ctx_lan_Bebes; ?> /> <label for="ctx_lan_Bebes">Bebês</label>
@@ -1812,9 +1942,9 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 			<br />
 			<input type="radio" name="ctx_rss_source" value="lan_vinhos" id="ctx_lan_vinhos" <?php echo $ctx_lan_vinhos; ?> /> <label for="ctx_lan_vinhos">Vinhos & Bebidas</label>
 			<br />
-			</td>
-			<td VALIGN="TOP">
-			<strong>Promoção</strong><br />
+		</td>
+		<td VALIGN="TOP">
+			<strong>Promoção RSS</strong><br />
 			<input type="radio" name="ctx_rss_source" value="prom_Geral" id="ctx_prom_Geral" <?php echo $ctx_prom_Geral; ?> /> <label for="ctx_prom_Geral">Geral (Todo o Site)</label>
 			<br />
 			<input type="radio" name="ctx_rss_source" value="prom_Beleza" id="ctx_prom_Beleza" <?php echo $ctx_prom_Beleza; ?> /> <label for="ctx_prom_Beleza">Beleza & Saúde</label>
@@ -1885,7 +2015,6 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 			<br />
 			<input type="radio" name="ctx_altcode" id="chbg" value="ctx_HBG" <?php echo $ctx_HBG; ?> /> <label for="chbg">HalfBanner (120x60px) Campanha de Giro</label>
 			<br />
-			Código HTML para ser mostrado caso não sejam encontrados produtos com a palavra acima.
 		</td>
 	 </tr>
 	</table>
@@ -2118,7 +2247,6 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 			<br />
 			<input type="radio" name="wid_altcode" value="HBG" id="whbg" <?php echo $HBG; ?> /> <label for="whbg">HalfBanner (120x60px) Campanha de Giro</label>
 			<br />
-			Código HTML para ser mostrado caso não sejam encontrados produtos com a palavra acima.
 		</td>
 	 </tr>
 	</table>
@@ -2132,6 +2260,16 @@ if (!in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugin
 <?php
 }
 
+/***************************************************************************************************
+ * Link para configuração do plugin na página de administração de plugins
+ */
+function vs_plugin_actions($links){
+
+	$settings_link = '<a href="options-general.php?page=vitrinesubmarino.php">' . __('Settings') . '</a>';
+	array_unshift( $links, $settings_link );
+ 
+	return $links;
+}
 /***************************************************************************************************
  *  Configuracao do widget
  */
@@ -2198,7 +2336,4 @@ function vs_http_get($request, $host, $path, $port = 80) {
 	}
 	return $response;
 }
-
-
-
 ?>
