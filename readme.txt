@@ -1,16 +1,16 @@
 === Vitrine Submarino ===
-Contributors: Bernardo Bauer
-Donate link: http://bernabauer.com/wp-plugins
+Contributors: bernabauer
+Donate link: http://bernabauer.com/
 Tags: brasil, monetização, submarino, vitrine 
-Requires at least: 2.7
-Tested up to: 2.7
-Stable tag: 3.2
+Requires at least: 2.8
+Tested up to: 2.8.4
+Stable tag: 3.3
 
 Mostra vitrine de produtos do Submarino.com.
 
 == Description ==
 
-Mostre produtos do Submarino de acordo com as fontes RSS que o Submarino oferece. Você pode mostrar Mais Vendidos, Lançamentos e Promoções. Os produtos são coletados através do RSS e mostrados de maneira aleatória nas vitrines. É possível escolher uma categoria para cada tipo de vitrine de produtos.
+Mostre produtos do Submarino baseados em palavras chaves. A funcionalidade de pegar produtos através do feed RSS foi retirado nesta versão por que o Submarino deixou de atualizar os produtos desta maneira e não comunicou ou avisou as mudanças.
 
 São duas funcionalidades distintas para o plugin. Widget e Vitrine Simples/Contextual.
 
@@ -18,13 +18,11 @@ São duas funcionalidades distintas para o plugin. Widget e Vitrine Simples/Cont
 
 Requer tema compatível com Widgets e mostra produtos baseados na escolha de uma palavra chave definida na página de administração.
 
-**Vitrine Simples/Contextual**
+**Vitrine Contextual**
 
-Vitrine Simples é vitrine que mostra produtos oriundos do RSS do Submarino. Já a Vitrine Contextual busca palavras cadastradas através do plugin Palavras de Monetização para mostrar produtos contextuais que estão na loja do Submarino.
+Busca palavras cadastradas através do plugin Palavras de Monetização para mostrar produtos contextuais que estão na loja do Submarino.
 
-A novidade na versão 3.2 é que os produtos da Vitrine Contextual ficam armazenados localmente na base de dados do seu blog. O cache de produtos sempre é descartado a cada 24 horas pegando os produtos com suas descrições e preços a cada primeira visita que a palavra é pedida e não está na base de dados. Na página de administração do plugin é possível ver quantos produtos e palavras compõe o cache.
-
-Com este cache local o Submarino não vai mais bloquear o seu blog para fazer a pesquisa de produtos em suas páginas.
+Os produtos da Vitrine Contextual e do widget ficam armazenados localmente na base de dados do seu blog. O cache de produtos sempre é descartado a cada 24 horas pegando os produtos com suas descrições e preços a cada primeira visita que a palavra é pedida e não está na base de dados. Na página de administração do plugin é possível ver quantos produtos e palavras compõe o cache.
 
 == Installation ==
 
@@ -61,10 +59,16 @@ Sei lá. Eu recomendo o uso de widgets. É uma mão na roda, não sei por que vo
 
 O plugin **requer PHP 5** ou superior para funcionar. Se o seu blog está usando a versão 4, não tem como o plugin mostrar a vitrine. Sorry! :-(
 
-= Meu hospedeiro é a GoDaddy, e o plugin não funciona!!! =
-
-A GoDaddy é um tanto restritiva quanto ao que roda em seus sevidores. Apesar de ter criado um código especifico para a GoDaddy, a vitrine ainda assim parece não funcionar.
-
 = Como faço um reset nas configurações do plugin? Como removo o plugin totalmente? =
 
 Basta habilitar a opção `Remover opções ao desativar`, atualizar as opções e depois desativar o plugin. Se quiser reabilitar o plugin, as configurações voltarão ao estado "de fábrica".
+
+== Changelog ==
+
+= 3.3 =
+* plugin agora entende as páginas de resultado de pesquisa para determinados produtos.
+* consertado problema do link de afiliado que não aparecia na sintaxe correta.
+* melhoria no tratamento da vitrine.
+* introdução do primeiro slot diferenciado para pesquisa de preços. Slot diferenciado só aparece se existirem palavras cadastradas através do Palavras de Monetização.
+* remoção das fontes de produtos via RSS (culpa do submarino que parou de atualizar o RSS com produtos novos.)
+
