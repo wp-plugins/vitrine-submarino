@@ -532,6 +532,9 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 	global $vs_options;
 	global $vs_version;
 	$i=1;
+	$cod_BP = $vs_options['cod_BP'];
+	$cod_ML = $vs_options['cod_ML'];
+	$cod_JC = $vs_options['cod_JC'];
 	
 	if ($vs_options['codafil'] == '')
 		return "ERRO: Código de Afiliado não informado.";
@@ -573,19 +576,19 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 
 			switch ($vs_options['PCP']) {
 				case "BP":
-					$compare_precos = "<a href=\"http://busca.buscape.com.br/cprocura?lkout=1&amp;site_origem=".$cod_BP."&produto=".urlencode(utf8_decode($busca))."\" ".$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
+					$compare_precos = "<a href=\"http://busca.buscape.com.br/cprocura?lkout=1&amp;site_origem=".$cod_BP."&produto=".urlencode(utf8_decode($word))."\" ".$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
 					break;
 				case "ML":
-					$compare_precos = "<a href=\"http://pmstrk.mercadolivre.com.br/jm/PmsTrk?tool=".$cod_ML."&amp;go=http://lista.mercadolivre.com.br/".urlencode($busca)."\"  ".$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
+					$compare_precos = "<a href=\"http://pmstrk.mercadolivre.com.br/jm/PmsTrk?tool=".$cod_ML."&amp;go=http://lista.mercadolivre.com.br/".urlencode($word)."\"  ".$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
 					break;
 				case "JC":
-					$compare_precos = "<a href=\"http://www.jacotei.com.br/mod.php?module=jacotei.pesquisa&amp;texto=".urlencode($busca)."&amp;precomin=&amp;precomax=&amp;af=".$cod_JC."\" ".$tccp." target='_blank'>".$vs_options['LCP']."</a>";  
+					$compare_precos = "<a href=\"http://www.jacotei.com.br/mod.php?module=jacotei.pesquisa&amp;texto=".urlencode($word)."&amp;precomin=&amp;precomax=&amp;af=".$cod_JC."\" ".$tccp." target='_blank'>".$vs_options['LCP']."</a>";  
 					break;
 				case "NS":
 					$compare_precos = ''; 
 					break;
 				case "BB":
-					$compare_precos = "<a href=\"http://bernabauer.shopping.busca.uol.com.br/busca.html?q=".urlencode(utf8_decode($busca))."\" "	.$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
+					$compare_precos = "<a href=\"http://bernabauer.shopping.busca.uol.com.br/busca.html?q=".urlencode(utf8_decode($word))."\" "	.$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
 					break;
 			}
 	

@@ -65,6 +65,9 @@ Basta habilitar a opção `Remover opções ao desativar`, atualizar as opções
 
 == Changelog ==
 
+= 3.3.1 =
+* Links de comparação de preços não esta funcionando corretamente.
+
 = 3.3 =
 * plugin agora entende as páginas de resultado de pesquisa para determinados produtos.
 * consertado problema do link de afiliado que não aparecia na sintaxe correta.
