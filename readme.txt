@@ -4,7 +4,7 @@ Donate link: http://bernabauer.com/
 Tags: brasil, monetização, submarino, vitrine 
 Requires at least: 2.8
 Tested up to: 2.8.4
-Stable tag: 3.3
+Stable tag: 3.3.1
 
 Mostra vitrine de produtos do Submarino.com.
 
