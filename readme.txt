@@ -66,7 +66,9 @@ Basta habilitar a opção `Remover opções ao desativar`, atualizar as opções
 == Changelog ==
 
 = 3.3.1 =
-* Links de comparação de preços não esta funcionando corretamente.
+* Links de comparação de preços não estava funcionando corretamente.
+* Mensagem de warning ao processar resultado de pesquisa era mostrada após atualização das opções do plugin.
+* 
 
 = 3.3 =
 * plugin agora entende as páginas de resultado de pesquisa para determinados produtos.

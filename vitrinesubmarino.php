@@ -93,6 +93,7 @@ function vs_activate() {
 			'ctx_tipo'=>			'horizontal',
 			'ctx_local'=>		'depois',
 			'ctx_prcolor'=>		'#3982C6',
+			'ctx_bg'=>			'white',
 			'ctx_track'=>		'nao',
 			'ctx_altcode'=>		'ctx_FBD',
 		);
@@ -113,9 +114,7 @@ function vs_activate() {
 		if ($vs_options['version'] != $vs_version) {
 			$vs_options = get_option('vs_options');
 			$vs_options[	'version'] = $vs_version;
-			$vs_options[	'wid_word'] = 'celular';
-			$vs_options[	'ctx_word'] = 'notebook';
-			$vs_options[	'ctx_slot1'] = 'normal';
+			$vs_options[	'ctx_bg'] = 'white';
 			update_option('vs_options', $vs_options);
 		}
 	}
@@ -425,8 +424,11 @@ function vs_pesquisaprodutos($palavra){
 	$buffer = curl($urlaserlida);
 	$doc = new DOMDocument();
 
-	$doc->loadHTML( str_replace("&", "&amp;", $buffer) );
-
+	if ($buffer) {
+		$buffer = mb_convert_encoding($buffer, 'HTML-ENTITIES', "UTF-8"); 
+		@$doc->loadHTML( str_replace("&", "&amp;", $buffer) );
+	}
+	
 ############## COMEÇO DO CORE SCRIPT
 
 		// Pego as imagens
@@ -535,6 +537,7 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 	$cod_BP = $vs_options['cod_BP'];
 	$cod_ML = $vs_options['cod_ML'];
 	$cod_JC = $vs_options['cod_JC'];
+	$ctx_bg = $vs_options['ctx_bg'];
 	
 	if ($vs_options['codafil'] == '')
 		return "ERRO: Código de Afiliado não informado.";
@@ -574,6 +577,7 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 				$tc = '';
 			}
 
+		if (strstr($vitrine, "banner") == FALSE) {
 			switch ($vs_options['PCP']) {
 				case "BP":
 					$compare_precos = "<a href=\"http://busca.buscape.com.br/cprocura?lkout=1&amp;site_origem=".$cod_BP."&produto=".urlencode(utf8_decode($word))."\" ".$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
@@ -590,8 +594,8 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 				case "BB":
 					$compare_precos = "<a href=\"http://bernabauer.shopping.busca.uol.com.br/busca.html?q=".urlencode(utf8_decode($word))."\" "	.$tccp." target='_blank'>".$vs_options['LCP']."</a>"; 
 					break;
-			}
-	
+			} // switch
+		} //if
 			switch ($vitrine) {
 		
 				case "contextual":
@@ -603,12 +607,12 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 
 						//mostra vitrine com produtos em uma unica linha (VITRINE HORIZONTAL)
 #						$lista_de_produtos .= "<div onMouseover=\"ddrivetip('".$nome."', '#EFEFEF')\";=\"\" onMouseout=\"hideddrivetip()\">";
-						$lista_de_produtos[] = '<div style="width:'. $td.'%;background-color:white;text-align:center; line-height:120%;padding-right: 10px;font-size:12px;border:0px;float:left;overflow: hidden;"><a href="'.$link_prod.'" '.$tc.'  target="_blank"><span style="width:90px;height:90px;position:relative;">'.$imagem.'</span></a><br />'.$nome.'<br /><span style="color:'.$corprec.';">&nbsp;'.$preco.'&nbsp;</span><br /><a href="'.$link_prod.'" '.$tc.'  target="_blank"><strong>Veja mais</strong></a>'.$compare_precos.'</div>';
+						$lista_de_produtos[] = '<div style="width:'. $td.'%;background-color:'.$ctx_bg.';text-align:center; line-height:120%;padding-right: 10px;font-size:12px;border:0px;float:left;overflow: hidden;"><a href="'.$link_prod.'" '.$tc.'  target="_blank"><span style="width:90px;height:90px;position:relative;">'.$imagem.'</span></a><br />'.$nome.'<br /><span style="color:'.$corprec.';">&nbsp;'.$preco.'&nbsp;</span><br /><a href="'.$link_prod.'" '.$tc.'  target="_blank"><strong>Veja mais</strong></a><br />'.$compare_precos.'</div>';
 						
 					} elseif ($vs_options['ctx_tipo'] == "vertical") {
 						$imagem = str_replace("<img ", "<img style=\" display: inline; float: left; margin: 0 10px 10px 0;\" alt=\"".$nome."\"", $imagem);
 						//mostra vitrine com um produto por linha (VITRINE VERTICAL)
-						$lista_de_produtos[] = '<div style="height:130px;background-color:white;padding:3px;"><a href="'.$link_prod.'" '.$tc.'  target="_blank">'.$imagem.'</a><a href="'.$link_prod.'" '.$tc.' target="_blank">'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
+						$lista_de_produtos[] = '<div style="height:130px;background-color:'.$ctx_bg.';padding:3px;"><a href="'.$link_prod.'" '.$tc.'  target="_blank">'.$imagem.'</a><a href="'.$link_prod.'" '.$tc.' target="_blank">'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
 												
 					} elseif ($vs_options['ctx_tipo'] == "banner-468") {
 						$credits='<div style="position:absolute;bottom:0px;right:0px;"><small><a href="http://www.bernabauer.com/wp-plugins/">Vitrine Submarino '.$vs_options['version'].'</a></small></div>';
@@ -918,6 +922,8 @@ function vs_options_subpanel() {
 		// Opções CONTEXTUAL
 		if (isset($_POST['ctx_prcolor'])) 
 			$vs_options['ctx_prcolor'] = strip_tags(stripslashes($_POST['ctx_prcolor']));
+		if (isset($_POST['ctx_bg'])) 
+			$vs_options['ctx_bg'] = strip_tags(stripslashes($_POST['ctx_bg']));
 		
 		if (isset($_POST['ctx_titulo'])) 
 			$vs_options['ctx_titulo'] = stripslashes($_POST['ctx_titulo']);
@@ -1308,9 +1314,10 @@ function vs_options_subpanel() {
 	
     <table class="form-table">
 	 <tr>
-		<th scope="row" valign="top">Cor para preço</th>
+		<th scope="row" valign="top">Cores</th>
 		<td>
-  				<input style="width: 60px;" id="ctx_prcolor" name="ctx_prcolor" type="text" value="<?php echo $vs_options['ctx_prcolor']; ?>" /><label for="ctx_prcolor"> Cor do preço dos produtos.</label><br />
+  				Preço: <input style="width: 70px;" id="ctx_prcolor" name="ctx_prcolor" type="text" value="<?php echo $vs_options['ctx_prcolor']; ?>" /><label for="ctx_prcolor"> Cor do preço dos produtos.</label><br />
+  				Fundo: <input style="width: 70px;" id="ctx_bg" name="ctx_bg" type="text" value="<?php echo $vs_options['ctx_bg']; ?>" /><label for="ctx_br"> Cor de fundo da vitrine.</label><br />
   				Você pode digitar "red", "blue", "green" de acordo com a correspondencia de cores de HTML. Lista completa <a href="http://www.w3schools.com/Html/html_colornames.asp" target="_blank">aqui</a>.
  		</td>
 	 </tr>
