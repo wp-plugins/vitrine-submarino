@@ -3,8 +3,8 @@ Contributors: bernabauer
 Donate link: http://bernabauer.com/
 Tags: brasil, monetização, submarino, vitrine 
 Requires at least: 2.8
-Tested up to: 2.8.4
-Stable tag: 3.3.1
+Tested up to: 2.9.1
+Stable tag: 3.4
 
 Mostra vitrine de produtos do Submarino.com.
 
@@ -65,10 +65,14 @@ Basta habilitar a opção `Remover opções ao desativar`, atualizar as opções
 
 == Changelog ==
 
+= 3.4 =
+* Widget agora é contextual na página de um único artigo, basta escolher entre utilizar a palavra padrão ou palavras cadastradas pelo [Palavras de Monetização](http://wordpress.org/extend/plugins/palavras-de-monetizacao/ "Palavras de Monetização")
+* Grandes mudanças na utilização das funções.
+* Incluido links para o fórum de suporte.
+
 = 3.3.1 =
 * Links de comparação de preços não estava funcionando corretamente.
 * Mensagem de warning ao processar resultado de pesquisa era mostrada após atualização das opções do plugin.
-* 
 
 = 3.3 =
 * plugin agora entende as páginas de resultado de pesquisa para determinados produtos.

@@ -3,7 +3,7 @@
 Plugin Name: Vitrine Submarino
 Plugin URI: http://www.bernabauer.com/wp-plugins/
 Description: Mostre vitrines de produtos do Submarino em seu blog. Com o <a href="http://wordpress.org/extend/plugins/palavras-de-monetizacao/">Palavras de Monetização</a> você pode contextualizar manualmente os produtos. Para usar widgets é neecessário um tema compatível.
-Version: 3.3.1
+Version: 3.4
 Author: Bernardo Bauer
 Author URI: http://www.bernabauer.com/
 
@@ -29,7 +29,7 @@ global $wpdb;
 global $vs_options;
 global $vs_version;
 
-$vs_version = "3.3.1";
+$vs_version = "3.4";
 $vs_options = get_option('vs_options');
 
 register_activation_hook(__FILE__, 'vs_activate');
@@ -57,7 +57,7 @@ add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), 'vs_plugin_actio
  */
 function vs_activate() {
 
-	require_once(ABSPATH . 'wp-admin/upgrade-functions.php');
+#	require_once(ABSPATH . 'wp-admin/upgrade-functions.php');
 
 	global $wpdb;
 	global $vs_version;
@@ -78,6 +78,7 @@ function vs_activate() {
 			'remover'=>			'nao',
 			'wid_title'=>		'Ofertas Submarino',
 			'wid_word'=>		'celular',
+			'wid_ctx'=>			FALSE,
 			'wid_show'=>		'3',
 			'wid_fontcolor'=>	'#000000',
 			'wid_bgcolor'=>		'#FFFFFF',
@@ -114,7 +115,7 @@ function vs_activate() {
 		if ($vs_options['version'] != $vs_version) {
 			$vs_options = get_option('vs_options');
 			$vs_options[	'version'] = $vs_version;
-			$vs_options[	'ctx_bg'] = 'white';
+			$vs_options[	'wid_ctx'] = FALSE;
 			update_option('vs_options', $vs_options);
 		}
 	}
@@ -249,17 +250,7 @@ function vs_vitrine () {
 
 	$vs_options = get_option('vs_options');
 
-	$current_plugins = get_option('active_plugins');
-	if (in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugins)) {
-		$words_array = pm_get_words();
-		
-		if (count($words_array) == 0)
-			$word = $vs_options['ctx_word'];
-		else
-			$word = $words_array[rand(0, count($words_array)-1)];
-	} else {
-		$word = $vs_options['ctx_word'];
-	}
+	$word = vs_palcontext();
 
 	$vitrine_temp = vs_core($vs_options["ctx_show"], $word, "contextual", $vs_options['ctx_bgcolor'], $vs_options['ctx_brdcolor'], $vs_options['ctx_fontcolor'], $vs_options['ctx_prcolor']);
 
@@ -273,17 +264,13 @@ function vs_vitrine () {
 }
 
 /***************************************************************************************************
- * Vitrine Automatica
+ * Pega palavra contextual do Palavras de Monetização
  */
-function vs_auto($text) {
+function vs_palcontext($id = '') {
 
-	global $vs_options;
-
-	$vs_options = get_option('vs_options');
-//
 	$current_plugins = get_option('active_plugins');
 	if (in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugins)) {
-		$words_array = pm_get_words();
+		$words_array = pm_get_words($id);
 		
 		if (count($words_array) == 0)
 			$word = $vs_options['ctx_word'];
@@ -292,7 +279,20 @@ function vs_auto($text) {
 	} else {
 		$word = $vs_options['ctx_word'];
 	}
-//
+return $word;
+}
+
+/***************************************************************************************************
+ * Vitrine Automatica
+ */
+function vs_auto($text) {
+
+	global $vs_options;
+ 
+	$vs_options = get_option('vs_options');
+
+	$word = vs_palcontext();
+
 	if ((is_single()) AND ($vs_options["ctx_exib_auto"] == 'auto')) {
 
 		$vitrine = vs_core ( $vs_options["ctx_show"], $word, "contextual", $vs_options['ctx_bgcolor'], $vs_options['ctx_brdcolor'], $vs_options['ctx_fontcolor'], $vs_options['ctx_prcolor']) ;
@@ -318,7 +318,11 @@ function vs_pegaprodutos($palavra){
 	global $wpdb;
 	global $vs_options;
 
-	$select = "SELECT * FROM wp_vitrinesubmarino WHERE rss_source = '". $palavra ."'";
+	if ($palavra == '') {
+		return '';
+	}
+
+	$select = "SELECT * FROM wp_vitrinesubmarino WHERE rss_source = '". mysql_real_escape_string($palavra) ."'";
 
 	$results = $wpdb->get_results( $wpdb->prepare($select) , ARRAY_A);
 
@@ -395,6 +399,11 @@ function vs_pesquisaprodutos($palavra){
 	
 	if ($palavra == '')
 		$palavra = $vs_options['ctx_word'];
+	
+	if ($palavra == '') {
+		error_log("vs_pagaprodutos: Não foi definada palavra alguma", 0);
+		return '';
+	}
 	$urlaserlida = "http://www.submarino.com.br/busca?q=".$palavra;
 
 ############## ACESSO A PÁGINA COM PRODUTOS
@@ -430,23 +439,6 @@ function vs_pesquisaprodutos($palavra){
 	}
 	
 ############## COMEÇO DO CORE SCRIPT
-
-		// Pego as imagens
-	
-		$img = $doc->getElementsByTagName( "img" );
-	
-		$i = 1;
-	
-		foreach( $img as $img )	{
-			$teste = $img->getAttribute("class");
-	
-			if($teste == 'image') { 
-				$imagem[$i] = "<img src=\"".$img->getAttribute("src")."\"  hspace=\"3\" border=\"0\">."; 
-				$i++; 
-			}
-		}
-
-		$totalprod = $i-1;
 	
 		// Pego os links e os titulos
 	
@@ -468,6 +460,23 @@ function vs_pesquisaprodutos($palavra){
 			}
 	
 		}
+
+		// Pego as imagens
+	
+		$img = $doc->getElementsByTagName( "img" );
+	
+		$i = 1;
+	
+		foreach( $img as $img )	{
+			$teste = $img->getAttribute("class");
+	
+			if($teste == 'image') { 
+				$imagem[$i] = "<img src=\"".ltrim($img->getAttribute("src"))."\" alt=\"".$titulo[$i]."\" hspace=\"3\" border=\"0\">."; 
+				$i++; 
+			}
+		}
+
+		$totalprod = $i-1;
 
 		// Pego os links e os titulos para categorias
 	
@@ -493,11 +502,12 @@ function vs_pesquisaprodutos($palavra){
 
 	if ($lprod != '') {
 		$insert = "INSERT INTO wp_vitrinesubmarino (nomep, linkp, imagemp, precop, rss_source) VALUES " . rtrim($lprod, ", ");
-
-		$results = $wpdb->query( $wpdb->prepare($insert) );
+		
+		$results = $wpdb->query( $insert );
 	}
 
-	$select = "SELECT * FROM wp_vitrinesubmarino WHERE rss_source = '". $palavra ."'";
+	$select = "SELECT * FROM wp_vitrinesubmarino WHERE rss_source = '". mysql_real_escape_string($palavra) ."'";
+
 	$produtos = $wpdb->get_results( $wpdb->prepare($select) , ARRAY_A);
 
 	return $produtos;
@@ -548,7 +558,6 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 	$idsubmarino = $vs_options['codafil'];			// Define codigo de afiliado para o script funcionar
 
 	//pega produtos da BD (devolve um array)
-
 	$produtos = vs_pegaprodutos($word);
 
 	shuffle($produtos);
@@ -602,12 +611,23 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 					// vitrine contextual
 					if ($vs_options['ctx_tipo'] == "horizontal") {
 						$td = 92 / $vs_options['ctx_show'];
-						$imagem = str_replace("<img ", "<img width=90px height=90px alt=\"".$nome."\"", $imagem);
+						$imagem = str_replace("<img ", "<img width=90px height=90px ", $imagem);
 						$imagem = rtrim($imagem,".");
 
 						//mostra vitrine com produtos em uma unica linha (VITRINE HORIZONTAL)
 #						$lista_de_produtos .= "<div onMouseover=\"ddrivetip('".$nome."', '#EFEFEF')\";=\"\" onMouseout=\"hideddrivetip()\">";
 						$lista_de_produtos[] = '<div style="width:'. $td.'%;background-color:'.$ctx_bg.';text-align:center; line-height:120%;padding-right: 10px;font-size:12px;border:0px;float:left;overflow: hidden;"><a href="'.$link_prod.'" '.$tc.'  target="_blank"><span style="width:90px;height:90px;position:relative;">'.$imagem.'</span></a><br />'.$nome.'<br /><span style="color:'.$corprec.';">&nbsp;'.$preco.'&nbsp;</span><br /><a href="'.$link_prod.'" '.$tc.'  target="_blank"><strong>Veja mais</strong></a><br />'.$compare_precos.'</div>';
+						
+					} elseif ($vs_options['ctx_tipo'] == "horizontal-big") {
+						$td = 92 / $vs_options['ctx_show'];
+						$imagem = str_replace("cover_tn", "cover", $imagem);
+						$imagem = str_replace("/pq", "/", $imagem);
+						$imagem = rtrim($imagem,".");
+
+						//mostra vitrine com produtos em uma unica linha (VITRINE HORIZONTAL)
+#						$lista_de_produtos .= "<div onMouseover=\"ddrivetip('".$nome."', '#EFEFEF')\";=\"\" onMouseout=\"hideddrivetip()\">";
+						$lista_de_produtos[] = '<div style="background-color:'.$ctx_bg.';text-align:center; line-height:120%;padding-right: 10px;font-size:12px;border:0px;float:left;overflow: hidden;"><a href="'.$link_prod.'" '.$tc.'  target="_blank"><span style="position:relative;">'.$imagem.'</span></a></div>';
+#						$lista_de_produtos .= "</div>";
 						
 					} elseif ($vs_options['ctx_tipo'] == "vertical") {
 						$imagem = str_replace("<img ", "<img style=\" display: inline; float: left; margin: 0 10px 10px 0;\" alt=\"".$nome."\"", $imagem);
@@ -645,9 +665,6 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 
 			} //switch
 
-#		if ($vs_options['ctx_slot1'] != "normal" AND $i == $show-1)
-#			break;
-
 		if ($i >= $show)
 			break;
 		else
@@ -659,7 +676,7 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 		if (in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugins)) {
 			$words_array = pm_get_words();
 		
-			if ($vs_options['ctx_rss_source'] == "ctx_contextual" AND $words_array != '' AND $vs_options['ctx_slot1'] != "normal" AND $vitrine == "contextual" AND $vs_options['ctx_tipo'] == "horizontal" || $vs_options['ctx_tipo'] == "box-250") {
+			if ($words_array != '' AND $vs_options['ctx_slot1'] != "normal" AND $vitrine == "contextual" AND $vs_options['ctx_tipo'] == "horizontal" || $vs_options['ctx_tipo'] == "box-250") {
 			
 				if (count($lista_de_produtos) >= $show)
 					$lixo = array_pop($lista_de_produtos);
@@ -668,10 +685,6 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 					$lista_final_de_produtos .= $produto;
 				}
 
-				$current_plugins = get_option('active_plugins');
-				if (in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugins)) 
-					$words_array = pm_get_words();
-			
 				shuffle($words_array);
 			
 				$compareprecoshead = '<strong>Compare Preços</strong><br />';
@@ -918,6 +931,7 @@ function vs_options_subpanel() {
 		$vs_options['wid_word'] = strip_tags(stripslashes($_POST['wid_word']));
 		$vs_options['wid_altcode'] = strip_tags(stripslashes($_POST['wid_altcode']));
 		$vs_options['wid_track'] = strip_tags(stripslashes($_POST['wid_track']));
+		$vs_options['wid_ctx'] = strip_tags(stripslashes($_POST['wid_ctx']));
 
 		// Opções CONTEXTUAL
 		if (isset($_POST['ctx_prcolor'])) 
@@ -973,6 +987,12 @@ function vs_options_subpanel() {
 		$widtrksim = 'checked=\"checked\"';
     } else {
     	$widtrknao = 'checked=\"checked\"';
+    }
+
+    if ( $vs_options['wid_ctx'] == 'sim') {
+		$widctxsim = 'checked=\"checked\"';
+    } else {
+    	$widctxnao = 'checked=\"checked\"';
     }
 
     switch ( $vs_options['ctx_tipo'] ) {
@@ -1386,9 +1406,12 @@ function vs_options_subpanel() {
 
     <table class="form-table">
 	 <tr>
-		<th scope="row" valign="top">Palavra de pesquisa da vitrine</th>
+		<th scope="row" valign="top">Fonte de produtos</th>
 		<td>
-			<input style="width: 60px;" id="wid_word" name="wid_word" type="text" value="<?php echo $vs_options['wid_word']; ?>" /><label for="wid_word"> Palavra padrão</label><br />
+			<input type="radio" name="wid_ctx" id="wcn" value="nao" <?php echo $widctxnao; ?> /> <label for="wcn">Palavra padrão</label>
+			<input style="width: 60px;" id="wid_word" name="wid_word" type="text" value="<?php echo $vs_options['wid_word']; ?>" />
+			<br />
+			<input type="radio" name="wid_ctx" id="wcs" value="sim" <?php echo $widctxsim; ?> /> <label for="wcs">Contextual</label>
 			<br />
 		</td>
 	 </tr>
@@ -1467,6 +1490,18 @@ function vs_options_subpanel() {
   <input type="submit" name="info_update" value="Atualizar" />
 </div>
 </form> 
+		<h2><?php _e("Últimas do Fórum de suporte", $domain ); ?></h2>
+<p> <?php echo sprintf(__('Veja todos os tópicos do fórum de suporte para este plugin <a href="%1$s">aqui</a>.', $domain), "http://forum.bernabauer.com/viewforum.php?f=7");?>
+				<?php require_once (ABSPATH . WPINC . '/rss.php');
+				$rss = @fetch_rss('http://forum.bernabauer.com/feed.php?f=7');
+				if ( isset($rss->items) && 0 != count($rss->items) ) { ?>
+				<ul>
+					<?php $rss->items = array_slice($rss->items, 0, 5); foreach ($rss->items as $item ) { ?>
+					<li>-> <?php echo date_format(date_create($item['updated']), "d/m/Y @ H:i"); ?> - <a  target="_blank" href='<?php echo wp_filter_kses($item['link_']); ?>'> <?php echo wp_specialchars($item['title']); ?></a> <?php _e("por", "fvr"); ?> <?php echo $item['author_name']; ?></li>
+					<?php } ?>
+				</ul>
+				<?php } ?>
+</p>		
 
 <?php
 }
@@ -1505,11 +1540,17 @@ function vs_widget_init() {
 		// Output
 			echo $before_widget . $before_title . $vs_options['wid_title'] . $after_title;
 
+			if (is_single() AND $vs_options['wid_ctx'] == 'sim') {
+				$word = vs_palcontext(get_the_ID());
+			} else {
+				$word = $vs_options['wid_word'];
+			}
+
 			// start list
 			echo '<ul>';
 			
 				// were there any posts found?
-				$prod = vs_core ( $vs_options['wid_show'], $vs_options['wid_word'], "widget", $vs_options['wid_bgcolor'], $vs_options['wid_brdcolor'], $vs_options['wid_fontcolor'], $vs_options['wid_prcolor'], $vs_options['wid_procolor'], $vs_options['wid_prccolor']) ;
+				$prod = vs_core ( $vs_options['wid_show'], $word, "widget", $vs_options['wid_bgcolor'], $vs_options['wid_brdcolor'], $vs_options['wid_fontcolor'], $vs_options['wid_prcolor'], $vs_options['wid_procolor'], $vs_options['wid_prccolor']) ;
 				if (!empty($prod)) {
 					echo $prod;
 				}
