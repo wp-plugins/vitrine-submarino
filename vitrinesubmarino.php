@@ -3,7 +3,7 @@
 Plugin Name: Vitrine Submarino
 Plugin URI: http://www.bernabauer.com/wp-plugins/
 Description: Mostre vitrines de produtos do Submarino em seu blog. Com o <a href="http://wordpress.org/extend/plugins/palavras-de-monetizacao/">Palavras de Monetização</a> você pode contextualizar manualmente os produtos. Para usar widgets é neecessário um tema compatível.
-Version: 3.4
+Version: 3.4.1
 Author: Bernardo Bauer
 Author URI: http://www.bernabauer.com/
 
@@ -29,7 +29,7 @@ global $wpdb;
 global $vs_options;
 global $vs_version;
 
-$vs_version = "3.4";
+$vs_version = "3.4.1";
 $vs_options = get_option('vs_options');
 
 register_activation_hook(__FILE__, 'vs_activate');
@@ -326,7 +326,9 @@ function vs_pegaprodutos($palavra){
 
 	$results = $wpdb->get_results( $wpdb->prepare($select) , ARRAY_A);
 
-	if ($results == "") {
+// tive que mudar o teste de vazio de string para vazio de array por conta da versão 3.0 do WP.
+//  if ($results == "") {
+	if (empty($results)) {
 		$results = vs_pesquisaprodutos($palavra);
 	}
 
@@ -471,7 +473,7 @@ function vs_pesquisaprodutos($palavra){
 			$teste = $img->getAttribute("class");
 	
 			if($teste == 'image') { 
-				$imagem[$i] = "<img src=\"".ltrim($img->getAttribute("src"))."\" alt=\"".$titulo[$i]."\" hspace=\"3\" border=\"0\">."; 
+				$imagem[$i] = "<img src=\"".ltrim($img->getAttribute("src"))."\" alt=\"".$titulo[$i]."\" hspace=\"3\" border=\"0\">"; 
 				$i++; 
 			}
 		}
