@@ -6,7 +6,7 @@ Requires at least: 2.8
 Tested up to: 2.9.1
 Stable tag: 3.4
 
-Mostra vitrine de produtos do Submarino.com. A vitrine pode ser mostrada através de widget na sidebar do blog e também pode ser incluído automaticamente antes ou após o texto dos seus artigos. O plugin permite ainda mostrar produtos de maneira contextual se for utilizado o plugin [Palavras de Monetização](http://bernabauer.com/wp-plugins/palavras-de-monetizacao/ "Palavras de Monetização").
+Mostra vitrine de produtos do Submarino.com.
 
 == Description ==
 
