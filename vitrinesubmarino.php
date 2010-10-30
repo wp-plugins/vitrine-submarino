@@ -3,7 +3,7 @@
 Plugin Name: Vitrine Submarino
 Plugin URI: http://www.bernabauer.com/wp-plugins/
 Description: Mostre vitrines de produtos do Submarino em seu blog. Com o <a href="http://wordpress.org/extend/plugins/palavras-de-monetizacao/">Palavras de Monetização</a> você pode contextualizar manualmente os produtos. Para usar widgets é neecessário um tema compatível.
-Version: 3.4.1
+Version: 3.5
 Author: Bernardo Bauer
 Author URI: http://www.bernabauer.com/
 
@@ -29,7 +29,7 @@ global $wpdb;
 global $vs_options;
 global $vs_version;
 
-$vs_version = "3.4.1";
+$vs_version = "3.5";
 $vs_options = get_option('vs_options');
 
 register_activation_hook(__FILE__, 'vs_activate');
@@ -45,7 +45,9 @@ add_action('admin_menu', 'vs_option_menu');
 
 // Vitrine Contextual Automática
 if ($vs_options['ctx_exib_auto'] == 'auto') {
-	add_filter('the_content', 'vs_auto',1);
+	if ( $vs_options['codafil'] != '') {
+		add_filter('the_content', 'vs_auto',6);
+	}
 }
 
 add_action('vs_cron', 'vs_atualiza_produtos' );
@@ -56,8 +58,6 @@ add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), 'vs_plugin_actio
  *  Coisas para serem feitas na instalacao do plugin
  */
 function vs_activate() {
-
-#	require_once(ABSPATH . 'wp-admin/upgrade-functions.php');
 
 	global $wpdb;
 	global $vs_version;
@@ -73,7 +73,6 @@ function vs_activate() {
 			'LCP'=>				'[ Compare Preços ]',
 			'PCP'=>				'BB',
 			'LP'=>				'[ Veja mais ]',
-			'LPT'=>				'submarino',
 			'version'=>			$vs_version,
 			'remover'=>			'nao',
 			'wid_title'=>		'Ofertas Submarino',
@@ -85,13 +84,12 @@ function vs_activate() {
 			'wid_brdcolor'=>	'#DDDDDD',
 			'wid_prcolor'=>		'#3982C6',
 			'wid_track'=>		'nao',
-			'wid_altcode'=>		'BVD',
+			'wid_altcode'=>		'wid_BVD',
 			'ctx_titulo'=>		'<h3>Ofertas Submarino</h3>',
 			'ctx_word'=>		'notebook',
 			'ctx_show'=>		'4',
 			'ctx_exib_auto'=>	'auto',
-			'ctx_slot1'=>		'normal',
-			'ctx_tipo'=>			'horizontal',
+			'ctx_tipo'=>		'tp_vit_horiz',
 			'ctx_local'=>		'depois',
 			'ctx_prcolor'=>		'#3982C6',
 			'ctx_bg'=>			'white',
@@ -100,22 +98,79 @@ function vs_activate() {
 		);
 		add_option('vs_options', $vs_options);
 		
-			$sql = 'CREATE TABLE wp_vitrinesubmarino (
-					nomep varchar(255) NOT NULL,
-					linkp varchar(255) NOT NULL,
-					imagemp varchar(255) NOT NULL,
-					precop varchar(15) NOT NULL,
-					rss_source varchar(255) NOT NULL
-					) ENGINE=MyISAM DEFAULT CHARSET=utf8;';
+		$sql = 'CREATE TABLE wp_vitrinesubmarino (
+				id_sub 	int(20)			NOT NULL,
+				name 	varchar(255) 	NOT NULL,
+				link	varchar(255) 	NOT NULL,
+				imgp	varchar(255) 	NOT NULL,
+				imgm	varchar(255) 	NOT NULL,
+				imgg	varchar(255) 	NOT NULL,
+				descr	varchar(255) 	NOT NULL,
+				priced	varchar(15) 	NOT NULL,
+				pricep	varchar(15) 	NOT NULL,
+				cat 	int(20)			NOT NULL,
+				seed	varchar(255) 	NOT NULL
+				) ENGINE=MyISAM DEFAULT CHARSET=utf8;';
 	
 			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 			dbDelta($sql);
-		
+
 	} else {
 		if ($vs_options['version'] != $vs_version) {
-			$vs_options = get_option('vs_options');
-			$vs_options[	'version'] = $vs_version;
-			$vs_options[	'wid_ctx'] = FALSE;
+		$vs_options = array(
+			'codafil'=>			'',
+			'cod_BP'=>			'',
+			'cod_ML'=>			'',
+			'cod_JC'=>			'',
+			'LCP'=>				'[ Compare Preços ]',
+			'PCP'=>				'BB',
+			'LP'=>				'[ Veja mais ]',
+			'version'=>			$vs_version,
+			'remover'=>			'nao',
+			'wid_title'=>		'Ofertas Submarino',
+			'wid_word'=>		'celular',
+			'wid_ctx'=>			FALSE,
+			'wid_show'=>		'3',
+			'wid_fontcolor'=>	'#000000',
+			'wid_bgcolor'=>		'#FFFFFF',
+			'wid_brdcolor'=>	'#DDDDDD',
+			'wid_prcolor'=>		'#3982C6',
+			'wid_track'=>		'nao',
+			'wid_altcode'=>		'wid_BVD',
+			'ctx_titulo'=>		'<h3>Ofertas Submarino</h3>',
+			'ctx_word'=>		'notebook',
+			'ctx_show'=>		'4',
+			'ctx_exib_auto'=>	'auto',
+			'ctx_tipo'=>		'tp_vit_horiz',
+			'ctx_local'=>		'depois',
+			'ctx_prcolor'=>		'#3982C6',
+			'ctx_bg'=>			'white',
+			'ctx_track'=>		'nao',
+			'ctx_altcode'=>		'ctx_FBD',
+		);
+
+			$vs_options['version'] = $vs_version;
+			$sql = "DROP TABLE wp_vitrinesubmarino";
+			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+			dbDelta($sql);
+			
+		$sql = 'CREATE TABLE wp_vitrinesubmarino (
+				id_sub 	int(20)			NOT NULL,
+				name 	varchar(255) 	NOT NULL,
+				link	varchar(255) 	NOT NULL,
+				imgp	varchar(255) 	NOT NULL,
+				imgm	varchar(255) 	NOT NULL,
+				imgg	varchar(255) 	NOT NULL,
+				descr	varchar(255) 	NOT NULL,
+				priced	varchar(15) 	NOT NULL,
+				pricep	varchar(15) 	NOT NULL,
+				cat 	int(20)			NOT NULL,
+				seed	varchar(255) 	NOT NULL
+				) ENGINE=MyISAM DEFAULT CHARSET=utf8;';
+	
+			dbDelta($sql);
+
+
 			update_option('vs_options', $vs_options);
 		}
 	}
@@ -123,7 +178,7 @@ function vs_activate() {
 	if (!wp_next_scheduled('vs_cron')) {
 		wp_schedule_event( time(), 'daily', 'vs_cron' );
 	}
-	vs_atualiza_produtos();
+
 }
 
 /***************************************************************************************************
@@ -131,17 +186,10 @@ function vs_activate() {
  */
  function vs_deactivate() {
 
-	require_once(ABSPATH . 'wp-admin/upgrade-functions.php');
-
 	global $wpdb;
-
-	//pega dados da base
-	global $vs_options;
 
 	wp_clear_scheduled_hook('vs_cron');
 	
-	if ($vs_options['remover'] == 'sim')
-		delete_option('vs_options');
 }
 
 /***************************************************************************************************
@@ -151,6 +199,8 @@ function vs_alerta() {
 
 	global $vs_options;
 	global $vs_version;
+	global $domain;
+	$msg = '';
 
 	if (  !isset($_POST['info_update']) ) {
 		if ($vs_options['version'] != $vs_version) {
@@ -268,10 +318,12 @@ function vs_vitrine () {
  */
 function vs_palcontext($id = '') {
 
+	global $vs_options;
+
 	$current_plugins = get_option('active_plugins');
 	if (in_array('palavras-de-monetizacao/palavrasmonetizacao.php', $current_plugins)) {
 		$words_array = pm_get_words($id);
-		
+
 		if (count($words_array) == 0)
 			$word = $vs_options['ctx_word'];
 		else
@@ -279,6 +331,7 @@ function vs_palcontext($id = '') {
 	} else {
 		$word = $vs_options['ctx_word'];
 	}
+
 return $word;
 }
 
@@ -292,10 +345,10 @@ function vs_auto($text) {
 	$vs_options = get_option('vs_options');
 
 	$word = vs_palcontext();
-
+	
 	if ((is_single()) AND ($vs_options["ctx_exib_auto"] == 'auto')) {
 
-		$vitrine = vs_core ( $vs_options["ctx_show"], $word, "contextual", $vs_options['ctx_bgcolor'], $vs_options['ctx_brdcolor'], $vs_options['ctx_fontcolor'], $vs_options['ctx_prcolor']) ;
+		$vitrine = vs_core ( $vs_options["ctx_show"], $word, "contextual", "", "", "", $vs_options['ctx_prcolor']) ;
 
 		if ($vs_options["ctx_local"] == 'antes') {
 		   $text = $vitrine.$text;
@@ -322,7 +375,7 @@ function vs_pegaprodutos($palavra){
 		return '';
 	}
 
-	$select = "SELECT * FROM wp_vitrinesubmarino WHERE rss_source = '". mysql_real_escape_string($palavra) ."'";
+	$select = "SELECT * FROM wp_vitrinesubmarino WHERE seed = '". mysql_real_escape_string($palavra) ."'";
 
 	$results = $wpdb->get_results( $wpdb->prepare($select) , ARRAY_A);
 
@@ -351,7 +404,7 @@ function curl_redir_exec($ch) {
 	curl_setopt($ch, CURLOPT_HEADER, true);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	$data = curl_exec($ch);
-	list($header, $data) = explode("\n\n", $data, 2);
+	@list($header, $data) = explode("\n\n", $data, 2);
 	$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 	if ($http_code == 301 || $http_code == 302) {
 		$matches = array();
@@ -369,7 +422,7 @@ function curl_redir_exec($ch) {
 			$url['host'] = $last_url['host'];
 		if (!$url['path'])
 			$url['path'] = $last_url['path'];
-		$new_url = $url['scheme'] . '://' . $url['host'] . $url['path'] . ($url['query']?'?'.$url['query']:'');
+		@$new_url = $url['scheme'] . '://' . $url['host'] . $url['path'] . ($url['query']?'?'.$url['query']:'');
 		curl_setopt($ch, CURLOPT_URL, $new_url);
 		return curl_redir_exec($ch);
 	} else {
@@ -398,6 +451,7 @@ function vs_pesquisaprodutos($palavra){
 
 	global $wpdb;
 	global $vs_options;
+	$lprod = '';
 	
 	if ($palavra == '')
 		$palavra = $vs_options['ctx_word'];
@@ -446,69 +500,104 @@ function vs_pesquisaprodutos($palavra){
 	
 		$img = $doc->getElementsByTagName( "span" );
 		
-		$i = 1;
-		$j = 1;
+		$i = 0;
 	
 		foreach( $img as $img ) {
 			$teste = $img->getAttribute("class");
 	
 			if($teste == 'name entry-title' OR $teste == 'name') { 
-				$titulo[$i] = $img->nodeValue; 
-				$i++; 
+				$i++;
+				$produtos1[$i]['name'] = $img->nodeValue; 
+			}
+			if($teste == 'from') { 
+				$produtos1[$i]['priced'] = str_replace(",",".",str_replace(".", "", ltrim($img->nodeValue,'de: R$ '))); 
 			}
 			if($teste == 'for') { 
-				$preco[$j] = ltrim($img->nodeValue,'por: '); 
-				$j++; 
+				$produtos1[$i]['pricep'] = str_replace(",",".",str_replace(".", "", ltrim($img->nodeValue,'por: R$ '))); 
 			}
-	
+			/** pega a descricao do produto **/
+			if($teste == 'description') { 
+				$produtos1[$i]['descr'] = $img->nodeValue; 
+			}
+
 		}
+		$totalprod = $i;
 
 		// Pego as imagens
 	
 		$img = $doc->getElementsByTagName( "img" );
 	
-		$i = 1;
+		$i = 0;
 	
 		foreach( $img as $img )	{
 			$teste = $img->getAttribute("class");
 	
 			if($teste == 'image') { 
-				$imagem[$i] = "<img src=\"".ltrim($img->getAttribute("src"))."\" alt=\"".$titulo[$i]."\" hspace=\"3\" border=\"0\">"; 
 				$i++; 
+				$produtos1[$i]['imgp'] = "<img src=\"".ltrim($img->getAttribute("src"))."\" alt=\"".$produtos1[$i]['name']."\" hspace=\"3\" border=\"0\">"; 
+
+				$tmp = '';
+				$tmp = str_replace("_tn", "", $img->getAttribute("src"));
+				$tmp = str_replace("pq", "", $tmp);
+				$produtos1[$i]['imgm'] = "<img src=\"".$tmp."\" alt=\"".$produtos1[$i]['name']."\" hspace=\"3\" border=\"0\">"; 
+
+				$tmp = str_replace(".jpg", "_4.jpg", $tmp);
+				$produtos1[$i]['imgg'] = "<img src=\"".$tmp."\" alt=\"".$produtos1[$i]['name']."\" hspace=\"3\" border=\"0\">"; 
 			}
 		}
-
-		$totalprod = $i-1;
 
 		// Pego os links e os titulos para categorias
 	
 		$img = $doc->getElementsByTagName( "a" );
 	
-		$i = 1;
+		$i = 0;
 	
 		foreach( $img as $img ) {
 			$teste = $img->getAttribute("class");
 	
 			if($teste == 'link') { 
-					$link[$i] = "http://www.submarino.com.br".$img->getAttribute("href").'?franq='.$vs_options['codafil']; 
 					$i++; 
+					$produtos1[$i]['link'] = "http://www.submarino.com.br".$img->getAttribute("href").'?franq='.$vs_options['codafil']; 
+					$elem = explode("/", $img->getAttribute("href"));
+					$produtos1[$i]['cat'] = $elem[2];
+					$produtos1[$i]['subid'] = $elem[3];
 			}
 		} // foreach
-
+###############
 		$produtos = array();
 
 		for($i=1;$i<=$totalprod;$i++) {
-			if ($titulo[$i] != '' AND $link[$i] != '' AND $imagem[$i] != '' AND $preco[$i] != '') 
-				$lprod .= "('" . $wpdb->escape($titulo[$i]) . "','" . $wpdb->escape($link[$i]) . "','" . $wpdb->escape($imagem[$i]) . "','" . $wpdb->escape($preco[$i]) . "', '". $wpdb->escape($palavra) ."'), ";
+			if ($produtos1[$i]['subid'] != '' AND @$produtos1[$i]['pricep'] != '') {
+				if ( @$produtos1[$i]['priced'] != '') {
+					$pd = $wpdb->escape($produtos1[$i]['priced']);
+				} else {
+					$pd = '';
+				}
+				
+					$pp = $produtos1[$i]['pricep'];
+
+				$lprod .= "('" . 
+				$wpdb->escape($produtos1[$i]['name']) . "','" . 
+				$pd . "','" . 
+				$pp . "','" . 
+				trim($wpdb->escape(@$produtos1[$i]['descr'])) . "','" . 
+				$wpdb->escape($produtos1[$i]['link']) . "','" .  
+				$wpdb->escape($produtos1[$i]['cat']) . "','" .  
+				$wpdb->escape($produtos1[$i]['subid']) . "','" .  
+				$produtos1[$i]['imgp'] . "','" .  
+				$produtos1[$i]['imgm'] . "','" .  
+				$produtos1[$i]['imgg'] . "','" .  
+				$wpdb->escape($palavra) ."'), ";
+			}
 		} //for
 
 	if ($lprod != '') {
-		$insert = "INSERT INTO wp_vitrinesubmarino (nomep, linkp, imagemp, precop, rss_source) VALUES " . rtrim($lprod, ", ");
+		$insert = "INSERT INTO wp_vitrinesubmarino (name, priced, pricep, descr, link, cat, id_sub, imgp, imgm, imgg, seed) VALUES " . rtrim($lprod, ", ");
 		
-		$results = $wpdb->query( $insert );
+		$results = @$wpdb->query( $insert );
 	}
 
-	$select = "SELECT * FROM wp_vitrinesubmarino WHERE rss_source = '". mysql_real_escape_string($palavra) ."'";
+	$select = "SELECT * FROM wp_vitrinesubmarino WHERE seed = '". mysql_real_escape_string($palavra) ."'";
 
 	$produtos = $wpdb->get_results( $wpdb->prepare($select) , ARRAY_A);
 
@@ -552,7 +641,7 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 	$ctx_bg = $vs_options['ctx_bg'];
 	
 	if ($vs_options['codafil'] == '')
-		return "ERRO: Código de Afiliado não informado.";
+		return "<p>ERRO: Código de Afiliado não informado.</p>";
 
 	if ($vs_options['version'] != $vs_version)
 		return "Vitrine Submarino ** ERRO: Atualização necessária! **";
@@ -562,16 +651,16 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 	//pega produtos da BD (devolve um array)
 	$produtos = vs_pegaprodutos($word);
 
-	shuffle($produtos);
+	if (count($produtos) != 0) {
 
-	if (is_array($produtos)) {
+		shuffle($produtos);
 
 		foreach ($produtos as $produto) {
 	
-			$nome = $produto['nomep'];
-			$link_prod = $produto['linkp'];
-			$imagem = $produto['imagemp'];
-			$preco = $produto['precop'];
+			$nome = $produto['name'];
+			$link_prod = $produto['link'];
+			$imagem = $produto['imgp'];
+			$preco = $produto['pricep'];
 	
 			$tc = '';
 	
@@ -611,58 +700,68 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 		
 				case "contextual":
 					// vitrine contextual
-					if ($vs_options['ctx_tipo'] == "horizontal") {
+					if ($vs_options['ctx_tipo'] == "tp_vit_horiz") {
 						$td = 92 / $vs_options['ctx_show'];
 						$imagem = str_replace("<img ", "<img width=90px height=90px ", $imagem);
 						$imagem = rtrim($imagem,".");
 
 						//mostra vitrine com produtos em uma unica linha (VITRINE HORIZONTAL)
 #						$lista_de_produtos .= "<div onMouseover=\"ddrivetip('".$nome."', '#EFEFEF')\";=\"\" onMouseout=\"hideddrivetip()\">";
-						$lista_de_produtos[] = '<div style="width:'. $td.'%;background-color:'.$ctx_bg.';text-align:center; line-height:120%;padding-right: 10px;font-size:12px;border:0px;float:left;overflow: hidden;"><a href="'.$link_prod.'" '.$tc.'  target="_blank"><span style="width:90px;height:90px;position:relative;">'.$imagem.'</span></a><br />'.$nome.'<br /><span style="color:'.$corprec.';">&nbsp;'.$preco.'&nbsp;</span><br /><a href="'.$link_prod.'" '.$tc.'  target="_blank"><strong>Veja mais</strong></a><br />'.$compare_precos.'</div>';
+						$lista_de_produtos[] = '
+						<div style="width:'.$td.'%;background-color:'.$ctx_bg.';text-align:center; line-height:120%;padding-right: 10px;padding-bottom: 10px;font-size:12px;border:0px;float:left;overflow: hidden;">
+							<a href="'.$link_prod.'" '.$tc.'  target="_blank">
+								<span style="width:90px;height:90px;position:relative;">'.$imagem.'</span>
+							</a><div style="height:43px;overflow: hidden;">'.$nome.'</div>
+							<div style="color:'.$corprec.';">
+								&nbsp; R$ '.number_format($preco,2,",","").'&nbsp;
+							</div>
+							<div>
+								<a href="'.$link_prod.'" '.$tc.' target="_blank"><strong>Veja mais</strong></a>
+							</div>
+							<div>'.$compare_precos.'</div>
+						</div>';
 						
-					} elseif ($vs_options['ctx_tipo'] == "horizontal-big") {
-						$td = 92 / $vs_options['ctx_show'];
-						$imagem = str_replace("cover_tn", "cover", $imagem);
-						$imagem = str_replace("/pq", "/", $imagem);
-						$imagem = rtrim($imagem,".");
-
-						//mostra vitrine com produtos em uma unica linha (VITRINE HORIZONTAL)
-#						$lista_de_produtos .= "<div onMouseover=\"ddrivetip('".$nome."', '#EFEFEF')\";=\"\" onMouseout=\"hideddrivetip()\">";
-						$lista_de_produtos[] = '<div style="background-color:'.$ctx_bg.';text-align:center; line-height:120%;padding-right: 10px;font-size:12px;border:0px;float:left;overflow: hidden;"><a href="'.$link_prod.'" '.$tc.'  target="_blank"><span style="position:relative;">'.$imagem.'</span></a></div>';
-#						$lista_de_produtos .= "</div>";
-						
-					} elseif ($vs_options['ctx_tipo'] == "vertical") {
+					} elseif ($vs_options['ctx_tipo'] == "tp_vit_vert") {
 						$imagem = str_replace("<img ", "<img style=\" display: inline; float: left; margin: 0 10px 10px 0;\" alt=\"".$nome."\"", $imagem);
 						//mostra vitrine com um produto por linha (VITRINE VERTICAL)
-						$lista_de_produtos[] = '<div style="height:130px;background-color:'.$ctx_bg.';padding:3px;"><a href="'.$link_prod.'" '.$tc.'  target="_blank">'.$imagem.'</a><a href="'.$link_prod.'" '.$tc.' target="_blank">'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
+						$lista_de_produtos[] = '
+							<div style="height:130px;background-color:'.$ctx_bg.';padding:3px;">
+								<a href="'.$link_prod.'" '.$tc.'  target="_blank">
+									<span style="width:90px;height:90px;position:relative;">'.$imagem.'</span>
+								</a><div style="height:43px;overflow: hidden;">'.$nome.'</div>
+								<div style="color:'.$corprec.';">
+									<center>&nbsp; R$ '.number_format($preco,2,",","").'&nbsp;</center>
+								</div>
+								<div>
+									<center><a href="'.$link_prod.'" '.$tc.' target="_blank"><strong>Veja mais</strong></a></center>
+								</div>
+								<div><center>'.$compare_precos.'</center></div>
+							</div>';
 												
-					} elseif ($vs_options['ctx_tipo'] == "banner-468") {
-						$credits='<div style="position:absolute;bottom:0px;right:0px;"><small><a href="http://www.bernabauer.com/wp-plugins/">Vitrine Submarino '.$vs_options['version'].'</a></small></div>';
+					} elseif ($vs_options['ctx_tipo'] == "tp_vit_b468") {
+						$credits='<div style="position:absolute;bottom:-2px;right:2px;font-size: 55%;"><small><a style="text-decoration:none;" href="http://www.bernabauer.com/wp-plugins/">Vitrine Submarino '.$vs_options['version'].'</a></small></div>';
 						$imagem = rtrim(str_replace("<img ", "<img style=\" display: inline; float: left; margin: 0 10px 0px 10px;height:60px;\" alt=\"".$nome."\"", $imagem), ".");
-						$lista_de_produtos[] = '<div style="border: 1px solid #ccc;color:'.$desc.';background-color:white;padding:3px;text-decoration: none ! important;width:468px;height:60px;position:relative;"><a href="http://www.submarino.com.br?franq='.$vs_options['codafil'].'" target="_blank"><img style=" display: inline; float: right; margin: 0 10px 0px 10px;" src="http://i.s8.com.br/images/affiliates/selos/70x70_selo.gif" WIDTH=40 HEIGHT=40 ></a><a href="'.$link_prod.'" '.$tc.' target="_blank">'.$imagem.'<font size="+1">'.$nome.'</font></a><br /><div style="color:'.$corprec.';font-size: 100%;">'.$preco.'</div>'.$compare_precos.''.$credits.'</div>';
+						$lista_de_produtos[] = '
+							<div style="text-align: center;border: 1px solid #ccc;color:'.$desc.';background-color:white;padding:3px;text-decoration: none;width:468px;height:60px;position:relative;line-height:95%;"><a href="http://www.submarino.com.br?franq='.$vs_options['codafil'].'" target="_blank"><img style=" display: inline; float: right; margin: 0 0px 0px 0px; width: 50px;" src="http://i.s8.com.br/images/affiliates/selos/70x70_selo.gif" ></a><a style="text-decoration:none;" href="'.$link_prod.'" '.$tc.' target="_blank">'.$imagem.''.$nome.'</a><div style="color:'.$corprec.';font-size: 100%;position:absolute;left:50%;bottom:2px;">R$ '.number_format($preco,2,",","").'</div>'.$credits.'</div>';
+						$i = $show;
+					} elseif ($vs_options['ctx_tipo'] == "tp_vit_b728") {
+						$credits='<div style="position:absolute;bottom:-2px;right:2px;font-size: 55%;"><small><a style="text-decoration:none;" href="http://www.bernabauer.com/wp-plugins/">Vitrine Submarino '.$vs_options['version'].'</a></small></div>';
+						$imagem = rtrim(str_replace("<img ", "<img style=\" display: inline; float: left; margin: 0 10px 0px 10px;height:90px;\" alt=\"".$nome."\"", $imagem), ".");
+						$lista_de_produtos[] = '<div style="border: 1px solid #ccc;color:'.$desc.';background-color:white;padding:3px;text-decoration: none ! important;width:728px;height:90px;position:relative;"><a href="http://www.submarino.com.br?franq='.$vs_options['codafil'].'" target="_blank"><img style=" display: inline; float: right; margin: 0 10px 0px 10px;" src="http://i.s8.com.br/images/affiliates/selos/70x70_selo.gif"></a><a style="text-decoration:none;" href="'.$link_prod.'" '.$tc.' target="_blank">'.$imagem.'<div style="font-size: 150%;">'.$nome.'</div></a><br /><div style="color:'.$corprec.';font-size: 100%;position:absolute;left:50%;bottom:2px;">R$ '.number_format($preco,2,",","").'</div>'.$credits.'</div>';
 						$i = $show;
 						
-					} elseif ($vs_options['ctx_tipo'] == "box-250") {
-						$imagem = rtrim(str_replace("<img ", "<img width=90px height=90px alt=\"".$nome."\"", $imagem),".");
+					} elseif ($vs_options['ctx_tipo'] == "tp_vit_b250") {
+						$imagem = rtrim(str_replace("<img ", "<img style=\"height:108px;\" alt=\"".$nome."\"", $imagem),".");
 #						$lista_de_produtos .= "<div onMouseover=\"ddrivetip('".$nome."', '#EFEFEF')\";=\"\" onMouseout=\"hideddrivetip()\">";
-						$lista_de_produtos[] = "<div style=\"width:110px;height:125px;background-color:white;text-align:center; line-height:120%;padding-left: 10px;font-size:12px;border:0px;float:left;overflow: hidden;\"><a href=\"".$link_prod.'" '.$tc.'  target="_blank"><span style="width:90px;height:90px;position:relative;">'.$imagem.'<div style="color:'.$corprec.';font-size: 120%;background-color:white;position: absolute; bottom: 65px; right: 0px;">&nbsp;'.$preco.'&nbsp;</div></span></a><br />'.$nome.''.$compare_precos.'</div></div>';
+						$lista_de_produtos[] = "<div style=\"width:110px;height:110px;background-color:white;text-align:center; padding-left: 10px;padding-bottom: 5px;font-size:12px;border:0px;float:left;overflow: hidden;\"><a style=\"text-decoration:none;\" href=\"".$link_prod.'" '.$tc.'  target="_blank"><span style="width:80px;height:80px;position:relative;">'.$imagem.'<div style="color:'.$corprec.';font-size: 120%;background-color:white;position: absolute; bottom: 65px; right: 2px;">&nbsp;R$ '.number_format($preco,2,",","").'&nbsp;</div></span></a><br />'.$nome.'</div>';
+						if ($i == 4)
+							$i = $show;
 					}
 					break;
 	
 				case "widget":
 #					$imagem = rtrim(str_replace("<img ", "<img name=image".$i." onload=\"resizeimage('image".$i."');\"", $imagem), ".");
-					$lista_de_produtos[] = '<div style="color:'.$desc.';background-color:'.$fundo.';text-align:center;padding:3px;text-decoration: none ! important;"><a href="'.$link_prod.'" '.$tc.' target="_blank">'.$imagem.'<br />'.$nome.'</a><br /><div style="color:'.$corprec.';">'.$preco.'</div>'.$compare_precos.'</div>';
-					break;
-				case "banner-728-1":
-					$credits='<div style="position:absolute;bottom:0px;right:0px;"><small><a href="http://www.bernabauer.com/wp-plugins/">Vitrine Submarino '.$vs_options['version'].'</a></small></div>';
-					$imagem = rtrim(str_replace("<img ", "<img style=\" display: inline; float: left; margin: 0 10px 0px 10px;height:90px;\" alt=\"".$nome."\"", $imagem), ".");
-					$lista_de_produtos[] = '<div style="border: 1px solid #ccc;color:'.$desc.';background-color:white;padding:3px;text-decoration: none ! important;width:728px;height:90px;position:relative;"><a href="http://www.submarino.com.br?franq='.$vs_options['codafil'].'" target="_blank"><img style=" display: inline; float: right; margin: 0 10px 0px 10px;" src="http://i.s8.com.br/images/affiliates/selos/70x70_selo.gif"></a><a href="'.$link_prod.'" '.$tc.' target="_blank">'.$imagem.'<div style="font-size: 200%;">'.$nome.'</div></a><br /><div style="color:'.$corprec.';font-size: 150%;">'.$preco.'</div>'.$compare_precos.''.$credits.'</div>';
-					$i = $show;
-					break;
-						
-				case "banner-728-2":
-					$imagem = str_replace("<img ", "<img style=\" display: inline; margin: 0 10px 0px 10px;height:90px;\" alt=\"".$nome."\"", $imagem);
-					$lista_de_produtos[] = '<span style="position:relative;"><a href="'.$link_prod.'" '.$tc.' target="_blank" title="'.$nome.'">'.$imagem.'</a><div style="color:'.$corprec.';font-size: 100%;position: absolute; top: 0px; left: 10px;">'.$preco.'</div></span>';
+					$lista_de_produtos[] = '<div style="color:'.$desc.';background-color:'.$fundo.';text-align:center;padding:3px;text-decoration: none ! important;"><a href="'.$link_prod.'" '.$tc.' target="_blank">'.$imagem.'<br />'.$nome.'</a><br /><div style="color:'.$corprec.';">&nbsp; R$ '.number_format($preco,2,",","").'&nbsp;</div>'.$compare_precos.'</div>';
 					break;
 
 			} //switch
@@ -692,9 +791,6 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 				$compareprecoshead = '<strong>Compare Preços</strong><br />';
 			
 				switch($vs_options['ctx_slot1']) {
-					case "adsense":
-						$lista_final_de_produtos = '<div style="width:120px;height:125px;background-color:white;border:0px;float:left;"><div style="float:center; " align="center" >'.stripslashes($vs_options['adsense_code']).'</div></div>'.$lista_final_de_produtos; 
-						break;
 					case "compareBP":
 						foreach ($words_array as $word) {
 							$compare_precos = "<a href=\"http://busca.buscape.com.br/cprocura?lkout=1&amp;site_origem=".$cod_BP."&produto=".urlencode(utf8_decode($word))."\" ".$tccp." target='_blank'>".$word."</a><br />"; 
@@ -761,80 +857,92 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 
 			switch ($vs_options['ctx_altcode']) {
 				case "ctx_FBD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=full&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=full&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "ctx_FBG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=full2&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=full2&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "ctx_SBD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=super&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=super&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "ctx_SBG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=super2&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=super2&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "ctx_BVD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=vertical&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=vertical&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "ctx_BVG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=vertical2&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=vertical2&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "ctx_SKYD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=sky&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=sky&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "ctx_SKYG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=sky2&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=sky2&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "ctx_BTD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=botao&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=botao&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "ctx_BTG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=botao2&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=botao2&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "ctx_HBD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=half&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=half&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "ctx_HBG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=half&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=half2&franq='.$vs_options['codafil'].'\'></script></div>';
+					break;
+				case "ctx_BXD":
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=box&franq='.$vs_options['codafil'].'\'></script></div>';
+					break;
+				case "ctx_BXG":
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=box2&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 			} // switch
 		} else {
 			// anuncio alternativo widget
 			switch ($vs_options['wid_altcode']) {
 				case "FBD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=full&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=full&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "FBG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=full2&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=full2&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "SBD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=super&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=super&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "SBG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=super2&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=super2&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "BVD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=vertical&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=vertical&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "BVG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=vertical2&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=vertical2&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "SKYD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=sky&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=sky&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "SKYG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=sky2&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=sky2&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "BTD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=botao&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=botao&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "BTG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=botao2&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=botao2&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "HBD":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=half&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=half&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 				case "HBG":
-					$altcode = '<script language="JavaScript1.1" type="text/javascript" src=http://www.submarino.com.br/afiliados/get_banner.asp?tipo=half&amp;franq='.$vs_options['codafil'].'></script>';
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=half2&franq='.$vs_options['codafil'].'\'></script></div>';
+					break;
+				case "BXD":
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=box&franq='.$vs_options['codafil'].'\'></script></div>';
+					break;
+				case "BXG":
+					$altcode = '<div style=\'margin-bottom:-20px;\'><a href=\'http://www.submarino.com.br\'>Submarino.com.br</a></div><div><script type=\'text/javascript\' src=\'http://www.submarino.com.br/afiliados/get_banner.asp?tipo=box2&franq='.$vs_options['codafil'].'\'></script></div>';
 					break;
 			} //switch
 		} //if
@@ -843,19 +951,24 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 	}# else {
 	
 	$credits = "<br /><div style=\"text-align:right;\"><small><a href='http://www.bernabauer.com/wp-plugins/'>Vitrine Submarino ".$vs_options['version']."</a></small></div>";
+	$credits='<div style="text-align:right;right:2px;"><small><a style="text-decoration:none;" href="http://www.bernabauer.com/wp-plugins/">Vitrine Submarino '.$vs_options['version'].'</a></small></div>';
 
-	if (($vitrine == "contextual") AND ($vs_options['ctx_exib_auto'] == 'auto'))
-		$titulo = $vs_options['ctx_titulo'];
-	else
+
+	if (($vitrine == "contextual") AND ($vs_options['ctx_exib_auto'] == 'auto')) {
+			$titulo = $vs_options['ctx_titulo'];
+	 } else
 		$titulo = '';
 
-	if (strstr($vs_options['ctx_tipo'], "banner") != FALSE OR strstr($vitrine, "banner") != FALSE) {
+	if (strstr($vs_options['ctx_tipo'], "tp_vit_b") != FALSE OR strstr($vitrine, "banner") != FALSE) {
 		$credits = "<br />";
+		$titulo = '';
 	}
 
-	if (($vitrine == "contextual") AND ($vs_options['ctx_tipo'] == "box-250")) {
-		$box_antes = '<div style="width:250px;">';
-		$box_depois = "</div>";
+	if (($vitrine == "contextual") AND ($vs_options['ctx_tipo'] == "tp_vit_b250")) {
+		$credits='<span style="float:right;bottom:0px;right:2px;font-size: 55%;"><small><a style="text-decoration:none;" href="http://www.bernabauer.com/wp-plugins/">Vitrine Submarino '.$vs_options['version'].'</a></small></span>';
+		$box_antes = '<div style="width:250px;height:250px;overflow:hidden;border: 1px solid #ccc; padding: 5px;">';
+		$box_depois = $credits."</div>";
+		$credits = '';
 	}
 
 	
@@ -866,7 +979,7 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
 	} else
 		$combordas = '';
 
-	return "<br />".$box_antes.''.$titulo."<div ".$widgetid." style=\"".$combordas."\">".$lista_de_produtos."</div>".$credits.''.$box_depois;
+	return "<br />".$box_antes.''.$titulo."<div ".$widgetid." style=\"".$combordas."\">".$lista_de_produtos."".$credits."</div>".$box_depois;
 	#}
 }
 
@@ -876,7 +989,7 @@ function vs_core ($show, $word, $vitrine, $fundo, $borda, $desc, $corprec) {
  */
 function vs_option_menu() {
     if ( function_exists('add_options_page') ) {
-        add_options_page('Vitrine Submarino', 'Vitrine Submarino', 9, basename(__FILE__), 'vs_options_subpanel');
+        add_options_page('Vitrine Submarino', 'Vitrine Submarino', 'manage_options', basename(__FILE__), 'vs_options_subpanel');
 	}
 }
 
@@ -886,10 +999,54 @@ function vs_option_menu() {
 function vs_options_subpanel() {
 
 	global $wpdb;
-
-	//pega dados da base
 	global $vs_options;
 
+	//declaração de variáveis
+	$PCP_BP = '';
+	$PCP_ML = '';
+	$PCP_JC = '';
+	$PCP_BB = '';
+	$PCP_NS = '';
+	$PM_Present = '';
+	$auto = '';
+	$manual = '';
+	$horizontal = '';
+	$vertical = '';
+	$antes = '';
+	$depois = '';
+	$ctxtrksim = '';
+	$ctxtrknao = '';
+	$widctxsim = '';
+	$widctxnao = '';
+	$widtrksim =  '';
+	$widtrknao = '';
+	
+	$tp_vitrines = array(
+		array("tp_vit_horiz", "Horizontal (produtos em uma única linha)"),
+		array("tp_vit_vert","Vertical (um produto por linha)"),
+		array("tp_vit_b250","Box 250x250 (até 4 produtos em 2 linhas)"),
+		array("tp_vit_b468","Banner 468x60"),
+		array("tp_vit_b728","Banner 728x90")
+	);
+	
+	$alt_banners = array(
+	array("ctx_FBD", 	"wid_FBD"	, "Fullbanner (468x60px) Campanha de Duráveis"),
+	array("ctx_FBG", 	"wid_FBG"	, "Fullbanner (468x60px) Campanha de Giro"),
+	array("ctx_SBD", 	"wid_SBD"	, "Superbanner (728x90px) Campanha de Duráveis"),
+	array("ctx_SBG", 	"wid_SBG"	, "Superbanner (728x90px) Campanha de Giro"),
+	array("ctx_BVD", 	"wid_BVD"	, "Barra Vertical (150x350px) Campanha de Duráveis"),
+	array("ctx_BVG", 	"wid_BVG"	, "Barra Vertical (150x350px) Campanha de Giro"),
+	array("ctx_SKYD", 	"wid_SKYD"	, "Sky (120x600px) Campanha de Duráveis"),
+	array("ctx_SKYG", 	"wid_SKYG"	, "Sky (120x600px) Campanha de Giro"),
+	array("ctx_BTD", 	"wid_BTD"	, "Botão (125x125px) Campanha de Duráveis"),
+	array("ctx_BTG", 	"wid_BTG"	, "Botão (125x125px) Campanha de Giro"),
+	array("ctx_HBD", 	"wid_HBD"	, "HalfBanner (120x60px) Campanha de Duráveis"),
+	array("ctx_HBG", 	"wid_HBG"	, "HalfBanner (120x60px) Campanha de Giro"),
+	array("ctx_BXD", 	"wid_BXD"	, "Box (300x250px) Campanha de Duráveis"),
+	array("ctx_BXG", 	"wid_BXG"	, "Box (300x250px) Campanha de Giro")
+	);
+	$alt_banners_selected = '';
+	
 	//processa novos dados para atualizacao
     if ( isset($_POST['info_update']) ) {
 
@@ -906,12 +1063,11 @@ function vs_options_subpanel() {
         if (isset($_POST['LCP'])) 
            $vs_options['LCP'] = $_POST['LCP'];
 
-		$vs_options['PCP'] = strip_tags(stripslashes($_POST['PCP']));
-		$vs_options['LPT'] = strip_tags(stripslashes($_POST['LPT']));
-		$vs_options['remover'] = strip_tags(stripslashes($_POST['remover']));
+        if (isset($_POST['PCP'])) 
+			$vs_options['PCP'] = strip_tags(stripslashes($_POST['PCP']));
             
 		// Opções WIDGET
-		$vs_options['wid_orderby'] = strip_tags(stripslashes($_POST['wid_orderby']));
+
 		if (isset($_POST['wid_title'])) 
 			$vs_options['wid_title'] = strip_tags(stripslashes($_POST['wid_title']));
 
@@ -951,13 +1107,9 @@ function vs_options_subpanel() {
 		$vs_options['ctx_word'] = strip_tags(stripslashes($_POST['ctx_word']));
 		$vs_options['ctx_altcode'] = strip_tags(stripslashes($_POST['ctx_altcode']));
 		$vs_options['ctx_exib_auto'] = strip_tags(stripslashes($_POST['ctx_exib_auto']));
-		$vs_options['ctx_slot1'] = strip_tags(stripslashes($_POST['ctx_slot1']));
 		$vs_options['ctx_local'] = strip_tags(stripslashes($_POST['ctx_local']));
 		$vs_options['ctx_track'] = strip_tags(stripslashes($_POST['ctx_track']));
 		$vs_options['ctx_tipo'] = strip_tags(stripslashes($_POST['ctx_tipo']));
-		$vs_options['ctx_style'] = strip_tags(stripslashes($_POST['ctx_style']));
-		$vs_options['ctx_alt'] = strip_tags(stripslashes($_POST['ctx_alt']));
-		$vs_options['adsense_code'] = $_POST['adsense_code'];
 
 		//atualiza base de dados com informacaoes do formulario		
 		update_option('vs_options',$vs_options);
@@ -997,129 +1149,7 @@ function vs_options_subpanel() {
     	$widctxnao = 'checked=\"checked\"';
     }
 
-    switch ( $vs_options['ctx_tipo'] ) {
-		case 'horizontal':
-			$horizontal = 'checked=\"checked\"';
-			break;
-		case 'vertical':
-			$vertical = 'checked=\"checked\"';
-			break;
-		case 'banner-468':
-			$banner468 = 'checked=\"checked\"';
-			break;
-		case 'banner-728-1':
-			$banner7281 = 'checked=\"checked\"';
-			break;
-		case 'box-250':
-			$banner250 = 'checked=\"checked\"';
-			break;
-    }
 
-    if ( $vs_options['remover'] == 'nao') {
-		$remover_nao = 'checked=\"checked\"';
-    } else {
-    	$remover_sim = 'checked=\"checked\"';
-    }
-
-	switch ($vs_options['ctx_slot1']) {
-		case "adsense":
-			$slot1_adsense = 'checked=\"checked\"';
-			break;
-		case "compareBP":
-			$slot1_compareBP = 'checked=\"checked\"';
-			break;
-		case "compareML":
-			$slot1_compareML = 'checked=\"checked\"';
-			break;
-		case "compareJC":
-			$slot1_compareJC = 'checked=\"checked\"';
-			break;
-		case "compareBB":
-			$slot1_compareBB = 'checked=\"checked\"';
-			break;
-		case "normal":
-			$slot1_normal = 'checked=\"checked\"';
-			break;
-	}
-    
-	switch ($vs_options['wid_altcode']) {
-		case "FBD":
-			$FBD = 'checked=\"checked\"';
-			break;
-		case "FBG":
-			$FBG = 'checked=\"checked\"';
-			break;
-		case "SBD":
-			$SBD = 'checked=\"checked\"';
-			break;
-		case "SBG":
-			$SBG = 'checked=\"checked\"';
-			break;
-		case "BVD":
-			$BVD = 'checked=\"checked\"';
-			break;
-		case "BVG":
-			$BVG = 'checked=\"checked\"';
-			break;
-		case "SKYD":
-			$SKYD = 'checked=\"checked\"';
-			break;
-		case "SKYG":
-			$SKYG = 'checked=\"checked\"';
-			break;
-		case "BTD":
-			$BTD = 'checked=\"checked\"';
-			break;
-		case "BTG":
-			$BTG = 'checked=\"checked\"';
-			break;
-		case "HBD":
-			$HBD = 'checked=\"checked\"';
-			break;
-		case "HBG":
-			$HBG = 'checked=\"checked\"';
-			break;
-	}
-	
-	switch ($vs_options['ctx_altcode']) {
-		case "ctx_FBD":
-			$ctx_FBD = 'checked=\"checked\"';
-			break;
-		case "ctx_FBG":
-			$ctx_FBG = 'checked=\"checked\"';
-			break;
-		case "ctx_SBD":
-			$ctx_SBD = 'checked=\"checked\"';
-			break;
-		case "ctx_SBG":
-			$ctx_SBG = 'checked=\"checked\"';
-			break;
-		case "ctx_BVD":
-			$ctx_BVD = 'checked=\"checked\"';
-			break;
-		case "ctx_BVG":
-			$ctx_BVG = 'checked=\"checked\"';
-			break;
-		case "ctx_SKYD":
-			$ctx_SKYD = 'checked=\"checked\"';
-			break;
-		case "ctx_SKYG":
-			$ctx_SKYG = 'checked=\"checked\"';
-			break;
-		case "ctx_BTD":
-			$ctx_BTD = 'checked=\"checked\"';
-			break;
-		case "ctx_BTG":
-			$ctx_BTG = 'checked=\"checked\"';
-			break;
-		case "ctx_HBD":
-			$ctx_HBD = 'checked=\"checked\"';
-			break;
-		case "ctx_HBG":
-			$ctx_HBG = 'checked=\"checked\"';
-			break;
-	}
-	
 	switch ($vs_options['PCP']) {
 		case "BP":
 			$PCP_BP = 'checked=\"checked\"';
@@ -1152,14 +1182,14 @@ function vs_options_subpanel() {
 		<td>
 			Produtos : 
 			<?php 
-			$sql = "SELECT count( linkp ) as count FROM wp_vitrinesubmarino";
+			$sql = "SELECT count( id_sub ) as count FROM wp_vitrinesubmarino";
 			$results = $wpdb->get_results( $wpdb->prepare($sql) , ARRAY_A);
 			echo $results['0']['count'];
 			 ?>
 			<br />
 			Palavras distintas de produtos : 
 			<?php 
-			$sql = "SELECT count(distinct rss_source ) as count FROM wp_vitrinesubmarino";
+			$sql = "SELECT count(distinct seed ) as count FROM wp_vitrinesubmarino";
 			$results = $wpdb->get_results( $wpdb->prepare($sql) , ARRAY_A);
 			echo $results['0']['count'];
 			
@@ -1214,18 +1244,6 @@ function vs_options_subpanel() {
 	 </tr>
 	</table>
 
-    <table class="form-table">
-	 <tr>
-		<th scope="row" valign="top">Remover opções ao desativar</th>
-		<td>
-			<input type="radio" id="RemoN" name="remover" value="nao" <?php echo $remover_nao; ?> /> <label for="RemoN">Não</label>
-			<br />
-			<input type="radio" id="RemoS" name="remover" value="sim" <?php echo $remover_sim; ?> /> <label for="RemoS">Sim</label>
-			<br />
-		</td>
-	 </tr>
-	</table>
-
 <br />
     <h2>Vitrine Contextual</h2>
     <table class="form-table">
@@ -1275,48 +1293,18 @@ function vs_options_subpanel() {
 
     <table class="form-table">
 	 <tr>
-		<th scope="row" valign="top">Configuração da Vitrine</th>
-		<td VALIGN="TOP">
-			Primeiro slot de produto deve ser diferenciado com <br />
-<!--
-			<input type="radio" id="vitslot1a" name="ctx_slot1" value="adsense" <?php echo $slot1_adsense; ?> /> <label for="vitslot1a">Adsense</label>
--->			
-			<br />
-			<input type="radio" id="vitslot1cBP" name="ctx_slot1" value="compareBP" <?php echo $slot1_compareBP; ?> /> <label for="vitslot1cBP">Comparação de Preços BuscaPé</label>
-			<br />
-			<input type="radio" id="vitslot1cML" name="ctx_slot1" value="compareML" <?php echo $slot1_compareML; ?> /> <label for="vitslot1cML">Comparação de Preços Mercado Livre</label>
-			<br />
-			<input type="radio" id="vitslot1cJC" name="ctx_slot1" value="compareJC" <?php echo $slot1_compareJC; ?> /> <label for="vitslot1cJC">Comparação de Preços Jacotei</label>
-			<br />
-			<input type="radio" id="vitslot1cBB" name="ctx_slot1" value="compareBB" <?php echo $slot1_compareBB; ?> /> <label for="vitslot1cBB">Comparação de Preços Shopping bernabauer.com</label>
-			<br />
-			<input type="radio" id="vitslot1n" name="ctx_slot1" value="normal" <?php echo $slot1_normal; ?> /> <label for="vitslot1n">Nada</label>
-			<br />
-		</td>
-<!--
-		<td VALIGN="TOP">
-			<label for="adsense">Código Adsense</label><br /><textarea name="adsense_code" rows="5" cols="40" id="adsense"><?php echo stripslashes($vs_options['adsense_code']); ?></textarea>
-		</td>
--->
-	 </tr>
-	</table>
-
-    <table class="form-table">
-	 <tr>
 		<th scope="row" valign="top">Tipo de Vitrine</th>
 		<td>
-			<input type="radio" id="vithor" name="ctx_tipo" value="horizontal" <?php echo $horizontal; ?> /> <label for="vithor">Horizontal (produtos em uma única linha)</label>
-			<br />
-			<input type="radio" id="vitver" name="ctx_tipo" value="vertical" <?php echo $vertical; ?> /> <label for="vitver">Vertical (um produto por linha)</label>
-			<br />
-<!--
-			<input type="radio" id="box-250" name="ctx_tipo" value="box-250" <?php echo $banner250; ?> /> <label for="box-250">Box 250x250 (até 4 produtos em 2 linhas)</label>
-			<br />
-			<input type="radio" id="banner-468" name="ctx_tipo" value="banner-468" <?php echo $banner468; ?> /> <label for="banner-468">Banner 468x60</label>
-			<br />
-			<input type="radio" id="banner-728-1" name="ctx_tipo" value="banner-728-1" <?php echo $banner7281; ?> /> <label for="banner-728-1">Banner 728x90</label>
-			<br />
--->
+			<?php foreach ($tp_vitrines as $tp_vitrine) {
+					if ($vs_options['ctx_tipo'] == $tp_vitrine[0])
+						$tp_vitrines_selected = "checked=\"checked\"";
+					else
+						$tp_vitrines_selected = "";
+					echo "
+					<input type=\"radio\" name=\"ctx_tipo\" id=\"".$tp_vitrine[0]."\" value=\"".$tp_vitrine[0]."\"" .$tp_vitrines_selected. " /> <label for=\"".$tp_vitrine[0]."\">".$tp_vitrine[1]."</label>
+					<br />
+					";
+			 } ?>
 		</td>
 	 </tr>
 	</table>
@@ -1362,30 +1350,17 @@ function vs_options_subpanel() {
 	 <tr>
 		<th scope="row" valign="top">Anúncio alternativo</th>
 		<td>
-			<input type="radio" name="ctx_altcode" id="cfbd" value="ctx_FBD" <?php echo $ctx_FBD; ?> /> <label for="cfbd">Fullbanner (468x60px) Campanha de Duráveis</label>
-			<br />
-			<input type="radio" name="ctx_altcode" id="cfbg" value="ctx_FBG" <?php echo $ctx_FBG; ?> /> <label for="cfbg">Fullbanner (468x60px) Campanha de Giro</label>
-			<br />
-			<input type="radio" name="ctx_altcode" id="csbd" value="ctx_SBD" <?php echo $ctx_SBD; ?> /> <label for="csbd">Superbanner (728x90px) Campanha de Duráveis</label>
-			<br />
-			<input type="radio" name="ctx_altcode" id="csbg" value="ctx_SBG" <?php echo $ctx_SBG; ?> /> <label for="csbg">Superbanner (728x90px) Campanha de Giro</label>
-			<br />
-			<input type="radio" name="ctx_altcode" id="cbvd" value="ctx_BVD" <?php echo $ctx_BVD; ?> /> <label for="cbvd">Barra Vertical (150x350px) Campanha de Duráveis</label>
-			<br />
-			<input type="radio" name="ctx_altcode" id="cbvg" value="ctx_BVG" <?php echo $ctx_BVG; ?> /> <label for="cbvg">Barra Vertical (150x350px) Campanha de Giro</label>
-			<br />
-			<input type="radio" name="ctx_altcode" id="cskyd" value="ctx_SKYD" <?php echo $ctx_SKYD; ?> /> <label for="cskyd">Sky (120x600px) Campanha de Duráveis</label>
-			<br />
-			<input type="radio" name="ctx_altcode" id="cskyg" value="ctx_SKYG" <?php echo $ctx_SKYG; ?> /> <label for="cskyg">Sky (120x600px) Campanha de Giro</label>
-			<br />
-			<input type="radio" name="ctx_altcode" id="cbtd" value="ctx_BTD" <?php echo $ctx_BTD; ?> /> <label for="cbtd">Botão (125x125px) Campanha de Duráveis</label>
-			<br />
-			<input type="radio" name="ctx_altcode" id="cbtg" value="ctx_BTG" <?php echo $ctx_BTG; ?> /> <label for="cbtg">Botão (125x125px) Campanha de Giro</label>
-			<br />
-			<input type="radio" name="ctx_altcode" id="chbd" value="ctx_HBD" <?php echo $ctx_HBD; ?> /> <label for="chbd">HalfBanner (120x60px) Campanha de Duráveis</label>
-			<br />
-			<input type="radio" name="ctx_altcode" id="chbg" value="ctx_HBG" <?php echo $ctx_HBG; ?> /> <label for="chbg">HalfBanner (120x60px) Campanha de Giro</label>
-			<br />
+			<?php foreach ($alt_banners as $alt_banner) {
+					if ($vs_options['ctx_altcode'] == $alt_banner[0])
+						$alt_banners_selected = "checked=\"checked\"";
+					else
+						$alt_banners_selected = "";
+					echo "
+					<input type=\"radio\" name=\"ctx_altcode\" id=\"".$alt_banner[0]."\" value=\"".$alt_banner[0]."\"" .$alt_banners_selected. " /> <label for=\"".$alt_banner[0]."\">".$alt_banner[2]."</label>
+					<br />
+					";
+			 } ?>
+			
 		</td>
 	 </tr>
 	</table>
@@ -1459,30 +1434,19 @@ function vs_options_subpanel() {
 	 <tr>
 		<th scope="row" valign="top">Anúncio alternativo</th>
 		<td>
-			<input type="radio" name="wid_altcode" value="FBD" id="wfbd" <?php echo $FBD; ?> /> <label for="wFBD">Fullbanner (468x60px) Campanha de Duráveis</label>
-			<br />
-			<input type="radio" name="wid_altcode" value="FBG" id="wfbg" <?php echo $FBG; ?> /> <label for="wfbg">Fullbanner (468x60px) Campanha de Giro</label>
-			<br />
-			<input type="radio" name="wid_altcode" value="SBD" id="wsbd" <?php echo $SBD; ?> /> <label for="wsbd">Superbanner (728x90px) Campanha de Duráveis</label>
-			<br />
-			<input type="radio" name="wid_altcode" value="SBG" id="wsbg" <?php echo $SBG; ?> /> <label for="wsbg">Superbanner (728x90px) Campanha de Giro</label>
-			<br />
-			<input type="radio" name="wid_altcode" value="BVD" id="wbvd" <?php echo $BVD; ?> /> <label for="wbvd">Barra Vertical (150x350px) Campanha de Duráveis</label>
-			<br />
-			<input type="radio" name="wid_altcode" value="BVG" id="wbvg" <?php echo $BVG; ?> /> <label for="wbvg">Barra Vertical (150x350px) Campanha de Giro</label>
-			<br />
-			<input type="radio" name="wid_altcode" value="SKYD" id="wskyd" <?php echo $SKYD; ?> /> <label for="wskyd">Sky (120x600px) Campanha de Duráveis</label>
-			<br />
-			<input type="radio" name="wid_altcode" value="SKYG" id="wskyg" <?php echo $SKYG; ?> /> <label for="wskyg">Sky (120x600px) Campanha de Giro</label>
-			<br />
-			<input type="radio" name="wid_altcode" value="BTD" id="wbtd" <?php echo $BTD; ?> /> <label for="wbtd">Botão (125x125px) Campanha de Duráveis</label>
-			<br />
-			<input type="radio" name="wid_altcode" value="BTG" id="wbtg" <?php echo $BTG; ?> /> <label for="wbtg">Botão (125x125px) Campanha de Giro</label>
-			<br />
-			<input type="radio" name="wid_altcode" value="HBD" id="whbd" <?php echo $HBD; ?> /> <label for="whbd">HalfBanner (120x60px) Campanha de Duráveis</label>
-			<br />
-			<input type="radio" name="wid_altcode" value="HBG" id="whbg" <?php echo $HBG; ?> /> <label for="whbg">HalfBanner (120x60px) Campanha de Giro</label>
-			<br />
+			<?php foreach ($alt_banners as $alt_banner) {
+					if ($vs_options['wid_altcode'] == $alt_banner[1])
+						$alt_banners_selected = "checked=\"checked\"";
+					else
+						$alt_banners_selected = "";
+					echo "
+					<input type=\"radio\" name=\"wid_altcode\" id=\"".$alt_banner[1]."\" value=\"".$alt_banner[1]."\"" .$alt_banners_selected. " /> <label for=\"".$alt_banner[1]."\">".$alt_banner[2]."</label>
+					<br />
+					";
+			 } ?>
+
+
+
 		</td>
 	 </tr>
 	</table>
@@ -1492,18 +1456,6 @@ function vs_options_subpanel() {
   <input type="submit" name="info_update" value="Atualizar" />
 </div>
 </form> 
-		<h2><?php _e("Últimas do Fórum de suporte", $domain ); ?></h2>
-<p> <?php echo sprintf(__('Veja todos os tópicos do fórum de suporte para este plugin <a href="%1$s">aqui</a>.', $domain), "http://forum.bernabauer.com/viewforum.php?f=7");?>
-				<?php require_once (ABSPATH . WPINC . '/rss.php');
-				$rss = @fetch_rss('http://forum.bernabauer.com/feed.php?f=7');
-				if ( isset($rss->items) && 0 != count($rss->items) ) { ?>
-				<ul>
-					<?php $rss->items = array_slice($rss->items, 0, 5); foreach ($rss->items as $item ) { ?>
-					<li>-> <?php echo date_format(date_create($item['updated']), "d/m/Y @ H:i"); ?> - <a  target="_blank" href='<?php echo wp_filter_kses($item['link_']); ?>'> <?php echo wp_specialchars($item['title']); ?></a> <?php _e("por", "fvr"); ?> <?php echo $item['author_name']; ?></li>
-					<?php } ?>
-				</ul>
-				<?php } ?>
-</p>		
 
 <?php
 }
@@ -1552,7 +1504,7 @@ function vs_widget_init() {
 			echo '<ul>';
 			
 				// were there any posts found?
-				$prod = vs_core ( $vs_options['wid_show'], $word, "widget", $vs_options['wid_bgcolor'], $vs_options['wid_brdcolor'], $vs_options['wid_fontcolor'], $vs_options['wid_prcolor'], $vs_options['wid_procolor'], $vs_options['wid_prccolor']) ;
+				$prod = vs_core ( $vs_options['wid_show'], $word, "widget", $vs_options['wid_bgcolor'], $vs_options['wid_brdcolor'], $vs_options['wid_fontcolor'], $vs_options['wid_prcolor']) ;
 				if (!empty($prod)) {
 					echo $prod;
 				}
