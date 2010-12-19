@@ -4,5 +4,6 @@
 	
 	delete_option('vs_options');
 
-	$wpdb->query( 'DROP TABLE IF EXISTS wp_vitrinesubmarino');
+	$wpdb->query( 'DROP TABLE IF EXISTS wp_vs_vendas');
+	$wpdb->query( 'DROP TABLE IF EXISTS wp_vs_cache_produtos');
 ?>

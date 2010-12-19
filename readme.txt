@@ -4,7 +4,7 @@ Donate link: http://bernabauer.com/
 Tags: brasil, monetização, submarino, vitrine 
 Requires at least: 3.0
 Tested up to: 3.0.1
-Stable tag: 3.5
+Stable tag: 3.6
 
 Mostra vitrine de produtos do Submarino.com. A vitrine pode ser mostrada através de widget na sidebar do blog e também pode ser incluído automaticamente antes ou após o texto dos seus artigos. O plugin permite ainda mostrar produtos de maneira contextual se for utilizado o plugin [Palavras de Monetização](http://bernabauer.com/wp-plugins/palavras-de-monetizacao/ "Palavras de Monetização").
 
@@ -64,6 +64,15 @@ O plugin **requer PHP 5** ou superior para funcionar. Se o seu blog está usando
 Para remover todas as informações do plugin, basta escolher a opção "Excluir" na página de administraçãode plugins do WordPress. Isto removerá todos os arquivos do plugin, assim como suas configurações e dados de cache.
 
 == Changelog ==
+
+= 3.6 = 
+* Implementado nofollow nos links da vitrine
+* Ganhos acumulados podem ser vistos na página de administração do blog e recebidos por email
+* Nova vitrine com produtos mais vendidos e com maiores descontos
+* Fonte de produtos agora pode ser de tags do artigo, além do plugin Palavras de Monetização
+* Cache não apaga mais todos os produtos diariamente, mas sim os produtos com mais de 24 horas no cache
+* Vitrine com menos produtos do que configurado agora tem tamanho correto para cada produto
+* Correções de códigos PHP e melhor compatibilidade com WordPress 3.0
 
 = 3.5 =
 * Revisão do código para compatibilizar com as normas de desenvolvimento para o WordPress 3.0
