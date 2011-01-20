@@ -3,11 +3,11 @@
 Plugin Name: Vitrine Submarino
 Plugin URI: http://www.bernabauer.com/wp-plugins/
 Description: Mostre vitrines de produtos do Submarino em seu blog. Com o <a href="http://wordpress.org/extend/plugins/palavras-de-monetizacao/">Palavras de Monetização</a> você pode contextualizar manualmente os produtos. Para usar widgets é neecessário um tema compatível.
-Version: 3.6
+Version: 3.6.1
 Author: Bernardo Bauer
 Author URI: http://www.bernabauer.com/
 
-	Copyright 2008  Bernardo Bauer  (email : bernabauer@bernabauer.com)
+	Copyright 2010  Bernardo Bauer  (email : bernabauer@bernabauer.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ global $wpdb;
 global $vs_options;
 global $vs_version;
 
-$vs_version = "3.6";
+$vs_version = "3.6.1";
 $vs_options = get_option('vs_options');
 
 register_activation_hook(__FILE__, 'vs_activate');
@@ -63,7 +63,7 @@ function vs_activate() {
 
 	global $wpdb;
 	global $vs_version;
-
+	global $vs_options;
 	$vs_options = get_option('vs_options');
 
 	//UHU! Newcomer!
@@ -140,7 +140,7 @@ function vs_activate() {
 		if ($vs_options['version'] != $vs_version) {
 			$vs_options = array(
 				'codafil'=>			$vs_options['codafil'],
-				'password'=>		'',
+				'password'=>		$vs_options['password'],
 				'cod_BP'=>			$vs_options['cod_BP'],
 				'cod_ML'=>			$vs_options['cod_ML'],
 				'cod_JC'=>			$vs_options['cod_JC'],
@@ -148,10 +148,10 @@ function vs_activate() {
 				'PCP'=>				$vs_options['PCP'],
 				'LP'=>				$vs_options['LP'],
 				'version'=>			$vs_version,
-				'accu_ganhos'=>		'',
+				'accu_ganhos'=>		$vs_options['accu_ganhos'],
 				'wid_title'=>		$vs_options['wid_title'],
 				'wid_word'=>		$vs_options['wid_word'],
-				'wid_seed'=>		'seed_padrao',
+				'wid_seed'=>		$vs_options['wid_seed'],
 				'wid_show'=>		$vs_options['wid_show'],
 				'wid_fontcolor'=>	$vs_options['wid_fontcolor'],
 				'wid_bgcolor'=>		$vs_options['wid_bgcolor'],
@@ -160,11 +160,11 @@ function vs_activate() {
 				'wid_track'=>		$vs_options['wid_track'],
 				'wid_altcode'=>		$vs_options['wid_altcode'],
 				'ctx_titulo'=>		$vs_options['ctx_titulo'],
-				'ctx_seed'=>		'seed_padrao',
+				'ctx_seed'=>		$vs_options['ctx_seed'],
 				'ctx_word'=>		$vs_options['ctx_word'],
 				'ctx_show'=>		$vs_options['ctx_show'],
 				'ctx_exib_auto'=>	$vs_options['ctx_exib_auto'],
-				'ctx_tipo'=>		'tp_vit_horiz',
+				'ctx_tipo'=>		$vs_options['ctx_tipo'],
 				'ctx_local'=>		$vs_options['ctx_local'],
 				'ctx_prcolor'=>		$vs_options['ctx_prcolor'],
 				'ctx_bg'=>			$vs_options['ctx_bg'],
@@ -172,40 +172,6 @@ function vs_activate() {
 				'ctx_altcode'=>		$vs_options['ctx_altcode']
 			);
 			update_option('vs_options', $vs_options);
-
-			$wpdb->query( 'DROP TABLE IF EXISTS wp_vitrine_submarino');
-
-		$sql = 'CREATE TABLE wp_vs_cache_produtos (
-				id_sub 	int(20)			NOT NULL,
-				name 	varchar(255) 	NOT NULL,
-				link	varchar(255) 	NOT NULL,
-				imgp	varchar(255) 	NOT NULL,
-				imgm	varchar(255) 	NOT NULL,
-				imgg	varchar(255) 	NOT NULL,
-				descr	varchar(255) 	NOT NULL,
-				priced	float 			NOT NULL,
-				pricep	float 			NOT NULL,
-				cat 	int(20)			NOT NULL,
-				seed	varchar(255) 	NOT NULL,
-				date	datetime		NOT NULL,
-				KEY seed (seed)
-				) ENGINE=MyISAM DEFAULT CHARSET=utf8;';
-	
-			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-			dbDelta($sql);
-		$sql = 'CREATE TABLE wp_vs_vendas (
-				data 		DATE 			NOT NULL ,
-				pedido 		INT( 15 ) 		NOT NULL ,
-				tipo 		VARCHAR( 30 ) 	NOT NULL ,
-				codigo 		INT( 15 ) 		NOT NULL ,
-				descricao 	VARCHAR( 100 ) 	NOT NULL ,
-				quant 		INT( 4 ) 		NOT NULL ,
-				valor 		FLOAT		 	NOT NULL ,
-				faturado 	TINYINT( 1 ) 	NOT NULL
-				) ENGINE = MYISAM ;	';
-	
-
-			dbDelta($sql);
 
 		}
 	}
@@ -575,7 +541,11 @@ function vs_pesquisaprodutos($palavra){
 		
 				if($teste == 'link') { 
 						$i++; 
-						$produtos1[$i]['link'] = "http://www.submarino.com.br".$img->getAttribute("href").'?franq='.$vs_options['codafil']; 
+						
+						if (strpos($img->getAttribute("href"), "?") > 0)
+							$produtos1[$i]['link'] = "http://www.submarino.com.br".$img->getAttribute("href").'&franq='.$vs_options['codafil']; 
+						else
+							$produtos1[$i]['link'] = "http://www.submarino.com.br".$img->getAttribute("href").'?franq='.$vs_options['codafil']; 
 						$elem = explode("/", $img->getAttribute("href"));
 						$produtos1[$i]['cat'] = $elem[2];
 						$produtos1[$i]['subid'] = $elem[3];
