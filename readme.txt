@@ -2,9 +2,9 @@
 Contributors: bernabauer
 Donate link: http://bernabauer.com/
 Tags: brasil, monetização, submarino, vitrine 
-Requires at least: 2.8
-Tested up to: 2.9.1
-Stable tag: 3.4.1
+Requires at least: 3.0
+Tested up to: 3.1
+Stable tag: 3.6.1
 
 Mostra vitrine de produtos do Submarino.com. A vitrine pode ser mostrada através de widget na sidebar do blog e também pode ser incluído automaticamente antes ou após o texto dos seus artigos. O plugin permite ainda mostrar produtos de maneira contextual se for utilizado o plugin [Palavras de Monetização](http://bernabauer.com/wp-plugins/palavras-de-monetizacao/ "Palavras de Monetização").
 
@@ -59,11 +59,31 @@ Sei lá. Eu recomendo o uso de widgets. É uma mão na roda, não sei por que vo
 
 O plugin **requer PHP 5** ou superior para funcionar. Se o seu blog está usando a versão 4, não tem como o plugin mostrar a vitrine. Sorry! :-(
 
-= Como faço um reset nas configurações do plugin? Como removo o plugin totalmente? =
+= Como desinstalo o plugin completamente? =
 
-Basta habilitar a opção `Remover opções ao desativar`, atualizar as opções e depois desativar o plugin. Se quiser reabilitar o plugin, as configurações voltarão ao estado "de fábrica".
+Para remover todas as informações do plugin, basta escolher a opção "Excluir" na página de administraçãode plugins do WordPress. Isto removerá todos os arquivos do plugin, assim como suas configurações e dados de cache.
 
 == Changelog ==
+
+= 3.6.1 =
+* Correção na inclusão de produtos que já tenham "?" no seu link
+
+= 3.6 = 
+* Implementado nofollow nos links da vitrine
+* Ganhos acumulados podem ser vistos na página de administração do blog e recebidos por email
+* Nova vitrine com produtos mais vendidos e com maiores descontos
+* Fonte de produtos agora pode ser de tags do artigo, além do plugin Palavras de Monetização
+* Cache não apaga mais todos os produtos diariamente, mas sim os produtos com mais de 24 horas no cache
+* Vitrine com menos produtos do que configurado agora tem tamanho correto para cada produto
+* Correções de códigos PHP e melhor compatibilidade com WordPress 3.0
+
+= 3.5 =
+* Revisão do código para compatibilizar com as normas de desenvolvimento para o WordPress 3.0
+* Retirada de códigos desnecessários e não utilizados.
+* Consertado código de teste de produtos válidos para palavra informada.
+* Inclusão do novo banner 300x250 para os anuncios alternativos.
+* Inclusão de formatos de banner (728x90, 468x60 e 250x250) para as vitrines.
+* Suporte para processo de desinstalação nativo do WordPress para remover o plugin.
 
 = 3.4.1 =
 * Ajuste para tornar compatível com o WordPress 3.0
